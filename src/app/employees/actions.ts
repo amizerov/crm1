@@ -2,6 +2,7 @@
 
 import { query } from '@/db/connect';
 import { redirect } from 'next/navigation';
+import { getCurrentUser } from '@/db/loginUser';
 
 export interface Employee {
   id: number;
@@ -16,9 +17,15 @@ export interface Employee {
   dtu?: string; // дата обновления
 }
 
-// Получение всех сотрудников
+// Получение сотрудников компаний текущего пользователя
 export async function getEmployees() {
   try {
+    const currentUser = await getCurrentUser();
+    
+    if (!currentUser) {
+      return [];
+    }
+
     const result = await query(`
       SELECT 
         e.id,
@@ -38,8 +45,18 @@ export async function getEmployees() {
       FROM Employee e
       LEFT JOIN Company c ON e.companyId = c.id
       LEFT JOIN [User] u ON e.userId = u.id
+      WHERE e.companyId IN (
+        -- Получаем компании, где текущий пользователь является сотрудником или владельцем
+        SELECT DISTINCT companyId 
+        FROM Employee 
+        WHERE userId = @userId
+        UNION
+        SELECT DISTINCT id 
+        FROM Company 
+        WHERE ownerId = @userId
+      )
       ORDER BY e.Name
-    `);
+    `, { userId: currentUser.id });
 
     const employees = (result as any).recordset || result;
     return employees;
@@ -50,9 +67,78 @@ export async function getEmployees() {
   }
 }
 
-// Получение сотрудника по ID
+// Получение сотрудников по конкретной компании или всех компаний пользователя
+export async function getEmployeesByCompany(companyId?: number) {
+  try {
+    const currentUser = await getCurrentUser();
+    
+    if (!currentUser) {
+      return [];
+    }
+
+    // Если companyId не указан или "all", получаем сотрудников всех компаний пользователя
+    if (!companyId || companyId === 0) {
+      return await getEmployees();
+    }
+
+    // Проверяем, что пользователь имеет доступ к указанной компании
+    const hasAccess = await query(`
+      SELECT 1 FROM (
+        SELECT DISTINCT companyId as id
+        FROM Employee 
+        WHERE userId = @userId
+        UNION
+        SELECT DISTINCT id 
+        FROM Company 
+        WHERE ownerId = @userId
+      ) AS userCompanies
+      WHERE id = @companyId
+    `, { userId: currentUser.id, companyId });
+
+    if (hasAccess.length === 0) {
+      return [];
+    }
+
+    const result = await query(`
+      SELECT 
+        e.id,
+        e.Name,
+        e.companyId,
+        e.userId,
+        c.companyName,
+        u.nicName as userNicName,
+        u.fullName as userFullName,
+        -- Показываем связь с пользователем
+        CASE 
+          WHEN e.userId IS NOT NULL THEN e.Name + ' (' + COALESCE(u.nicName, u.fullName, 'Пользователь') + ')'
+          ELSE e.Name + ' (только сотрудник)'
+        END as displayName,
+        e.dtc,
+        e.dtu
+      FROM Employee e
+      LEFT JOIN Company c ON e.companyId = c.id
+      LEFT JOIN [User] u ON e.userId = u.id
+      WHERE e.companyId = @companyId
+      ORDER BY e.Name
+    `, { companyId });
+
+    const employees = (result as any).recordset || result;
+    return employees;
+
+  } catch (error) {
+    console.error('Ошибка получения сотрудников по компании:', error);
+    return [];
+  }
+}
+
+// Получение сотрудника по ID (с проверкой доступа)
 export async function getEmployeeById(id: number): Promise<Employee | null> {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return null;
+    }
+
     const result = await query(`
       SELECT 
         e.id,
@@ -64,8 +150,16 @@ export async function getEmployeeById(id: number): Promise<Employee | null> {
         c.companyName
       FROM Employee e
       LEFT JOIN Company c ON e.companyId = c.id
-      WHERE e.id = @id
-    `, { id });
+      WHERE e.id = @id AND e.companyId IN (
+        SELECT DISTINCT companyId 
+        FROM Employee 
+        WHERE userId = @userId
+        UNION
+        SELECT DISTINCT id 
+        FROM Company 
+        WHERE ownerId = @userId
+      )
+    `, { id, userId: currentUser.id });
     
     return result[0] || null;
   } catch (error) {
@@ -77,6 +171,11 @@ export async function getEmployeeById(id: number): Promise<Employee | null> {
 // Добавление сотрудника
 export async function addEmployee(formData: FormData) {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      throw new Error('Пользователь не авторизован');
+    }
+
     const params = {
       Name: (formData.get('Name') as string)?.trim(),
       userId: formData.get('userId') ? Number(formData.get('userId')) : null,
@@ -87,13 +186,31 @@ export async function addEmployee(formData: FormData) {
       throw new Error('Имя сотрудника обязательно');
     }
 
+    if (!params.companyId) {
+      throw new Error('Компания обязательна');
+    }
+
+    // Проверяем, что пользователь имеет доступ к указанной компании
+    const hasAccess = await query(`
+      SELECT 1 FROM (
+        SELECT DISTINCT companyId as id
+        FROM Employee 
+        WHERE userId = @userId
+        UNION
+        SELECT DISTINCT id 
+        FROM Company 
+        WHERE ownerId = @userId
+      ) AS userCompanies
+      WHERE id = @companyId
+    `, { userId: currentUser.id, companyId: params.companyId });
+
+    if (hasAccess.length === 0) {
+      throw new Error('У вас нет доступа к этой компании');
+    }
+
     // Обрабатываем пустые строки как null
     if (formData.get('userId') === '') {
       params.userId = null;
-    }
-    
-    if (formData.get('companyId') === '') {
-      params.companyId = null;
     }
 
     const sql = `INSERT INTO Employee (Name, userId, companyId, dtc)
@@ -118,6 +235,30 @@ export type UpdateEmployeeParams = {
 
 export async function updateEmployee(params: UpdateEmployeeParams) {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      throw new Error('Пользователь не авторизован');
+    }
+
+    // Сначала проверим, что сотрудник принадлежит к компании пользователя
+    const employeeCheck = await query(`
+      SELECT e.id, e.companyId 
+      FROM Employee e
+      WHERE e.id = @id AND e.companyId IN (
+        SELECT DISTINCT companyId 
+        FROM Employee 
+        WHERE userId = @userId
+        UNION
+        SELECT DISTINCT id 
+        FROM Company 
+        WHERE ownerId = @userId
+      )
+    `, { id: params.id, userId: currentUser.id });
+
+    if (employeeCheck.length === 0) {
+      throw new Error('У вас нет доступа к этому сотруднику');
+    }
+
     // Создаем объект с только непустыми полями
     const updateFields: any = {};
     
@@ -125,12 +266,31 @@ export async function updateEmployee(params: UpdateEmployeeParams) {
       updateFields.Name = params.Name.trim();
     }
     
-    // Для userId и companyId разрешаем null (сброс связи)
+    // Для userId разрешаем null (сброс связи)
     if (params.userId !== undefined) {
       updateFields.userId = params.userId || null;
     }
     
+    // Если изменяется companyId, проверяем доступ к новой компании
     if (params.companyId !== undefined) {
+      if (params.companyId) {
+        const hasAccess = await query(`
+          SELECT 1 FROM (
+            SELECT DISTINCT companyId as id
+            FROM Employee 
+            WHERE userId = @userId
+            UNION
+            SELECT DISTINCT id 
+            FROM Company 
+            WHERE ownerId = @userId
+          ) AS userCompanies
+          WHERE id = @companyId
+        `, { userId: currentUser.id, companyId: params.companyId });
+
+        if (hasAccess.length === 0) {
+          throw new Error('У вас нет доступа к указанной компании');
+        }
+      }
       updateFields.companyId = params.companyId || null;
     }
     
@@ -159,6 +319,30 @@ export async function updateEmployee(params: UpdateEmployeeParams) {
 // Удаление сотрудника
 export async function deleteEmployee(id: number) {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      throw new Error('Пользователь не авторизован');
+    }
+
+    // Проверим, что сотрудник принадлежит к компании пользователя
+    const employeeCheck = await query(`
+      SELECT e.id 
+      FROM Employee e
+      WHERE e.id = @id AND e.companyId IN (
+        SELECT DISTINCT companyId 
+        FROM Employee 
+        WHERE userId = @userId
+        UNION
+        SELECT DISTINCT id 
+        FROM Company 
+        WHERE ownerId = @userId
+      )
+    `, { id, userId: currentUser.id });
+
+    if (employeeCheck.length === 0) {
+      throw new Error('У вас нет доступа к этому сотруднику');
+    }
+
     await query('DELETE FROM Employee WHERE id = @id', { id });
   } catch (error) {
     console.error('Ошибка в deleteEmployee:', error);
@@ -188,20 +372,39 @@ export async function getUsers(): Promise<{id: number, login: string, nicName: s
   }
 }
 
-// Получение списка компаний для связи
+// Получение списка компаний пользователя для связи
 export async function getCompanies(): Promise<{id: number, companyName: string}[]> {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return [];
+    }
+
     const result = await query(`
       SELECT 
-        id,
-        companyName
-      FROM Company
-      ORDER BY companyName
-    `);
+        c.id,
+        c.companyName
+      FROM Company c
+      WHERE c.id IN (
+        SELECT DISTINCT companyId 
+        FROM Employee 
+        WHERE userId = @userId
+        UNION
+        SELECT DISTINCT id 
+        FROM Company 
+        WHERE ownerId = @userId
+      )
+      ORDER BY c.companyName
+    `, { userId: currentUser.id });
     
     return result;
   } catch (error) {
     console.error('Ошибка в getCompanies:', error);
     return [];
   }
+}
+
+// Получение компаний пользователя для селектора
+export async function getUserCompanies() {
+  return await getCompanies();
 }

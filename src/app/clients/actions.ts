@@ -1,13 +1,7 @@
+'use server';
+
 import { query } from '@/db/connect';
 import { getCurrentUser } from '@/db/loginUser';
-
-export async function getClients() {
-  return await query('SELECT * FROM Client ORDER BY id DESC');
-}
-
-export async function getClientsByCompany(companyId: number) {
-  return await query('SELECT * FROM Client WHERE companyId = @companyId ORDER BY id DESC', { companyId });
-}
 
 export async function getClientsByUserCompany() {
   const currentUser = await getCurrentUser();
@@ -91,18 +85,55 @@ export async function deleteClient(id: number) {
   await query('DELETE FROM Client WHERE id = @id', { id });
 }
 
-export async function getTotalSum(): Promise<number> {
+export async function getTotalSum(companyId?: number): Promise<number> {
   const currentUser = await getCurrentUser();
   
-  if (!currentUser?.companyId) {
+  if (!currentUser) {
     return 0;
   }
   
+  // Если companyId не указан или "all", получаем сумму по всем компаниям пользователя
+  if (!companyId || companyId === 0) {
+    const result = await query(`
+      SELECT SUM(summa) as totalSum 
+      FROM Client 
+      WHERE summa IS NOT NULL AND companyId IN (
+        SELECT DISTINCT companyId 
+        FROM Employee 
+        WHERE userId = @userId
+        UNION
+        SELECT DISTINCT id 
+        FROM Company 
+        WHERE ownerId = @userId
+      )
+    `, { userId: currentUser.id });
+    
+    return result[0]?.totalSum || 0;
+  }
+
+  // Проверяем, что пользователь имеет доступ к указанной компании
+  const hasAccess = await query(`
+    SELECT 1 FROM (
+      SELECT DISTINCT companyId as id
+      FROM Employee 
+      WHERE userId = @userId
+      UNION
+      SELECT DISTINCT id 
+      FROM Company 
+      WHERE ownerId = @userId
+    ) AS userCompanies
+    WHERE id = @companyId
+  `, { userId: currentUser.id, companyId });
+
+  if (hasAccess.length === 0) {
+    return 0;
+  }
+
   const result = await query(`
     SELECT SUM(summa) as totalSum 
     FROM Client 
     WHERE summa IS NOT NULL AND companyId = @companyId
-  `, { companyId: currentUser.companyId });
+  `, { companyId });
   
   return result[0]?.totalSum || 0;
 }
@@ -167,4 +198,57 @@ export async function getUserCompanies() {
   `, { userId: currentUser.id });
   
   return companies;
+}
+
+export async function getClientsByCompany(companyId?: number) {
+  const currentUser = await getCurrentUser();
+  
+  if (!currentUser) {
+    return [];
+  }
+
+  // Если companyId не указан или "all", получаем клиентов всех компаний пользователя
+  if (!companyId || companyId === 0) {
+    return await query(`
+      SELECT c.*, comp.companyName 
+      FROM Client c
+      LEFT JOIN Company comp ON c.companyId = comp.id
+      WHERE c.companyId IN (
+        SELECT DISTINCT companyId 
+        FROM Employee 
+        WHERE userId = @userId
+        UNION
+        SELECT DISTINCT id 
+        FROM Company 
+        WHERE ownerId = @userId
+      )
+      ORDER BY c.id DESC
+    `, { userId: currentUser.id });
+  }
+
+  // Проверяем, что пользователь имеет доступ к указанной компании
+  const hasAccess = await query(`
+    SELECT 1 FROM (
+      SELECT DISTINCT companyId as id
+      FROM Employee 
+      WHERE userId = @userId
+      UNION
+      SELECT DISTINCT id 
+      FROM Company 
+      WHERE ownerId = @userId
+    ) AS userCompanies
+    WHERE id = @companyId
+  `, { userId: currentUser.id, companyId });
+
+  if (hasAccess.length === 0) {
+    return [];
+  }
+
+  return await query(`
+    SELECT c.*, comp.companyName 
+    FROM Client c
+    LEFT JOIN Company comp ON c.companyId = comp.id
+    WHERE c.companyId = @companyId
+    ORDER BY c.id DESC
+  `, { companyId });
 }
