@@ -12,6 +12,8 @@ type Client = {
   description?: string;
   contacts?: string;
   statusId: number;
+  companyId?: number;
+  companyName?: string;
   summa?: number;
   payDate?: string;
   payType?: string;
@@ -98,6 +100,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
               <tr style={{ backgroundColor: '#f5f5f5' }}>
                 <th style={{ padding: 12, border: '1px solid #ddd', textAlign: 'left' }}>ID</th>
                 <th style={{ padding: 12, border: '1px solid #ddd', textAlign: 'left' }}>Имя</th>
+                <th style={{ padding: 12, border: '1px solid #ddd', textAlign: 'left' }}>Компания</th>
                 <th style={{ padding: 12, border: '1px solid #ddd', textAlign: 'left' }}>Описание</th>
                 <th style={{ padding: 12, border: '1px solid #ddd', textAlign: 'left' }}>Контакты</th>
                 <th style={{ padding: 12, border: '1px solid #ddd', textAlign: 'left' }}>Статус</th>

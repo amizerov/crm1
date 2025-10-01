@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
+import WindowsWindow from '@/components/WindowsWindow';
 
 interface Task {
   id: number;
@@ -20,6 +22,8 @@ interface SubtasksListProps {
 }
 
 export default function SubtasksList({ parentTaskId, subtasks }: SubtasksListProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
     const date = new Date(dateString);
@@ -54,86 +58,81 @@ export default function SubtasksList({ parentTaskId, subtasks }: SubtasksListPro
   };
 
   return (
-    <div style={{
-      border: '1px solid #e9ecef',
-      borderRadius: 8,
-      backgroundColor: 'white'
-    }}>
-      {/* Заголовок */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '16px 20px',
-        borderBottom: '1px solid #e9ecef',
-        backgroundColor: '#f8f9fa'
-      }}>
-        <h3 style={{
-          margin: 0,
-          fontSize: 18,
-          fontWeight: 600,
-          color: '#495057',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8
-        }}>
-          📋 Подзадачи ({subtasks.length})
-        </h3>
-        <Link href={`/tasks/add?parentId=${parentTaskId}`}>
-          <button style={{
-            padding: '8px 16px',
-            backgroundColor: '#28a745',
-            color: 'white',
-            border: 'none',
-            borderRadius: 4,
-            cursor: 'pointer',
-            fontSize: 14,
-            fontWeight: 500,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6
-          }}>
-            ➕ Добавить подзадачу
-          </button>
-        </Link>
-      </div>
+    <WindowsWindow
+      title={`Подзадачи (${subtasks.length})`}
+      icon="📋"
+      isExpanded={isExpanded}
+      onToggleExpanded={() => setIsExpanded(!isExpanded)}
+      defaultSize={{ width: 900, height: 700 }}
+      minSize={{ width: 500, height: 400 }}
+    >
+      {/* Кнопка добавления подзадачи - показываем всегда */}
+      {!isExpanded && (
+        <div style={{ marginBottom: 16 }}>
+          <Link href={`/tasks/add?parentId=${parentTaskId}`}>
+            <button style={{
+              padding: '8px 16px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: 4,
+              cursor: 'pointer',
+              fontSize: 14,
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              width: '100%',
+              justifyContent: 'center'
+            }}>
+              ➕ Добавить подзадачу
+            </button>
+          </Link>
+        </div>
+      )}
 
-      {/* Список подзадач */}
-      <div style={{ padding: 20 }}>
+      {/* Контент */}
+      <div style={{ 
+        flex: 1, 
+        overflow: isExpanded ? 'auto' : 'auto'
+      }}>
         {subtasks.length === 0 ? (
           <div style={{
             textAlign: 'center',
-            padding: 40,
+            padding: isExpanded ? 40 : 20,
             color: '#6c757d',
             fontSize: 14
           }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>📝</div>
+            <div style={{ fontSize: isExpanded ? 48 : 32, marginBottom: 16 }}>📝</div>
             <p style={{ margin: 0 }}>У этой задачи пока нет подзадач</p>
-            <Link href={`/tasks/add?parentId=${parentTaskId}`}>
-              <button style={{
-                marginTop: 16,
-                padding: '10px 20px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: 4,
-                cursor: 'pointer',
-                fontSize: 14
-              }}>
-                Создать первую подзадачу
-              </button>
-            </Link>
+            {isExpanded && (
+              <Link href={`/tasks/add?parentId=${parentTaskId}`}>
+                <button style={{
+                  marginTop: 16,
+                  padding: '10px 20px',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 4,
+                  cursor: 'pointer',
+                  fontSize: 14
+                }}>
+                  Создать первую подзадачу
+                </button>
+              </Link>
+            )}
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {subtasks.map((subtask) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: isExpanded ? 12 : 8 }}>
+            {/* В свернутом виде показываем только первые 3-4 подзадачи */}
+            {(isExpanded ? subtasks : subtasks.slice(0, 4)).map((subtask) => (
               <Link
                 key={subtask.id}
                 href={`/tasks/edit/${subtask.id}`}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  padding: 16,
+                  padding: isExpanded ? 16 : 12,
                   border: '1px solid #e9ecef',
                   borderRadius: 6,
                   backgroundColor: '#fafbfc',
@@ -155,11 +154,13 @@ export default function SubtasksList({ parentTaskId, subtasks }: SubtasksListPro
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                {/* Отступ для иерархии */}
-                <div style={{ 
-                  width: (subtask.level || 0) * 20, 
-                  flexShrink: 0 
-                }} />
+                {/* Отступ для иерархии - только в развернутом виде */}
+                {isExpanded && (
+                  <div style={{ 
+                    width: (subtask.level || 0) * 20, 
+                    flexShrink: 0 
+                  }} />
+                )}
 
                 {/* Основная информация */}
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -172,9 +173,13 @@ export default function SubtasksList({ parentTaskId, subtasks }: SubtasksListPro
                     <span style={{
                       color: '#495057',
                       fontWeight: 500,
-                      fontSize: 15
+                      fontSize: isExpanded ? 15 : 14
                     }}>
-                      {subtask.taskName}
+                      {isExpanded ? subtask.taskName : (
+                        subtask.taskName.length > 30 
+                          ? `${subtask.taskName.substring(0, 30)}...` 
+                          : subtask.taskName
+                      )}
                     </span>
                     {getPriorityIcon(subtask.priorityName) && (
                       <span title={`Приоритет: ${subtask.priorityName}`}>
@@ -183,7 +188,7 @@ export default function SubtasksList({ parentTaskId, subtasks }: SubtasksListPro
                     )}
                   </div>
                   
-                  {subtask.description && (
+                  {subtask.description && isExpanded && (
                     <div style={{
                       color: '#6c757d',
                       fontSize: 13,
@@ -200,15 +205,19 @@ export default function SubtasksList({ parentTaskId, subtasks }: SubtasksListPro
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 16,
-                    fontSize: 12,
+                    gap: isExpanded ? 16 : 8,
+                    fontSize: isExpanded ? 12 : 11,
                     color: '#6c757d'
                   }}>
                     {subtask.executorName && (
-                      <span>👤 {subtask.executorName}</span>
+                      <span>
+                        {isExpanded ? `👤 ${subtask.executorName}` : subtask.executorName.split(' ')[0]}
+                      </span>
                     )}
                     {subtask.dedline && (
-                      <span>📅 {formatDate(subtask.dedline)}</span>
+                      <span>
+                        {isExpanded ? `📅 ${formatDate(subtask.dedline)}` : formatDate(subtask.dedline)}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -216,19 +225,19 @@ export default function SubtasksList({ parentTaskId, subtasks }: SubtasksListPro
                 {/* Статус и иконка перехода */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{
-                    padding: '4px 12px',
+                    padding: isExpanded ? '4px 12px' : '3px 8px',
                     borderRadius: 12,
-                    fontSize: 12,
+                    fontSize: isExpanded ? 12 : 10,
                     fontWeight: 500,
                     color: 'white',
                     backgroundColor: getStatusColor(subtask.statusName),
                     flexShrink: 0
                   }}>
-                    {subtask.statusName}
+                    {isExpanded ? subtask.statusName : subtask.statusName.substring(0, 6)}
                   </div>
                   <div style={{
                     color: '#007bff',
-                    fontSize: 16,
+                    fontSize: isExpanded ? 16 : 14,
                     flexShrink: 0
                   }}>
                     ➤
@@ -236,9 +245,46 @@ export default function SubtasksList({ parentTaskId, subtasks }: SubtasksListPro
                 </div>
               </Link>
             ))}
+            
+            {/* Показать количество скрытых подзадач в свернутом виде */}
+            {!isExpanded && subtasks.length > 4 && (
+              <div style={{
+                padding: 8,
+                textAlign: 'center',
+                color: '#6c757d',
+                fontSize: 12,
+                fontStyle: 'italic'
+              }}>
+                ... и еще {subtasks.length - 4} подзадач(и)
+              </div>
+            )}
+
+            {/* Кнопка добавления в развернутом виде */}
+            {isExpanded && (
+              <Link href={`/tasks/add?parentId=${parentTaskId}`}>
+                <button style={{
+                  padding: '12px 20px',
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 4,
+                  cursor: 'pointer',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  width: '100%',
+                  justifyContent: 'center',
+                  marginTop: 16
+                }}>
+                  ➕ Добавить подзадачу
+                </button>
+              </Link>
+            )}
           </div>
         )}
       </div>
-    </div>
+    </WindowsWindow>
   );
 }

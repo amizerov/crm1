@@ -167,6 +167,8 @@ export default function WindowsWindow({
         left: isExpanded ? windowPosition.x : 'auto',
         width: isExpanded ? windowSize.width : 'auto',
         height: isExpanded ? windowSize.height : 'auto',
+        maxWidth: isExpanded ? 'none' : '400px', // Ограничиваем ширину в свернутом виде
+        maxHeight: isExpanded ? 'none' : '400px', // Ограничиваем высоту в свернутом виде (примерно 6 рядов)
         zIndex: isExpanded ? 9999 : 'auto',
         overflow: 'hidden',
         boxShadow: isExpanded ? '0 10px 50px rgba(0,0,0,0.3)' : 'none',
@@ -317,7 +319,7 @@ export default function WindowsWindow({
       <div style={{ 
         padding: isExpanded ? '0 16px 16px 16px' : '0 16px 16px 16px',
         flex: 1,
-        overflow: 'hidden',
+        overflow: isExpanded ? 'hidden' : 'auto', // В свернутом виде включаем скролл
         display: 'flex',
         flexDirection: 'column'
       }}>

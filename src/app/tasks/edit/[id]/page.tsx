@@ -119,9 +119,34 @@ export default async function EditTaskPage({ params }: EditTaskPageProps) {
         )}
       </div>
 
-      {/* Двухколоночный макет: форма и действия (компактная высота) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: 20, marginBottom: 20 }}>
-        {/* Левая колонка: Форма редактирования */}
+      {/* Адаптивная сетка оконных компонентов */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+        gap: 20,
+        marginBottom: 20
+      }}>
+        {/* 1. Действия по задаче - первый компонент */}
+        <TaskActions 
+          taskId={task.id} 
+          actions={taskActions}
+          currentUserId={currentUser.id}
+          addActionFunction={handleAddTaskAction}
+        />
+
+        {/* 2. Документы задачи - второй компонент */}
+        <TaskDocuments 
+          taskId={task.id} 
+          documents={documents}
+        />
+
+        {/* 3. Подзадачи - третий компонент */}
+        <SubtasksList 
+          parentTaskId={task.id} 
+          subtasks={subtasks}
+        />
+
+        {/* 4. Свойства задачи - четвертый компонент */}
         <TaskProperty
           task={task}
           statuses={statuses}
@@ -132,29 +157,6 @@ export default async function EditTaskPage({ params }: EditTaskPageProps) {
           currentUserId={currentUser.id}
           onSubmit={handleUpdateTask}
           onDelete={handleDeleteTask}
-        />
-
-        {/* Правая колонка: Действия по задаче */}
-        <TaskActions 
-          taskId={task.id} 
-          actions={taskActions}
-          currentUserId={currentUser.id}
-          addActionFunction={handleAddTaskAction}
-        />
-      </div>
-
-      {/* Нижний ряд: Подзадачи и Документы в одну строку */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: 20, marginTop: 20 }}>
-        {/* Левая колонка: Список подзадач */}
-        <SubtasksList 
-          parentTaskId={task.id} 
-          subtasks={subtasks}
-        />
-
-        {/* Правая колонка: Документы задачи */}
-        <TaskDocuments 
-          taskId={task.id} 
-          documents={documents}
         />
       </div>
     </main>

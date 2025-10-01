@@ -1,11 +1,31 @@
-import { addClient } from '../actions';
+import { addClient, getUserCompanies } from '../actions';
 import { getStatuses } from '../actions';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { getCurrentUser } from '@/db/loginUser';
 
 export default async function AddClientPage() {
-  const statuses = await getStatuses();
+  const currentUser = await getCurrentUser();
+  if (!currentUser) {
+    redirect('/login');
+  }
+  
+  const [statuses, companies] = await Promise.all([
+    getStatuses(),
+    getUserCompanies()
+  ]);
+  
+  if (companies.length === 0) {
+    return (
+      <main className="p-8">
+        <h1>Нет доступных компаний</h1>
+        <p>Вы должны быть сотрудником или владельцем компании для создания клиентов.</p>
+        <Link href="/clients">← Назад к списку клиентов</Link>
+      </main>
+    );
+  }
+  
   async function handleAddClient(formData: FormData) {
     'use server';
     
@@ -13,6 +33,7 @@ export default async function AddClientPage() {
     const description = formData.get('description') as string;
     const contacts = formData.get('contacts') as string;
     const statusId = parseInt(formData.get('statusId') as string);
+    const companyId = parseInt(formData.get('companyId') as string);
     const summa = formData.get('summa') ? parseFloat(formData.get('summa') as string) : undefined;
     const payDate = formData.get('payDate') as string;
     const payType = formData.get('payType') as string;
@@ -22,6 +43,7 @@ export default async function AddClientPage() {
       description: description || undefined,
       contacts: contacts || undefined,
       statusId,
+      companyId,
       summa,
       payDate: payDate || undefined,
       payType: payType || undefined,
@@ -72,6 +94,24 @@ export default async function AddClientPage() {
               name="contacts" 
               style={{ width: '100%', padding: 10, border: '1px solid #ccc', borderRadius: 4 }}
             />
+          </div>
+          
+          <div>
+            <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
+              Компания *
+            </label>
+            <select 
+              name="companyId" 
+              required 
+              style={{ width: '100%', padding: 10, border: '1px solid #ccc', borderRadius: 4 }}
+            >
+              <option value="">Выберите компанию</option>
+              {companies.map(company => (
+                <option key={company.id} value={company.id}>
+                  {company.companyName}
+                </option>
+              ))}
+            </select>
           </div>
           
           <div>

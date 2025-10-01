@@ -9,6 +9,8 @@ type Client = {
   description?: string;
   contacts?: string;
   statusId: number;
+  companyId?: number;
+  companyName?: string;
   summa?: number;
   payDate?: string;
   payType?: string;
@@ -42,6 +44,7 @@ export default function ClientRow({ client, statusName }: ClientRowProps) {
     >
       <td style={{ padding: 12, border: '1px solid #ddd' }}>{client.id}</td>
       <td style={{ padding: 12, border: '1px solid #ddd' }}>{client.clientName}</td>
+      <td style={{ padding: 12, border: '1px solid #ddd' }}>{client.companyName || '-'}</td>
       <td style={{ padding: 12, border: '1px solid #ddd' }}>{client.description || '-'}</td>
       <td style={{ padding: 12, border: '1px solid #ddd' }}>{client.contacts || '-'}</td>
       <td style={{ padding: 12, border: '1px solid #ddd' }}>{statusName}</td>

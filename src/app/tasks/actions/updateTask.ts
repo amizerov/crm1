@@ -108,6 +108,7 @@ export async function getTaskById(id: number) {
         t.statusId,
         t.priorityId,
         t.executorId,
+        t.userId,
         t.companyId,
         st.status as statusName,
         p.priority as priorityName,

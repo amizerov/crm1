@@ -1,10 +1,11 @@
-import { getStatuses, updateClient } from '../../actions';
+import { getStatuses, updateClient, getUserCompanies } from '../../actions';
 import { query } from '@/db/connect';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import DeleteButton from './DelBtn';
 import FormField from '@/components/FormField';
+import { getCurrentUser } from '@/db/loginUser';
 
 type Client = {
   id: number;
@@ -12,6 +13,7 @@ type Client = {
   description?: string;
   contacts?: string;
   statusId: number;
+  companyId?: number;
   summa?: number;
   payDate?: string;
   payType?: string;
@@ -27,10 +29,16 @@ export default async function EditClientPage({
   const { id } = await params;
   const clientId = parseInt(id);
   
-  // Получаем данные клиента и статусы параллельно
-  const [clients, statuses] = await Promise.all([
+  const currentUser = await getCurrentUser();
+  if (!currentUser) {
+    redirect('/login');
+  }
+  
+  // Получаем данные клиента, статусы и компании параллельно
+  const [clients, statuses, companies] = await Promise.all([
     query('SELECT * FROM Client WHERE id = @id', { id: clientId }) as Promise<Client[]>,
-    getStatuses()
+    getStatuses(),
+    getUserCompanies()
   ]);
   
   const client = clients[0];
@@ -52,6 +60,7 @@ export default async function EditClientPage({
     const description = formData.get('description') as string;
     const contacts = formData.get('contacts') as string;
     const statusId = parseInt(formData.get('statusId') as string);
+    const companyId = parseInt(formData.get('companyId') as string);
     const summa = formData.get('summa') ? parseFloat(formData.get('summa') as string) : undefined;
     const payDate = formData.get('payDate') as string;
     const payType = formData.get('payType') as string;
@@ -62,6 +71,7 @@ export default async function EditClientPage({
       description: description || undefined,
       contacts: contacts || undefined,
       statusId,
+      companyId,
       summa,
       payDate: payDate || undefined,
       payType: payType || undefined,
@@ -103,6 +113,22 @@ export default async function EditClientPage({
                   name="contacts" 
                   defaultValue={client.contacts || ''}
                 />
+              </FormField>
+              
+              {/* Компания */}
+              <FormField label="Компания" htmlFor="companyId" required>
+                <select
+                  name="companyId" 
+                  defaultValue={client.companyId || ''}
+                  required
+                >
+                  <option value="">Выберите компанию</option>
+                  {companies.map(company => (
+                    <option key={company.id} value={company.id}>
+                      {company.companyName}
+                    </option>
+                  ))}
+                </select>
               </FormField>
               
               {/* Статус */}

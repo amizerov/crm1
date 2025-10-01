@@ -1,7 +1,29 @@
 import { query } from '@/db/connect';
+import { getCurrentUser } from '@/db/loginUser';
 
 export async function getClients() {
   return await query('SELECT * FROM Client ORDER BY id DESC');
+}
+
+export async function getClientsByCompany(companyId: number) {
+  return await query('SELECT * FROM Client WHERE companyId = @companyId ORDER BY id DESC', { companyId });
+}
+
+export async function getClientsByUserCompany() {
+  const currentUser = await getCurrentUser();
+  
+  if (!currentUser?.companyId) {
+    // Если пользователь не связан с компанией, возвращаем пустой список
+    return [];
+  }
+  
+  return await query(`
+    SELECT c.*, comp.companyName 
+    FROM Client c
+    LEFT JOIN Company comp ON c.companyId = comp.id
+    WHERE c.companyId = @companyId
+    ORDER BY c.id DESC
+  `, { companyId: currentUser.companyId });
 }
 
 export async function getClientsWithPagination(page: number = 1, pageSize: number = 10) {
@@ -10,14 +32,34 @@ export async function getClientsWithPagination(page: number = 1, pageSize: numbe
   // Ограничиваем максимальный размер страницы для безопасности
   const safePageSize = Math.min(Math.max(pageSize, 5), 100);
   
+  const currentUser = await getCurrentUser();
+  
+  if (!currentUser?.companyId) {
+    // Если пользователь не связан с компанией, возвращаем пустой результат
+    return {
+      clients: [],
+      pagination: {
+        currentPage: page,
+        pageSize: safePageSize,
+        total: 0,
+        totalPages: 0,
+        hasNext: false,
+        hasPrev: false
+      }
+    };
+  }
+  
   const [clients, totalResult] = await Promise.all([
     query(`
-      SELECT * FROM Client 
-      ORDER BY id DESC 
+      SELECT c.*, comp.companyName 
+      FROM Client c
+      LEFT JOIN Company comp ON c.companyId = comp.id
+      WHERE c.companyId = @companyId
+      ORDER BY c.id DESC 
       OFFSET @offset ROWS 
       FETCH NEXT @pageSize ROWS ONLY
-    `, { offset, pageSize: safePageSize }),
-    query('SELECT COUNT(*) as total FROM Client')
+    `, { companyId: currentUser.companyId, offset, pageSize: safePageSize }),
+    query('SELECT COUNT(*) as total FROM Client WHERE companyId = @companyId', { companyId: currentUser.companyId })
   ]);
 
   const total = totalResult[0]?.total || 0;
@@ -50,7 +92,18 @@ export async function deleteClient(id: number) {
 }
 
 export async function getTotalSum(): Promise<number> {
-  const result = await query('SELECT SUM(summa) as totalSum FROM Client WHERE summa IS NOT NULL');
+  const currentUser = await getCurrentUser();
+  
+  if (!currentUser?.companyId) {
+    return 0;
+  }
+  
+  const result = await query(`
+    SELECT SUM(summa) as totalSum 
+    FROM Client 
+    WHERE summa IS NOT NULL AND companyId = @companyId
+  `, { companyId: currentUser.companyId });
+  
   return result[0]?.totalSum || 0;
 }
 
@@ -62,11 +115,12 @@ export type AddClientParams = {
   summa?: number;
   payDate?: string;
   payType?: string;
+  companyId: number;
 };
 
 export async function addClient(params: AddClientParams) {
-  const sql = `INSERT INTO Client (clientName, description, contacts, statusId, summa, payDate, payType)
-    VALUES (@clientName, @description, @contacts, @statusId, @summa, @payDate, @payType)`;
+  const sql = `INSERT INTO Client (clientName, description, contacts, statusId, summa, payDate, payType, companyId)
+    VALUES (@clientName, @description, @contacts, @statusId, @summa, @payDate, @payType, @companyId)`;
   await query(sql, params);
 }
 
@@ -79,6 +133,7 @@ export type UpdateClientParams = {
   summa?: number;
   payDate?: string;
   payType?: string;
+  companyId?: number;
 };
 
 export async function updateClient(params: UpdateClientParams) {
@@ -86,4 +141,30 @@ export async function updateClient(params: UpdateClientParams) {
   const setClause = fields.map(key => `${key} = @${key}`).join(', ');
   const sql = `UPDATE Client SET ${setClause} WHERE id = @id`;
   await query(sql, params);
+}
+
+export async function getUserCompanies() {
+  const currentUser = await getCurrentUser();
+  
+  if (!currentUser) {
+    return [];
+  }
+  
+  // Получаем компании, где пользователь является сотрудником или владельцем
+  const companies = await query(`
+    SELECT DISTINCT c.id, c.companyName
+    FROM Company c
+    WHERE c.id IN (
+      SELECT DISTINCT companyId 
+      FROM Employee 
+      WHERE userId = @userId
+      UNION
+      SELECT DISTINCT id 
+      FROM Company 
+      WHERE ownerId = @userId
+    )
+    ORDER BY c.companyName
+  `, { userId: currentUser.id });
+  
+  return companies;
 }
