@@ -103,8 +103,8 @@ export default function TaskProperty({
         
         {/* Минимальные поля в свернутом виде */}
         <div style={{ flexShrink: 0 }}>
-          {/* Название задачи и компания (только в развернутом виде для корневых задач) */}
-          <div style={{ display: 'grid', gridTemplateColumns: (isExpanded && !task.parentId) ? '2fr 1fr' : '1fr', gap: 16, marginBottom: 8 }}>
+          {/* Название задачи и компания/родительская задача */}
+          <div style={{ display: 'grid', gridTemplateColumns: isExpanded ? '2fr 1fr' : '1fr', gap: 16, marginBottom: 8 }}>
             <div>
               <label style={{ display: 'block', marginBottom: 5, fontWeight: 600, fontSize: 14 }}>
                 Название задачи *
@@ -157,10 +157,46 @@ export default function TaskProperty({
                 </div>
               </div>
             )}
+
+            {/* Родительская задача - только для подзадач в развернутом виде */}
+            {parentTask && isExpanded && (
+              <div>
+                <label style={{ display: 'block', marginBottom: 5, fontWeight: 600, fontSize: 14 }}>
+                  Родительская задача
+                </label>
+                <Link 
+                  href={`/tasks/edit/${task.parentId}`}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '10px 12px',
+                    backgroundColor: '#e3f2fd',
+                    border: '1px solid #bbdefb',
+                    borderRadius: 4,
+                    fontSize: 14,
+                    color: '#1565c0',
+                    textDecoration: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  title="Кликните для перехода к родительской задаче"
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#bbdefb';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#e3f2fd';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  🔗 {'—'.repeat(parentTask.level)} {parentTask.taskName}
+                </Link>
+              </div>
+            )}
           </div>
 
-          {/* Кликабельная ссылка на родительскую задачу - только для подзадач, отдельной строкой */}
-          {parentTask && (
+          {/* Кликабельная ссылка на родительскую задачу - только для подзадач в свернутом виде */}
+          {parentTask && !isExpanded && (
             <div style={{ marginBottom: 8 }}>
               <label style={{ display: 'block', marginBottom: 5, fontWeight: 600, fontSize: 14 }}>
                 Родительская задача
