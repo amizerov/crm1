@@ -3,6 +3,7 @@ import { getStatuses } from '../actions';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import FormField from '@/components/FormField';
 import { getCurrentUser } from '@/db/loginUser';
 
 export default async function AddClientPage() {
@@ -54,131 +55,114 @@ export default async function AddClientPage() {
   }
 
   return (
-    <main style={{ padding: 32 }}>
-      <div style={{ marginBottom: 20 }}>
-        <Link href="/clients" style={{ textDecoration: 'none', color: '#007bff' }}>
-          ← Назад к списку клиентов
-        </Link>
+    <main className="px-4 py-8 min-h-[50vh] bg-gray-50 dark:bg-gray-900">
+      
+      {/* Заголовок */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-200 m-0">
+          Добавить нового клиента
+        </h1>
       </div>
       
-      <h1>Добавить нового клиента</h1>
-      
-      <div style={{ padding: 20, border: '1px solid #ddd', borderRadius: 8 }}>
-        <form action={handleAddClient} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
-              Имя клиента *
-            </label>
-            <input 
-              name="clientName" 
-              required 
-              style={{ width: '100%', padding: 10, border: '1px solid #ccc', borderRadius: 4 }}
-            />
+      {/* Форма */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 mb-8">
+        <form action={handleAddClient}>
+          
+          {/* Grid для полей формы */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {/* Имя клиента */}
+            <FormField label="Имя клиента" htmlFor="clientName" required>
+              <input
+                name="clientName" 
+                required
+              />
+            </FormField>
+            
+            {/* Контакты */}
+            <FormField label="Контакты" htmlFor="contacts">
+              <input
+                name="contacts" 
+              />
+            </FormField>
+            
+            {/* Компания */}
+            <FormField label="Компания" htmlFor="companyId" required>
+              <select
+                name="companyId" 
+                required
+              >
+                <option value="">Выберите компанию</option>
+                {companies.map(company => (
+                  <option key={company.id} value={company.id}>
+                    {company.companyName}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            
+            {/* Статус */}
+            <FormField label="Статус" htmlFor="statusId" required>
+              <select
+                name="statusId" 
+                required
+              >
+                <option value="">Выберите статус</option>
+                {statuses.map(status => (
+                  <option key={status.id} value={status.id}>
+                    {status.status}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            
+            {/* Сумма */}
+            <FormField label="Сумма" htmlFor="summa">
+              <input
+                name="summa" 
+                type="number" 
+                step="0.01" 
+              />
+            </FormField>
+            
+            {/* Дата платежа */}
+            <FormField label="Дата платежа" htmlFor="payDate">
+              <input
+                name="payDate" 
+              />
+            </FormField>
+            
+            {/* Тип платежа */}
+            <FormField label="Тип платежа" htmlFor="payType">
+              <input
+                name="payType" 
+              />
+            </FormField>
           </div>
           
-          <div>
-            <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
-              Описание
-            </label>
-            <textarea 
-              name="description" 
-              style={{ width: '100%', padding: 10, border: '1px solid #ccc', borderRadius: 4, minHeight: 80 }}
-            />
+          {/* Описание на всю ширину */}
+          <div className="mb-8">
+            <FormField label="Описание" htmlFor="description">
+              <textarea
+                name="description" 
+                rows={4}
+              />
+            </FormField>
           </div>
           
-          <div>
-            <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
-              Контакты
-            </label>
-            <input 
-              name="contacts" 
-              style={{ width: '100%', padding: 10, border: '1px solid #ccc', borderRadius: 4 }}
-            />
-          </div>
-          
-          <div>
-            <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
-              Компания *
-            </label>
-            <select 
-              name="companyId" 
-              required 
-              style={{ width: '100%', padding: 10, border: '1px solid #ccc', borderRadius: 4 }}
-            >
-              <option value="">Выберите компанию</option>
-              {companies.map(company => (
-                <option key={company.id} value={company.id}>
-                  {company.companyName}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <div>
-            <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
-              Статус *
-            </label>
-            <select 
-              name="statusId" 
-              required 
-              style={{ width: '100%', padding: 10, border: '1px solid #ccc', borderRadius: 4 }}
-            >
-              <option value="">Выберите статус</option>
-              {statuses.map(status => (
-                <option key={status.id} value={status.id}>
-                  {status.status}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <div>
-            <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
-              Сумма
-            </label>
-            <input 
-              name="summa" 
-              type="number" 
-              step="0.01" 
-              style={{ width: '100%', padding: 10, border: '1px solid #ccc', borderRadius: 4 }}
-            />
-          </div>
-          
-          <div>
-            <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
-              Дата платежа
-            </label>
-            <input 
-              name="payDate" 
-              style={{ width: '100%', padding: 10, border: '1px solid #ccc', borderRadius: 4 }}
-            />
-          </div>
-          
-          <div>
-            <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
-              Тип платежа
-            </label>
-            <input 
-              name="payType" 
-              style={{ width: '100%', padding: 10, border: '1px solid #ccc', borderRadius: 4 }}
-            />
-          </div>
-          
-          <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+          {/* Кнопки действий */}
+          <div className="flex flex-wrap justify-start items-center gap-4">
             <button 
               type="submit" 
-              className="btn-success"
-              style={{ padding: '12px 24px', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', flex: 1 }}
+              className="btn-success py-3.5 px-7 text-white rounded-lg cursor-pointer text-base font-semibold min-w-40"
             >
-              Добавить клиента
+              💾 Добавить клиента
             </button>
             <Link href="/clients">
               <button 
                 type="button" 
-                className="btn-secondary"
-                style={{ padding: '12px 24px', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+                className="btn-secondary py-3.5 px-7 text-white rounded-lg cursor-pointer text-base font-semibold min-w-30"
               >
-                Отмена
+                ↩️ Отмена
               </button>
             </Link>
           </div>

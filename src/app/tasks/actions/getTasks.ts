@@ -75,42 +75,114 @@ export async function getTasks(executorId?: number, companyId?: number): Promise
       params.executorId = executorId;
     }
     
-    // Добавляем фильтрацию по выбранной компании
-    if (companyId) {
-      whereClause += " AND t.companyId = @selectedCompanyId";
-      params.selectedCompanyId = companyId;
-    }
-    
     console.log('getTasks - whereClause:', whereClause);
     console.log('getTasks - params:', params);
-    // Сначала получим все задачи (исключаем готовые и отмененные)
-    const allTasks = await query(`
-      SELECT 
-        t.id,
-        t.parentId,
-        t.taskName,
-        t.description,
-        t.statusId,
-        t.priorityId,
-        t.startDate,
-        t.dedline,
-        t.executorId,
-        t.userId,
-        t.companyId,
-        t.dtc,
-        t.dtu,
-        st.status as statusName,
-        p.priority as priorityName,
-        e.Name as executorName
-      FROM Task t
-      LEFT JOIN StatusTask st ON t.statusId = st.id
-      LEFT JOIN Priority p ON t.priorityId = p.id
-      LEFT JOIN Employee e ON t.executorId = e.id
-      ${whereClause}
-      ORDER BY t.dtc DESC
-    `, params);
+    
+    // Если есть фильтр по компании, сначала получаем задачи компании, 
+    // а затем добавляем все их подзадачи независимо от companyId
+    let allTasks;
+    if (companyId) {
+      // Получаем задачи выбранной компании
+      const companyWhereClause = whereClause + " AND t.companyId = @selectedCompanyId";
+      const companyParams = { ...params, selectedCompanyId: companyId };
+      
+      const companyTasks = await query(`
+        SELECT 
+          t.id,
+          t.parentId,
+          t.taskName,
+          t.description,
+          t.statusId,
+          t.priorityId,
+          t.startDate,
+          t.dedline,
+          t.executorId,
+          t.userId,
+          t.companyId,
+          t.dtc,
+          t.dtu,
+          st.status as statusName,
+          p.priority as priorityName,
+          e.Name as executorName
+        FROM Task t
+        LEFT JOIN StatusTask st ON t.statusId = st.id
+        LEFT JOIN Priority p ON t.priorityId = p.id
+        LEFT JOIN Employee e ON t.executorId = e.id
+        ${companyWhereClause}
+        ORDER BY t.dtc DESC
+      `, companyParams);
 
-    return buildTaskHierarchy(allTasks);
+      // Получаем ID всех задач компании для поиска их подзадач
+      const taskIds = companyTasks.map(task => task.id);
+      
+      if (taskIds.length > 0) {
+        // Получаем все подзадачи для задач компании (рекурсивно)
+        const taskIdsPlaceholders = taskIds.map((_, index) => `@taskId${index}`).join(',');
+        const subtaskParams = { ...params };
+        taskIds.forEach((taskId, index) => {
+          subtaskParams[`taskId${index}`] = taskId;
+        });
+
+        const subtasks = await query(`
+          WITH TaskHierarchy AS (
+            -- Базовый случай: задачи компании
+            SELECT t.id, t.parentId, t.taskName, t.description, t.statusId, t.priorityId, 
+                   t.startDate, t.dedline, t.executorId, t.userId, t.companyId, t.dtc, t.dtu
+            FROM Task t
+            WHERE t.id IN (${taskIdsPlaceholders})
+            AND t.statusId NOT IN (SELECT id FROM StatusTask WHERE status IN ('Готово', 'Отменено'))
+            
+            UNION ALL
+            
+            -- Рекурсивный случай: подзадачи
+            SELECT t.id, t.parentId, t.taskName, t.description, t.statusId, t.priorityId,
+                   t.startDate, t.dedline, t.executorId, t.userId, t.companyId, t.dtc, t.dtu
+            FROM Task t
+            INNER JOIN TaskHierarchy th ON t.parentId = th.id
+            WHERE t.statusId NOT IN (SELECT id FROM StatusTask WHERE status IN ('Готово', 'Отменено'))
+          )
+          SELECT th.id, th.parentId, th.taskName, th.description, th.statusId, th.priorityId,
+                 th.startDate, th.dedline, th.executorId, th.userId, th.companyId, th.dtc, th.dtu,
+                 st.status as statusName, p.priority as priorityName, e.Name as executorName
+          FROM TaskHierarchy th
+          LEFT JOIN StatusTask st ON th.statusId = st.id
+          LEFT JOIN Priority p ON th.priorityId = p.id
+          LEFT JOIN Employee e ON th.executorId = e.id
+          ORDER BY th.dtc DESC
+        `, subtaskParams);
+
+        allTasks = subtasks;
+      } else {
+        allTasks = companyTasks;
+      }
+    } else {
+      // Без фильтра по компании - получаем все доступные задачи
+      allTasks = await query(`
+        SELECT 
+          t.id,
+          t.parentId,
+          t.taskName,
+          t.description,
+          t.statusId,
+          t.priorityId,
+          t.startDate,
+          t.dedline,
+          t.executorId,
+          t.userId,
+          t.companyId,
+          t.dtc,
+          t.dtu,
+          st.status as statusName,
+          p.priority as priorityName,
+          e.Name as executorName
+        FROM Task t
+        LEFT JOIN StatusTask st ON t.statusId = st.id
+        LEFT JOIN Priority p ON t.priorityId = p.id
+        LEFT JOIN Employee e ON t.executorId = e.id
+        ${whereClause}
+        ORDER BY t.dtc DESC
+      `, params);
+    }    return buildTaskHierarchy(allTasks);
   } catch (error) {
     console.error('Ошибка при получении задач:', error);
     console.error('Детали ошибки:', error);

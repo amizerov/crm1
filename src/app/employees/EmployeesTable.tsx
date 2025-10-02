@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { getEmployeesByCompany } from './actions';
 import EmployeeRow from './EmployeeRow';
 
@@ -33,8 +33,28 @@ export default function EmployeesTable({ initialEmployees, companies, defaultCom
   const [selectedCompanyId, setSelectedCompanyId] = useState<number>(defaultCompanyId || 0);
   const [isPending, startTransition] = useTransition();
 
+  // Восстанавливаем выбранную компанию из localStorage при монтировании компонента
+  useEffect(() => {
+    const savedCompanyId = localStorage.getItem('selectedCompanyId_employees');
+    if (savedCompanyId) {
+      const companyId = parseInt(savedCompanyId, 10);
+      // Проверяем, что компания существует в списке доступных компаний
+      if (companyId === 0 || companies.some(c => c.id === companyId)) {
+        setSelectedCompanyId(companyId);
+        
+        // Загружаем данные для сохраненной компании
+        startTransition(async () => {
+          const newEmployees = await getEmployeesByCompany(companyId === 0 ? undefined : companyId);
+          setEmployees(newEmployees);
+        });
+      }
+    }
+  }, [companies]);
+
   const handleCompanyChange = (companyId: number) => {
     setSelectedCompanyId(companyId);
+    // Сохраняем выбор в localStorage
+    localStorage.setItem('selectedCompanyId_employees', companyId.toString());
     
     startTransition(async () => {
       const newEmployees = await getEmployeesByCompany(companyId === 0 ? undefined : companyId);

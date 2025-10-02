@@ -126,27 +126,7 @@ export default async function EditTaskPage({ params }: EditTaskPageProps) {
         gap: 20,
         marginBottom: 20
       }}>
-        {/* 1. Действия по задаче - первый компонент */}
-        <TaskActions 
-          taskId={task.id} 
-          actions={taskActions}
-          currentUserId={currentUser.id}
-          addActionFunction={handleAddTaskAction}
-        />
-
-        {/* 2. Документы задачи - второй компонент */}
-        <TaskDocuments 
-          taskId={task.id} 
-          documents={documents}
-        />
-
-        {/* 3. Подзадачи - третий компонент */}
-        <SubtasksList 
-          parentTaskId={task.id} 
-          subtasks={subtasks}
-        />
-
-        {/* 4. Свойства задачи - четвертый компонент */}
+        {/* 1. Свойства задачи - первый компонент */}
         <TaskProperty
           task={task}
           statuses={statuses}
@@ -157,6 +137,26 @@ export default async function EditTaskPage({ params }: EditTaskPageProps) {
           currentUserId={currentUser.id}
           onSubmit={handleUpdateTask}
           onDelete={handleDeleteTask}
+        />
+
+        {/* 2. Действия по задаче - второй компонент */}
+        <TaskActions 
+          taskId={task.id} 
+          actions={taskActions}
+          currentUserId={currentUser.id}
+          addActionFunction={handleAddTaskAction}
+        />
+
+        {/* 3. Документы задачи - третий компонент */}
+        <TaskDocuments 
+          taskId={task.id} 
+          documents={documents}
+        />
+
+        {/* 4. Подзадачи - четвертый компонент */}
+        <SubtasksList 
+          parentTaskId={task.id} 
+          subtasks={subtasks}
         />
       </div>
     </main>

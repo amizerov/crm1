@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { getClientsByCompany, getTotalSum } from './actions';
 import ClientRow from './ClientRow';
 
@@ -49,11 +49,30 @@ export default function ClientsTable({
   const [totalSum, setTotalSum] = useState<number>(initialTotalSum);
   const [isPending, startTransition] = useTransition();
 
+  // При загрузке компонента проверяем localStorage
+  useEffect(() => {
+    const savedCompanyId = localStorage.getItem('selectedCompanyId_clients');
+    if (savedCompanyId) {
+      const companyId = parseInt(savedCompanyId);
+      // Проверяем, что сохраненная компания есть в списке доступных
+      if (companyId === 0 || companies.some(c => c.id === companyId)) {
+        setSelectedCompanyId(companyId);
+        // Загружаем данные для сохраненной компании
+        if (companyId !== (defaultCompanyId || 0)) {
+          handleCompanyChange(companyId);
+        }
+      }
+    }
+  }, [companies, defaultCompanyId]);
+
   // Создаем карту статусов для быстрого поиска
   const statusMap = new Map(statuses.map(s => [s.id, s.status]));
 
   const handleCompanyChange = (companyId: number) => {
     setSelectedCompanyId(companyId);
+    
+    // Сохраняем выбор в localStorage
+    localStorage.setItem('selectedCompanyId_clients', companyId.toString());
     
     startTransition(async () => {
       const [newClients, newTotalSum] = await Promise.all([

@@ -98,30 +98,102 @@ export default function TaskProperty({
       defaultSize={{ width: 900, height: 600 }}
       minSize={{ width: 600, height: 400 }}
     >
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', height: '100%', marginTop: 16 }}>
         <input type="hidden" name="id" value={task.id} />
         
         {/* Минимальные поля в свернутом виде */}
         <div style={{ flexShrink: 0 }}>
-          {/* Название задачи - всегда видно */}
-          <div style={{ marginBottom: 8 }}>
-            <label style={{ display: 'block', marginBottom: 5, fontWeight: 600, fontSize: 14 }}>
-              Название задачи *
-            </label>
-            <input 
-              name="taskName" 
-              required 
-              defaultValue={task.taskName}
-              placeholder="Введите название задачи"
-              style={{ 
-                width: '100%', 
-                padding: '10px 12px', 
-                border: '1px solid #ced4da', 
-                borderRadius: 4,
-                fontSize: 14
-              }}
-            />
+          {/* Название задачи и компания (только в развернутом виде для корневых задач) */}
+          <div style={{ display: 'grid', gridTemplateColumns: (isExpanded && !task.parentId) ? '2fr 1fr' : '1fr', gap: 16, marginBottom: 8 }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: 5, fontWeight: 600, fontSize: 14 }}>
+                Название задачи *
+              </label>
+              <input 
+                name="taskName" 
+                required 
+                defaultValue={task.taskName}
+                placeholder="Введите название задачи"
+                style={{ 
+                  width: '100%', 
+                  padding: '10px 12px', 
+                  border: '1px solid #ced4da', 
+                  borderRadius: 4,
+                  fontSize: 14
+                }}
+              />
+            </div>
+
+            {/* Компания - только для корневых задач в развернутом виде */}
+            {!task.parentId && isExpanded && (
+              <div>
+                <label style={{ display: 'block', marginBottom: 5, fontWeight: 600, fontSize: 14 }}>
+                  Компания
+                </label>
+                <select 
+                  name="companyId" 
+                  defaultValue={task.companyId || ''}
+                  style={{ 
+                    width: '100%', 
+                    padding: '10px 12px', 
+                    border: '1px solid #ced4da', 
+                    borderRadius: 4,
+                    fontSize: 14
+                  }}
+                >
+                  <option value="">Личная задача</option>
+                  {userCompanies.map((company) => (
+                    <option key={company.id} value={company.id}>
+                      {company.companyName}
+                      {company.isOwner && ' 👑'}
+                    </option>
+                  ))}
+                </select>
+                <div style={{ fontSize: 12, color: '#6c757d', marginTop: 4 }}>
+                  {task.companyId ? 
+                    '🏢 Задача - видна всем сотрудникам компании' : 
+                    '👤 Личная задача - видна только вам'
+                  }
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* Кликабельная ссылка на родительскую задачу - только для подзадач, отдельной строкой */}
+          {parentTask && (
+            <div style={{ marginBottom: 8 }}>
+              <label style={{ display: 'block', marginBottom: 5, fontWeight: 600, fontSize: 14 }}>
+                Родительская задача
+              </label>
+              <Link 
+                href={`/tasks/edit/${task.parentId}`}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  padding: '10px 12px',
+                  backgroundColor: '#e3f2fd',
+                  border: '1px solid #bbdefb',
+                  borderRadius: 4,
+                  fontSize: 14,
+                  color: '#1565c0',
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                title="Кликните для перехода к родительской задаче"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#bbdefb';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#e3f2fd';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                🔗 {'—'.repeat(parentTask.level)} {parentTask.taskName}
+              </Link>
+            </div>
+          )}
 
           {/* Цель задачи - всегда видно */}
           <div style={{ marginBottom: 8 }}>
@@ -143,43 +215,6 @@ export default function TaskProperty({
               }}
             />
           </div>
-
-          {/* Ссылка на родительскую задачу - всегда видно если есть */}
-          {parentTask && (
-            <div style={{ marginBottom: 8 }}>
-              <label style={{ display: 'block', marginBottom: 5, fontWeight: 600, fontSize: 14 }}>
-                Родительская задача
-              </label>
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: 8,
-                padding: '10px 12px',
-                backgroundColor: '#f8f9fa',
-                border: '1px solid #dee2e6',
-                borderRadius: 4
-              }}>
-                <span style={{ fontSize: 14, color: '#495057', flex: 1 }}>
-                  {'—'.repeat(parentTask.level)} {parentTask.taskName}
-                </span>
-                <Link 
-                  href={`/tasks/edit/${task.parentId}`}
-                  style={{
-                    padding: '6px 12px',
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    textDecoration: 'none',
-                    borderRadius: 3,
-                    fontSize: 12,
-                    whiteSpace: 'nowrap'
-                  }}
-                  title="Перейти к родительской задаче"
-                >
-                  ↗️ Перейти
-                </Link>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Развернутые поля - показываем только в развернутом состоянии */}
@@ -357,60 +392,6 @@ export default function TaskProperty({
                   }}
                 />
               </div>
-            </div>
-
-            {/* Родительская задача и Компания */}
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, marginBottom: 16 }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: 5, fontWeight: 600, fontSize: 14 }}>
-                  Родительская задача
-                </label>
-                <select 
-                  name="parentId" 
-                  defaultValue={task.parentId || ''}
-                  style={{ 
-                    width: '100%',
-                    padding: '10px 12px', 
-                    border: '1px solid #ced4da', 
-                    borderRadius: 4,
-                    fontSize: 14
-                  }}
-                >
-                  <option value="">Нет (корневая задача)</option>
-                  {parentTasks.map((parentTask) => (
-                    <option key={parentTask.id} value={parentTask.id}>
-                      {'—'.repeat(parentTask.level)} {parentTask.taskName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Компания (только для корневых задач) */}
-              {!task.parentId && (
-                <div>
-                  <label style={{ display: 'block', marginBottom: 5, fontWeight: 600, fontSize: 14 }}>
-                    Компания
-                  </label>
-                  <select 
-                    name="companyId" 
-                    defaultValue={task.companyId || ''}
-                    style={{ 
-                      width: '100%',
-                      padding: '10px 12px', 
-                      border: '1px solid #ced4da', 
-                      borderRadius: 4,
-                      fontSize: 14
-                    }}
-                  >
-                    <option value="">Без компании</option>
-                    {userCompanies.map((company) => (
-                      <option key={company.id} value={company.id}>
-                        {company.companyName} {company.isOwner ? '👑' : '👤'}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
             </div>
 
             {/* Кнопки - только в развернутом состоянии */}

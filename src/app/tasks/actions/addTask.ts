@@ -13,7 +13,7 @@ export interface AddTaskData {
   priorityId?: number
   executorId?: number
   userId?: number
-  companyId?: number
+  companyId?: number | null
 }
 
 export async function addTask(formData: FormData) {
@@ -28,6 +28,23 @@ export async function addTask(formData: FormData) {
   const rawPriorityId = formData.get('priorityId') as string
   const rawExecutorId = formData.get('executorId') as string
   const rawParentId = formData.get('parentId') as string
+  const rawCompanyId = formData.get('companyId') as string
+  
+  let companyId: number | null = null;
+  
+  // Если есть родительская задача - наследуем компанию от неё
+  if (rawParentId) {
+    const parentTask = await query(`
+      SELECT companyId FROM Task WHERE id = @parentId
+    `, { parentId: parseInt(rawParentId) });
+    
+    if (parentTask.length > 0) {
+      companyId = parentTask[0].companyId;
+    }
+  } else if (rawCompanyId) {
+    // Если нет родительской задачи, но указана компания - используем её
+    companyId = parseInt(rawCompanyId);
+  }
   
   const taskData: AddTaskData = {
     parentId: rawParentId ? parseInt(rawParentId) : undefined,
@@ -39,7 +56,7 @@ export async function addTask(formData: FormData) {
     priorityId: rawPriorityId ? parseInt(rawPriorityId) : undefined,
     executorId: rawExecutorId ? parseInt(rawExecutorId) : undefined,
     userId: currentUser.id,
-    companyId: currentUser.companyId || null
+    companyId: companyId
   }
 
   console.log('Task data being inserted:', taskData)
