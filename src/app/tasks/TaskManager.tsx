@@ -1,16 +1,26 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useTransition } from 'react';
+import Link from 'next/link';
 import TaskTable from './TaskTable';
 import TaskFilters from './TaskFilters';
+import CompanySelector from './CompanySelector';
 import { taskUtils, type Task, type FilterType } from './taskUtils';
 import { getCompleted } from './actions/getCompleted';
+import { getTasks } from './actions/getTasks';
+
+interface UserCompany {
+  id: number;
+  companyName: string;
+  isOwner: boolean;
+}
 
 interface TaskManagerProps {
   tasks: Task[];
   userId: number;
   executorId?: number;
   executorName?: string;
+  userCompanies: UserCompany[];
 }
 
 export type SortConfig = {
@@ -18,10 +28,37 @@ export type SortConfig = {
   direction: 'asc' | 'desc';
 } | null;
 
-export default function TaskManager({ tasks: initialTasks, userId, executorId, executorName }: TaskManagerProps) {
+export default function TaskManager({ tasks: initialTasks, userId, executorId, executorName, userCompanies }: TaskManagerProps) {
   const [currentTasks, setCurrentTasks] = useState<Task[]>(initialTasks);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number>(0);
   const [currentFilter, setCurrentFilter] = useState<FilterType>('all');
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
+  const [isPending, startTransition] = useTransition();
+
+  // При загрузке компонента проверяем localStorage
+  useEffect(() => {
+    const savedCompanyId = localStorage.getItem('selectedCompanyId');
+    if (savedCompanyId) {
+      const companyId = parseInt(savedCompanyId);
+      // Проверяем, что сохраненная компания есть в списке доступных
+      if (companyId === 0 || userCompanies.some(c => c.id === companyId)) {
+        setSelectedCompanyId(companyId);
+        // Загружаем данные для сохраненной компании
+        if (companyId !== 0) {
+          handleCompanyChange(companyId);
+        }
+      }
+    }
+  }, [userCompanies]);
+
+  const handleCompanyChange = (companyId: number) => {
+    setSelectedCompanyId(companyId);
+    
+    startTransition(async () => {
+      const newTasks = await getTasks(undefined, companyId === 0 ? undefined : companyId);
+      setCurrentTasks(newTasks);
+    });
+  };
 
   // Обработчик изменения фильтра
   const handleFilterChange = async (filter: FilterType) => {
@@ -126,6 +163,68 @@ export default function TaskManager({ tasks: initialTasks, userId, executorId, e
 
   return (
     <>
+      {/* Заголовок и селектор компании */}
+      <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
+        <div className="flex items-center gap-8 flex-wrap">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 m-0">Задачи</h1>
+          
+          <CompanySelector 
+            userCompanies={userCompanies} 
+            selectedCompanyId={selectedCompanyId}
+            onCompanyChange={handleCompanyChange}
+          />
+          
+          {isPending && (
+            <span className="text-sm text-gray-600 dark:text-gray-400 italic">
+              Загрузка...
+            </span>
+          )}
+          
+          <div className="bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-md border border-gray-200 dark:border-gray-700">
+            <span className="text-sm font-bold text-gray-600 dark:text-gray-400">
+              Всего задач: {currentTasks.length}
+            </span>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          {/* Переключатель представлений */}
+          <Link 
+            href="/tasks/views/desk"
+            className="
+              px-4 py-2
+              bg-blue-600 hover:bg-blue-700 
+              dark:bg-blue-500 dark:hover:bg-blue-600
+              text-white
+              rounded
+              text-sm font-medium
+              no-underline inline-block
+              transition-colors
+            "
+          >
+            📋 Доска
+          </Link>
+          
+          <Link 
+            href="/tasks/add"
+            className="
+              px-6 py-3
+              bg-green-600 hover:bg-green-700 
+              dark:bg-green-500 dark:hover:bg-green-600
+              text-white
+              rounded
+              text-base font-medium
+              no-underline inline-block
+              transition-all duration-200
+              hover:shadow-lg dark:hover:shadow-green-500/20
+              hover:-translate-y-0.5
+            "
+          >
+            + Добавить задачу
+          </Link>
+        </div>
+      </div>
+
       {/* Фильтры */}
       <TaskFilters
         onFilterChange={handleFilterChange}
@@ -149,6 +248,15 @@ export default function TaskManager({ tasks: initialTasks, userId, executorId, e
           <span style={{ fontSize: 14, marginLeft: 8 }}>
             {sortConfig.direction === 'asc' ? '↑' : '↓'}
           </span>
+        </div>
+      )}
+
+      {/* Оверлей загрузки */}
+      {isPending && (
+        <div className="relative">
+          <div className="absolute inset-0 bg-white/70 dark:bg-gray-900/70 z-10 flex items-center justify-center min-h-[200px]">
+            <span className="text-gray-600 dark:text-gray-400">Загрузка задач...</span>
+          </div>
         </div>
       )}
 

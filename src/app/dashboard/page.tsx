@@ -11,46 +11,70 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div style={{ padding: '20px 0' }}>
+    <div style={{ 
+      padding: '20px 0',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden'
+    }}>
       {/* Приветствие */}
-      <div style={{ marginBottom: 40, textAlign: 'center' }}>
-        <h1 style={{ margin: '0 0 12px 0', fontSize: '32px', color: '#333' }}>
+      <div style={{ 
+        marginBottom: 24, 
+        textAlign: 'center',
+        flexShrink: 0
+      }}>
+        <h1 style={{ 
+          margin: '0 0 8px 0', 
+          fontSize: 'clamp(24px, 4vw, 32px)', 
+          color: '#333' 
+        }}>
           Добро пожаловать, {currentUser.nicName}!
         </h1>
-        <p style={{ margin: 0, color: '#666', fontSize: '16px' }}>
+        <p style={{ 
+          margin: 0, 
+          color: '#666', 
+          fontSize: 'clamp(14px, 2vw, 16px)' 
+        }}>
           Выберите раздел для работы
         </p>
       </div>
 
       {/* Навигационные карточки */}
       <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-        gap: 24,
-        maxWidth: '800px',
-        margin: '0 auto'
-      }}>
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: 16,
+        maxWidth: '1200px',
+        margin: '0 auto',
+        width: '100%',
+        flex: '1',
+        minHeight: 0,
+        alignContent: 'start'
+      }}
+      className="dashboard-grid"
+      >
         <InteractiveCard 
           href="/clients"
           style={{ 
-            padding: '32px',
+            padding: '20px',
             backgroundColor: '#f8f9fa',
             border: '1px solid #e9ecef',
             borderRadius: '12px',
             textAlign: 'center',
             cursor: 'pointer',
             transition: 'all 0.3s ease',
-            height: '200px',
+            minHeight: '160px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center'
           }}
         >
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>👥</div>
+          <div style={{ fontSize: '40px', marginBottom: '12px' }}>👥</div>
           <h3 style={{ 
-            margin: '0 0 12px 0', 
-            fontSize: '20px', 
+            margin: '0 0 8px 0', 
+            fontSize: '18px', 
             color: '#007bff',
             fontWeight: '600'
           }}>
@@ -59,34 +83,34 @@ export default async function DashboardPage() {
           <p style={{ 
             margin: 0, 
             color: '#6c757d', 
-            fontSize: '14px',
-            lineHeight: '1.5'
+            fontSize: '13px',
+            lineHeight: '1.4'
           }}>
-            Управление базой клиентов, добавление и редактирование контактов
+            Управление базой клиентов
           </p>
         </InteractiveCard>
 
         <InteractiveCard 
           href="/tasks"
           style={{ 
-            padding: '32px',
+            padding: '20px',
             backgroundColor: '#f8f9fa',
             border: '1px solid #e9ecef',
             borderRadius: '12px',
             textAlign: 'center',
             cursor: 'pointer',
             transition: 'all 0.3s ease',
-            height: '200px',
+            minHeight: '160px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center'
           }}
         >
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>📋</div>
+          <div style={{ fontSize: '40px', marginBottom: '12px' }}>📋</div>
           <h3 style={{ 
-            margin: '0 0 12px 0', 
-            fontSize: '20px', 
+            margin: '0 0 8px 0', 
+            fontSize: '18px', 
             color: '#28a745',
             fontWeight: '600'
           }}>
@@ -95,34 +119,34 @@ export default async function DashboardPage() {
           <p style={{ 
             margin: 0, 
             color: '#6c757d', 
-            fontSize: '14px',
-            lineHeight: '1.5'
+            fontSize: '13px',
+            lineHeight: '1.4'
           }}>
-            Создание, назначение и отслеживание выполнения задач
+            Отслеживание задач
           </p>
         </InteractiveCard>
 
         <InteractiveCard 
           href="/companies"
           style={{ 
-            padding: '32px',
+            padding: '20px',
             backgroundColor: '#f8f9fa',
             border: '1px solid #e9ecef',
             borderRadius: '12px',
             textAlign: 'center',
             cursor: 'pointer',
             transition: 'all 0.3s ease',
-            height: '200px',
+            minHeight: '160px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center'
           }}
         >
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏢</div>
+          <div style={{ fontSize: '40px', marginBottom: '12px' }}>🏢</div>
           <h3 style={{ 
-            margin: '0 0 12px 0', 
-            fontSize: '20px', 
+            margin: '0 0 8px 0', 
+            fontSize: '18px', 
             color: '#6f42c1',
             fontWeight: '600'
           }}>
@@ -131,34 +155,34 @@ export default async function DashboardPage() {
           <p style={{ 
             margin: 0, 
             color: '#6c757d', 
-            fontSize: '14px',
-            lineHeight: '1.5'
+            fontSize: '13px',
+            lineHeight: '1.4'
           }}>
-            Управление компаниями, переключение между организациями
+            Управление компаниями
           </p>
         </InteractiveCard>
 
         <InteractiveCard 
           href="/employees"
           style={{ 
-            padding: '32px',
+            padding: '20px',
             backgroundColor: '#f8f9fa',
             border: '1px solid #e9ecef',
             borderRadius: '12px',
             textAlign: 'center',
             cursor: 'pointer',
             transition: 'all 0.3s ease',
-            height: '200px',
+            minHeight: '160px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center'
           }}
         >
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>👨‍💼</div>
+          <div style={{ fontSize: '40px', marginBottom: '12px' }}>👨‍💼</div>
           <h3 style={{ 
-            margin: '0 0 12px 0', 
-            fontSize: '20px', 
+            margin: '0 0 8px 0', 
+            fontSize: '18px', 
             color: '#fd7e14',
             fontWeight: '600'
           }}>
@@ -167,10 +191,46 @@ export default async function DashboardPage() {
           <p style={{ 
             margin: 0, 
             color: '#6c757d', 
-            fontSize: '14px',
-            lineHeight: '1.5'
+            fontSize: '13px',
+            lineHeight: '1.4'
           }}>
-            Список всех сотрудников и назначенных им задач
+            Список сотрудников
+          </p>
+        </InteractiveCard>
+
+        <InteractiveCard 
+          href="/projects"
+          style={{ 
+            padding: '20px',
+            backgroundColor: '#f8f9fa',
+            border: '1px solid #e9ecef',
+            borderRadius: '12px',
+            textAlign: 'center',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            minHeight: '160px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+        >
+          <div style={{ fontSize: '40px', marginBottom: '12px' }}>📁</div>
+          <h3 style={{ 
+            margin: '0 0 8px 0', 
+            fontSize: '18px', 
+            color: '#17a2b8',
+            fontWeight: '600'
+          }}>
+            Проекты
+          </h3>
+          <p style={{ 
+            margin: 0, 
+            color: '#6c757d', 
+            fontSize: '13px',
+            lineHeight: '1.4'
+          }}>
+            Управление проектами
           </p>
         </InteractiveCard>
       </div>

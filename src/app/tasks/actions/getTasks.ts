@@ -1,3 +1,5 @@
+'use server'
+
 import { query } from '@/db/connect';
 import { getCurrentUser } from '@/db/loginUser';
 
@@ -78,15 +80,15 @@ export async function getTasks(executorId?: number, companyId?: number): Promise
     console.log('getTasks - whereClause:', whereClause);
     console.log('getTasks - params:', params);
     
-    // Если есть фильтр по компании, сначала получаем задачи компании, 
-    // а затем добавляем все их подзадачи независимо от companyId
+    // Если есть фильтр по компании, получаем только задачи этой компании
+    // (включая корневые задачи и их подзадачи только если они принадлежат этой компании)
     let allTasks;
     if (companyId) {
-      // Получаем задачи выбранной компании
+      // Получаем все задачи выбранной компании (и корневые, и подзадачи)
       const companyWhereClause = whereClause + " AND t.companyId = @selectedCompanyId";
       const companyParams = { ...params, selectedCompanyId: companyId };
       
-      const companyTasks = await query(`
+      allTasks = await query(`
         SELECT 
           t.id,
           t.parentId,
@@ -111,50 +113,6 @@ export async function getTasks(executorId?: number, companyId?: number): Promise
         ${companyWhereClause}
         ORDER BY t.dtc DESC
       `, companyParams);
-
-      // Получаем ID всех задач компании для поиска их подзадач
-      const taskIds = companyTasks.map(task => task.id);
-      
-      if (taskIds.length > 0) {
-        // Получаем все подзадачи для задач компании (рекурсивно)
-        const taskIdsPlaceholders = taskIds.map((_, index) => `@taskId${index}`).join(',');
-        const subtaskParams = { ...params };
-        taskIds.forEach((taskId, index) => {
-          subtaskParams[`taskId${index}`] = taskId;
-        });
-
-        const subtasks = await query(`
-          WITH TaskHierarchy AS (
-            -- Базовый случай: задачи компании
-            SELECT t.id, t.parentId, t.taskName, t.description, t.statusId, t.priorityId, 
-                   t.startDate, t.dedline, t.executorId, t.userId, t.companyId, t.dtc, t.dtu
-            FROM Task t
-            WHERE t.id IN (${taskIdsPlaceholders})
-            AND t.statusId NOT IN (SELECT id FROM StatusTask WHERE status IN ('Готово', 'Отменено'))
-            
-            UNION ALL
-            
-            -- Рекурсивный случай: подзадачи
-            SELECT t.id, t.parentId, t.taskName, t.description, t.statusId, t.priorityId,
-                   t.startDate, t.dedline, t.executorId, t.userId, t.companyId, t.dtc, t.dtu
-            FROM Task t
-            INNER JOIN TaskHierarchy th ON t.parentId = th.id
-            WHERE t.statusId NOT IN (SELECT id FROM StatusTask WHERE status IN ('Готово', 'Отменено'))
-          )
-          SELECT th.id, th.parentId, th.taskName, th.description, th.statusId, th.priorityId,
-                 th.startDate, th.dedline, th.executorId, th.userId, th.companyId, th.dtc, th.dtu,
-                 st.status as statusName, p.priority as priorityName, e.Name as executorName
-          FROM TaskHierarchy th
-          LEFT JOIN StatusTask st ON th.statusId = st.id
-          LEFT JOIN Priority p ON th.priorityId = p.id
-          LEFT JOIN Employee e ON th.executorId = e.id
-          ORDER BY th.dtc DESC
-        `, subtaskParams);
-
-        allTasks = subtasks;
-      } else {
-        allTasks = companyTasks;
-      }
     } else {
       // Без фильтра по компании - получаем все доступные задачи
       allTasks = await query(`
@@ -296,12 +254,17 @@ export async function getAllTasks(executorId?: number): Promise<Task[]> {
 
 // Выносим логику построения иерархии в отдельную функцию
 function buildTaskHierarchy(tasks: any[]): Task[] {
+  // Удаляем дубликаты задач по ID
+  const uniqueTasks = Array.from(
+    new Map(tasks.map(task => [task.id, task])).values()
+  );
+  
   // Построим иерархию в JavaScript
   const taskMap = new Map();
   const rootTasks: Task[] = [];
 
   // Создаем карту всех задач
-  tasks.forEach((task: any) => {
+  uniqueTasks.forEach((task: any) => {
     taskMap.set(task.id, {
       ...task,
       level: 0,
@@ -311,7 +274,7 @@ function buildTaskHierarchy(tasks: any[]): Task[] {
   });
 
   // Строим иерархию
-  tasks.forEach((task: any) => {
+  uniqueTasks.forEach((task: any) => {
     const taskObj = taskMap.get(task.id);
     if (task.parentId) {
       const parent = taskMap.get(task.parentId);
