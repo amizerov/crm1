@@ -17,6 +17,7 @@ interface Task {
   userId?: number; // Создатель задачи (ID пользователя)
   parentId?: number;
   companyId?: number;
+  projectId?: number;
 }
 
 interface TaskStatus {
@@ -41,6 +42,11 @@ interface UserCompany {
   isOwner: boolean;
 }
 
+interface Project {
+  id: number;
+  projectName: string;
+}
+
 interface TaskPropertyProps {
   task: Task;
   statuses: TaskStatus[];
@@ -48,6 +54,7 @@ interface TaskPropertyProps {
   employees: Employee[];
   parentTasks: ParentTask[];
   userCompanies: UserCompany[];
+  projects: Project[];
   currentUserId: number;
   onSubmit: (formData: FormData) => Promise<void>;
   onDelete: (taskId: number, taskName: string) => Promise<void>;
@@ -59,7 +66,8 @@ export default function TaskProperty({
   priorities, 
   employees, 
   parentTasks, 
-  userCompanies, 
+  userCompanies,
+  projects, 
   currentUserId,
   onSubmit,
   onDelete 
@@ -231,25 +239,67 @@ export default function TaskProperty({
             </div>
           )}
 
-          {/* Цель задачи - всегда видно */}
-          <div style={{ marginBottom: 8 }}>
-            <label style={{ display: 'block', marginBottom: 5, fontWeight: 600, fontSize: 14 }}>
-              Цель задачи
-            </label>
-            <textarea 
-              name="description" 
-              defaultValue={task.description || ''}
-              placeholder="Введите описание задачи"
-              style={{ 
-                width: '100%', 
-                padding: '10px 12px', 
-                border: '1px solid #ced4da', 
-                borderRadius: 4, 
-                minHeight: isExpanded ? 80 : 40,
-                fontSize: 14,
-                resize: 'vertical'
-              }}
-            />
+          {/* Цель задачи и Проект в одной строке для корневых задач */}
+          <div style={{ display: 'grid', gridTemplateColumns: isExpanded && !task.parentId ? '2fr 1fr' : '1fr', gap: 16, marginBottom: 8 }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: 5, fontWeight: 600, fontSize: 14 }}>
+                Цель задачи
+              </label>
+              <textarea 
+                name="description" 
+                defaultValue={task.description || ''}
+                placeholder="Введите описание задачи"
+                style={{ 
+                  width: '100%', 
+                  padding: '10px 12px', 
+                  border: '1px solid #ced4da', 
+                  borderRadius: 4, 
+                  minHeight: isExpanded ? 80 : 40,
+                  fontSize: 14,
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+
+            {/* Проект - только для корневых задач в развернутом виде */}
+            {!task.parentId && isExpanded && (
+              <div>
+                <label style={{ display: 'block', marginBottom: 5, fontWeight: 600, fontSize: 14 }}>
+                  Проект
+                </label>
+                <select 
+                  name="projectId" 
+                  defaultValue={task.projectId || ''}
+                  disabled={!task.companyId || projects.length === 0}
+                  style={{ 
+                    width: '100%', 
+                    padding: '10px 12px', 
+                    border: '1px solid #ced4da', 
+                    borderRadius: 4,
+                    fontSize: 14,
+                    backgroundColor: (!task.companyId || projects.length === 0) ? '#f5f5f5' : 'white',
+                    cursor: (!task.companyId || projects.length === 0) ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  <option value="">Без проекта</option>
+                  {projects.map((project) => (
+                    <option key={project.id} value={project.id}>
+                      {project.projectName}
+                    </option>
+                  ))}
+                </select>
+                <div style={{ fontSize: 12, color: '#6c757d', marginTop: 4 }}>
+                  {!task.companyId ? 
+                    '⚠️ Выберите компанию для назначения проекта' :
+                    projects.length === 0 ?
+                    '📋 У компании нет проектов' :
+                    task.projectId ?
+                    '📁 Задача входит в проект' :
+                    '📋 Задача без проекта'
+                  }
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

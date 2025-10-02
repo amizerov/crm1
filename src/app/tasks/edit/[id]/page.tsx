@@ -6,6 +6,7 @@ import { getTasksForParentSelection, getSubtasks } from '@/app/tasks/actions/get
 import { getTaskActions } from '@/app/tasks/actions/taskActions'
 import { getTaskDocuments } from '@/app/tasks/actions/taskDocuments'
 import { getUserCompanies } from '@/app/tasks/actions/getUserCompanies'
+import { getProjectsByCompanyForFilter } from '@/app/tasks/actions/getProjects'
 import { updateTaskAction } from './actions'
 import TaskProperty from './TaskProperty'
 import TaskActions from './TaskActions'
@@ -41,6 +42,11 @@ export default async function EditTaskPage({ params }: EditTaskPageProps) {
     getTaskDocuments(taskId),
     getUserCompanies()
   ])
+
+  // Получаем проекты для компании задачи (если задача корневая и привязана к компании)
+  const projects = task && !task.parentId && task.companyId 
+    ? await getProjectsByCompanyForFilter(task.companyId)
+    : []
 
   if (!task) {
     notFound()
@@ -134,6 +140,7 @@ export default async function EditTaskPage({ params }: EditTaskPageProps) {
           employees={employees}
           parentTasks={parentTasks}
           userCompanies={userCompanies}
+          projects={projects}
           currentUserId={currentUser.id}
           onSubmit={handleUpdateTask}
           onDelete={handleDeleteTask}

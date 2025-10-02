@@ -45,7 +45,10 @@ export default function TaskManager({ tasks: initialTasks, userId, executorId, e
         setSelectedCompanyId(companyId);
         // Загружаем данные для сохраненной компании
         if (companyId !== 0) {
-          handleCompanyChange(companyId);
+          startTransition(async () => {
+            const newTasks = await getTasks(undefined, companyId);
+            setCurrentTasks(newTasks);
+          });
         }
       }
     }

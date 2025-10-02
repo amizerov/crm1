@@ -11,11 +11,13 @@ export type Task = {
   executorId?: number;
   userId?: number;
   companyId?: number;
+  projectId?: number;
   dtc: string;
   dtu?: string;
   statusName: string;
   priorityName?: string;
   executorName?: string;
+  projectName?: string;
   level?: number;
   hasChildren?: boolean;
 };
@@ -33,6 +35,7 @@ export const defaultTaskColumns: ColumnConfig[] = [
   { key: 'id', title: 'ID', visible: true, width: '80px' },
   { key: 'taskName', title: 'Название', visible: true },
   { key: 'description', title: 'Описание', visible: false },
+  { key: 'projectName', title: 'Проект', visible: true, width: '120px' },
   { key: 'statusName', title: 'Статус', visible: true, width: '120px' },
   { key: 'priorityName', title: 'Приоритет', visible: true, width: '100px' },
   { key: 'executorName', title: 'Исполнитель', visible: true, width: '150px' },

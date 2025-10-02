@@ -14,6 +14,7 @@ export interface UpdateTaskData {
   priorityId?: number
   executorId?: number
   companyId?: number
+  projectId?: number
 }
 
 export async function updateTask(taskData: UpdateTaskData) {
@@ -42,7 +43,8 @@ export async function updateTask(taskData: UpdateTaskData) {
           statusId = @statusId,
           priorityId = @priorityId,
           executorId = @executorId,
-          companyId = @companyId
+          companyId = @companyId,
+          projectId = @projectId
       WHERE id = @id
     `, {
       id: taskData.id,
@@ -54,7 +56,8 @@ export async function updateTask(taskData: UpdateTaskData) {
       statusId: taskData.statusId,
       priorityId: taskData.priorityId || null,
       executorId: taskData.executorId || null,
-      companyId: taskData.companyId || null
+      companyId: taskData.companyId || null,
+      projectId: taskData.projectId || null
     })
 
     // Если это корневая задача и компания изменилась, обновляем все подзадачи
@@ -110,6 +113,7 @@ export async function getTaskById(id: number) {
         t.executorId,
         t.userId,
         t.companyId,
+        t.projectId,
         st.status as statusName,
         p.priority as priorityName,
         u.nicName as userName

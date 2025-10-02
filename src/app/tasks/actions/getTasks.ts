@@ -15,6 +15,7 @@ type Task = {
   executorId?: number;
   userId?: number;
   companyId?: number;
+  projectId?: number;
   dtc: string;
   dtu?: string;
   // Связанные данные
@@ -101,15 +102,18 @@ export async function getTasks(executorId?: number, companyId?: number): Promise
           t.executorId,
           t.userId,
           t.companyId,
+          t.projectId,
           t.dtc,
           t.dtu,
           st.status as statusName,
           p.priority as priorityName,
-          e.Name as executorName
+          e.Name as executorName,
+          pr.projectName
         FROM Task t
         LEFT JOIN StatusTask st ON t.statusId = st.id
         LEFT JOIN Priority p ON t.priorityId = p.id
         LEFT JOIN Employee e ON t.executorId = e.id
+        LEFT JOIN Project pr ON t.projectId = pr.id
         ${companyWhereClause}
         ORDER BY t.dtc DESC
       `, companyParams);
@@ -128,15 +132,18 @@ export async function getTasks(executorId?: number, companyId?: number): Promise
           t.executorId,
           t.userId,
           t.companyId,
+          t.projectId,
           t.dtc,
           t.dtu,
           st.status as statusName,
           p.priority as priorityName,
-          e.Name as executorName
+          e.Name as executorName,
+          pr.projectName
         FROM Task t
         LEFT JOIN StatusTask st ON t.statusId = st.id
         LEFT JOIN Priority p ON t.priorityId = p.id
         LEFT JOIN Employee e ON t.executorId = e.id
+        LEFT JOIN Project pr ON t.projectId = pr.id
         ${whereClause}
         ORDER BY t.dtc DESC
       `, params);

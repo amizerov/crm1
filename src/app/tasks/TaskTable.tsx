@@ -22,6 +22,8 @@ export default function TaskTable({ tasks, userId, onSort, sortConfig }: TaskTab
   const [contextMenu, setContextMenu] = useState<{x: number, y: number, visible: boolean}>({
     x: 0, y: 0, visible: false
   });
+  const [draggedColumnIndex, setDraggedColumnIndex] = useState<number | null>(null);
+  const [dragOverColumnIndex, setDragOverColumnIndex] = useState<number | null>(null);
   
   // Используем ref для отслеживания, были ли загружены настройки
   const settingsLoadedRef = useRef(false);
@@ -70,21 +72,51 @@ export default function TaskTable({ tasks, userId, onSort, sortConfig }: TaskTab
           if (settings.taskTableColumns) {
             // Обновляем старые настройки с новыми названиями колонок
             let needsUpdate = false;
-            const updatedColumns = settings.taskTableColumns.map((col: ColumnConfig) => {
+            const savedColumns = settings.taskTableColumns.map((col: ColumnConfig) => {
               if (col.key === 'dedline' && (col.title === 'Срок' || col.title === 'Срок выполнения')) {
                 needsUpdate = true;
                 return { ...col, title: 'Дедлайн' };
               }
               return col;
             });
-            setColumns(updatedColumns);
+            
+            // Проверяем, есть ли новые колонки в defaultTaskColumns, которых нет в сохраненных
+            const savedKeys = new Set(savedColumns.map((col: ColumnConfig) => col.key));
+            const newColumns = defaultTaskColumns.filter(col => !savedKeys.has(col.key));
+            
+            if (newColumns.length > 0) {
+              needsUpdate = true;
+              // Находим правильную позицию для вставки новых колонок
+              const mergedColumns = [...savedColumns];
+              newColumns.forEach(newCol => {
+                // Находим индекс в defaultTaskColumns
+                const defaultIndex = defaultTaskColumns.findIndex(dc => dc.key === newCol.key);
+                // Находим, после какой колонки вставить
+                let insertIndex = mergedColumns.length;
+                for (let i = defaultIndex - 1; i >= 0; i--) {
+                  const prevKey = defaultTaskColumns[i].key;
+                  const existingIndex = mergedColumns.findIndex(mc => mc.key === prevKey);
+                  if (existingIndex >= 0) {
+                    insertIndex = existingIndex + 1;
+                    break;
+                  }
+                }
+                mergedColumns.splice(insertIndex, 0, newCol);
+              });
+              setColumns(mergedColumns);
+              console.log('Добавлены новые колонки:', newColumns.map(c => c.key));
+            } else {
+              setColumns(savedColumns);
+            }
             
             // Сохраняем обновленные настройки, если были изменения
             if (needsUpdate) {
               try {
-                const updatedSettings = { taskTableColumns: updatedColumns };
+                const finalColumns = newColumns.length > 0 ? 
+                  [...savedColumns, ...newColumns] : savedColumns;
+                const updatedSettings = { taskTableColumns: finalColumns };
                 await saveUserSettings(userId, JSON.stringify(updatedSettings), deviceId);
-                console.log('Настройки колонок обновлены с новыми названиями');
+                console.log('Настройки колонок обновлены');
               } catch (error) {
                 console.error('Ошибка при обновлении настроек:', error);
               }
@@ -165,6 +197,74 @@ export default function TaskTable({ tasks, userId, onSort, sortConfig }: TaskTab
     }
   };
 
+  // Функции для drag-and-drop колонок
+  const handleDragStart = (e: React.DragEvent, columnKey: string) => {
+    // Находим индекс колонки в полном массиве columns по ключу
+    const fullIndex = columns.findIndex(col => col.key === columnKey);
+    setDraggedColumnIndex(fullIndex);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', columnKey);
+    // Добавляем полупрозрачность перетаскиваемому элементу
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '0.5';
+    }
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '1';
+    }
+    setDraggedColumnIndex(null);
+    setDragOverColumnIndex(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent, columnKey: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    
+    // Находим индекс целевой колонки в полном массиве
+    const targetIndex = columns.findIndex(col => col.key === columnKey);
+    
+    if (draggedColumnIndex !== null && draggedColumnIndex !== targetIndex) {
+      setDragOverColumnIndex(targetIndex);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverColumnIndex(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetColumnKey: string) => {
+    e.preventDefault();
+    
+    const targetIndex = columns.findIndex(col => col.key === targetColumnKey);
+    
+    if (draggedColumnIndex === null || draggedColumnIndex === targetIndex) {
+      setDragOverColumnIndex(null);
+      return;
+    }
+
+    // Создаем новый массив колонок с измененным порядком
+    const newColumns = [...columns];
+    const [draggedColumn] = newColumns.splice(draggedColumnIndex, 1);
+    newColumns.splice(targetIndex, 0, draggedColumn);
+    
+    setColumns(newColumns);
+    setDraggedColumnIndex(null);
+    setDragOverColumnIndex(null);
+    
+    // Сохраняем изменения
+    try {
+      const settings = { taskTableColumns: newColumns };
+      const result = await saveUserSettings(userId, JSON.stringify(settings), deviceId);
+      if (result.success) {
+        console.log('Порядок колонок сохранен');
+      }
+    } catch (error) {
+      console.error('Ошибка при сохранении порядка колонок:', error);
+    }
+  };
+
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     setContextMenu({
@@ -196,7 +296,7 @@ export default function TaskTable({ tasks, userId, onSort, sortConfig }: TaskTab
   };
 
   // Определяем, какие поля можно сортировать
-  const sortableFields = ['id', 'taskName', 'statusName', 'priorityName', 'executorName', 'dedline', 'startDate', 'dtc', 'dtu'];
+  const sortableFields = ['id', 'taskName', 'projectName', 'statusName', 'priorityName', 'executorName', 'dedline', 'startDate', 'dtc', 'dtu'];
   
   const getSortIcon = (columnKey: string) => {
     if (!onSort || !sortableFields.includes(columnKey)) return null;
@@ -242,25 +342,36 @@ export default function TaskTable({ tasks, userId, onSort, sortConfig }: TaskTab
         >
           <thead>
             <tr className="bg-gray-50 dark:bg-gray-700">
-              {visibleColumns.map((column) => (
-                <th 
-                  key={column.key}
-                  className={`
-                    border border-gray-200 dark:border-gray-600 
-                    font-semibold 
-                    text-gray-800 dark:text-gray-200
-                    ${sortableFields.includes(column.key) && onSort ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 select-none' : ''}
-                    ${sortConfig?.field === column.key ? 'bg-blue-50 dark:bg-blue-900' : ''}
-                  `}
-                  style={{ 
-                    width: column.width || 'auto',
-                    whiteSpace: 'nowrap',
-                    padding: '8px 12px',
-                    position: 'relative'
-                  }}
-                  onClick={() => handleColumnClick(column.key)}
-                  title={sortableFields.includes(column.key) && onSort ? 'Нажмите для сортировки' : ''}
-                >
+              {visibleColumns.map((column) => {
+                const fullIndex = columns.findIndex(col => col.key === column.key);
+                return (
+                  <th 
+                    key={column.key}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, column.key)}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={(e) => handleDragOver(e, column.key)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, column.key)}
+                    className={`
+                      border border-gray-200 dark:border-gray-600 
+                      font-semibold 
+                      text-gray-800 dark:text-gray-200
+                      ${sortableFields.includes(column.key) && onSort ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 select-none' : ''}
+                      ${sortConfig?.field === column.key ? 'bg-blue-50 dark:bg-blue-900' : ''}
+                      ${dragOverColumnIndex === fullIndex ? 'bg-blue-100 dark:bg-blue-800' : ''}
+                      transition-colors duration-200
+                    `}
+                    style={{ 
+                      width: column.width || 'auto',
+                      whiteSpace: 'nowrap',
+                      padding: '8px 12px',
+                      position: 'relative',
+                      cursor: draggedColumnIndex !== null ? 'move' : (sortableFields.includes(column.key) && onSort ? 'pointer' : 'grab')
+                    }}
+                    onClick={() => handleColumnClick(column.key)}
+                    title={draggedColumnIndex !== null ? 'Перетащите для изменения порядка' : (sortableFields.includes(column.key) && onSort ? 'Нажмите для сортировки, зажмите для перетаскивания' : 'Зажмите для перетаскивания')}
+                  >
                   <div style={{
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -268,9 +379,13 @@ export default function TaskTable({ tasks, userId, onSort, sortConfig }: TaskTab
                     width: '100%'
                   }}>
                     <span style={{ 
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
                       textAlign: column.key === 'id' ? 'right' : 'left',
                       flex: 1
                     }}>
+                      <span style={{ fontSize: '10px', opacity: 0.6 }}>⋮⋮</span>
                       {column.title}
                     </span>
                     {sortableFields.includes(column.key) && onSort && (
@@ -286,7 +401,8 @@ export default function TaskTable({ tasks, userId, onSort, sortConfig }: TaskTab
                     )}
                   </div>
                 </th>
-              ))}
+              );
+              })}
             </tr>
           </thead>
           <tbody>

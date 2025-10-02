@@ -14,6 +14,7 @@ export interface AddTaskData {
   executorId?: number
   userId?: number
   companyId?: number | null
+  projectId?: number | null
 }
 
 export async function addTask(formData: FormData) {
@@ -29,8 +30,10 @@ export async function addTask(formData: FormData) {
   const rawExecutorId = formData.get('executorId') as string
   const rawParentId = formData.get('parentId') as string
   const rawCompanyId = formData.get('companyId') as string
+  const rawProjectId = formData.get('projectId') as string
   
   let companyId: number | null = null;
+  let projectId: number | null = null;
   
   // Если есть родительская задача - наследуем компанию от неё
   if (rawParentId) {
@@ -46,6 +49,11 @@ export async function addTask(formData: FormData) {
     companyId = parseInt(rawCompanyId);
   }
   
+  // Проект может быть указан только для корневых задач
+  if (!rawParentId && rawProjectId) {
+    projectId = parseInt(rawProjectId);
+  }
+  
   const taskData: AddTaskData = {
     parentId: rawParentId ? parseInt(rawParentId) : undefined,
     taskName: formData.get('taskName') as string,
@@ -56,15 +64,16 @@ export async function addTask(formData: FormData) {
     priorityId: rawPriorityId ? parseInt(rawPriorityId) : undefined,
     executorId: rawExecutorId ? parseInt(rawExecutorId) : undefined,
     userId: currentUser.id,
-    companyId: companyId
+    companyId: companyId,
+    projectId: projectId
   }
 
   console.log('Task data being inserted:', taskData)
 
   try {
     await query(`
-      INSERT INTO Task (parentId, taskName, description, startDate, dedline, statusId, priorityId, executorId, userId, companyId)
-      VALUES (@parentId, @taskName, @description, @startDate, @dedline, @statusId, @priorityId, @executorId, @userId, @companyId)
+      INSERT INTO Task (parentId, taskName, description, startDate, dedline, statusId, priorityId, executorId, userId, companyId, projectId)
+      VALUES (@parentId, @taskName, @description, @startDate, @dedline, @statusId, @priorityId, @executorId, @userId, @companyId, @projectId)
     `, {
       parentId: taskData.parentId || null,
       taskName: taskData.taskName,
@@ -75,7 +84,8 @@ export async function addTask(formData: FormData) {
       priorityId: taskData.priorityId || null,
       executorId: taskData.executorId || null,
       userId: taskData.userId,
-      companyId: taskData.companyId
+      companyId: taskData.companyId,
+      projectId: taskData.projectId || null
     })
   } catch (error) {
     console.error('Error adding task:', error)

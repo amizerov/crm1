@@ -121,6 +121,12 @@ export default function TaskRow({ task, isCollapsed, onToggle, visibleColumns }:
             {task.description || '-'}
           </span>
         );
+      case 'projectName':
+        return (
+          <span className="text-gray-700 dark:text-gray-300">
+            {task.projectName || '-'}
+          </span>
+        );
       case 'statusName':
         return (
           <span 
@@ -190,11 +196,15 @@ export default function TaskRow({ task, isCollapsed, onToggle, visibleColumns }:
           className={`
             p-3 
             border border-gray-200 dark:border-gray-600
-            ${column.key === 'description' ? 'max-w-[300px] truncate' : ''}
             ${column.key === 'taskName' ? 'font-medium' : ''}
             ${column.key === 'id' ? 'text-right' : 'text-left'}
-            ${column.key === 'statusName' ? 'whitespace-nowrap' : ''}
           `}
+          style={{
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            maxWidth: column.width || (column.key === 'description' ? '300px' : 'auto')
+          }}
         >
           {getCellValue(column.key)}
         </td>

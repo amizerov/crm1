@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 interface Task {
   id: number;
   parentId?: number;
@@ -31,16 +33,30 @@ interface KanbanBoardProps {
   statuses: Status[];
   onTaskClick: (task: Task) => void;
   isPending: boolean;
+  companyId?: number;
+  onTaskCreated?: () => void;
 }
 
 export default function KanbanBoard({ 
   tasks, 
   statuses, 
   onTaskClick,
-  isPending 
+  isPending,
+  companyId,
+  onTaskCreated
 }: KanbanBoardProps) {
-  // Группируем задачи по статусам
-  const tasksByStatus = statuses.map(status => ({
+  const [addingToStatus, setAddingToStatus] = useState<number | null>(null);
+  const [newTaskName, setNewTaskName] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  // Фильтруем статусы: исключаем "Готово" и все статусы после него
+  const activeStatuses = statuses.filter(status => 
+    status.status !== 'Готово' && 
+    status.status !== 'Отменено' && 
+    status.status !== 'Караул'
+  );
+  
+  // Группируем задачи по активным статусам
+  const tasksByStatus = activeStatuses.map(status => ({
     status,
     tasks: tasks.filter(task => task.statusId === status.id && task.level === 0) // Только корневые задачи
   }));
@@ -61,13 +77,54 @@ export default function KanbanBoard({
     return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
   };
 
+  const handleAddTask = async (statusId: number) => {
+    if (!newTaskName.trim() || !companyId) return;
+
+    setIsCreating(true);
+    try {
+      const response = await fetch('/api/tasks/quick-add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          taskName: newTaskName.trim(),
+          statusId,
+          companyId
+        })
+      });
+
+      if (response.ok) {
+        setNewTaskName('');
+        setAddingToStatus(null);
+        // Вызываем обновление задач
+        if (onTaskCreated) {
+          await onTaskCreated();
+        }
+      }
+    } catch (error) {
+      console.error('Error creating task:', error);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, statusId: number) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleAddTask(statusId);
+    } else if (e.key === 'Escape') {
+      setAddingToStatus(null);
+      setNewTaskName('');
+    }
+  };
+
   return (
     <div className="h-full w-full p-4 overflow-hidden">
       <div className="flex gap-4 h-full overflow-x-auto pb-4">
         {tasksByStatus.map(({ status, tasks: statusTasks }) => (
           <div 
             key={status.id}
-            className="flex-shrink-0 w-80 h-full flex flex-col bg-gray-100 dark:bg-gray-800 rounded-lg"
+            className="flex-shrink-0 h-full flex flex-col bg-gray-100 dark:bg-gray-800 rounded-lg"
+            style={{ width: 'calc((100% - 64px) / 5)' }}
           >
             {/* Заголовок колонки */}
             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
@@ -146,19 +203,80 @@ export default function KanbanBoard({
               )}
             </div>
 
-            {/* Кнопка добавления задачи */}
+            {/* Форма добавления задачи */}
             <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-              <button
-                className="
-                  w-full px-3 py-2 
-                  text-sm text-gray-700 dark:text-gray-300
-                  hover:bg-gray-200 dark:hover:bg-gray-600
-                  rounded
-                  transition-colors
-                "
-              >
-                + Добавить задачу
-              </button>
+              {addingToStatus === status.id ? (
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={newTaskName}
+                    onChange={(e) => setNewTaskName(e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(e, status.id)}
+                    placeholder="Напишите название задачи"
+                    autoFocus
+                    disabled={isCreating}
+                    className="
+                      w-full px-3 py-2
+                      text-sm
+                      bg-white dark:bg-gray-700
+                      border border-gray-300 dark:border-gray-600
+                      rounded
+                      focus:outline-none focus:ring-2 focus:ring-blue-500
+                      disabled:opacity-50
+                    "
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleAddTask(status.id)}
+                      disabled={!newTaskName.trim() || isCreating}
+                      className="
+                        px-3 py-1.5
+                        text-sm text-white
+                        bg-blue-600 hover:bg-blue-700
+                        disabled:bg-gray-400 disabled:cursor-not-allowed
+                        rounded
+                        transition-colors
+                      "
+                    >
+                      {isCreating ? 'Создание...' : 'Добавить задачу'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setAddingToStatus(null);
+                        setNewTaskName('');
+                      }}
+                      disabled={isCreating}
+                      className="
+                        px-3 py-1.5
+                        text-sm text-gray-700 dark:text-gray-300
+                        hover:bg-gray-200 dark:hover:bg-gray-600
+                        rounded
+                        transition-colors
+                      "
+                    >
+                      Отмена
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setAddingToStatus(status.id)}
+                  disabled={!companyId}
+                  className="
+                    w-full px-3 py-2 
+                    text-sm text-gray-700 dark:text-gray-300
+                    hover:bg-gray-200 dark:hover:bg-gray-600
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    rounded
+                    transition-colors
+                    flex items-center gap-2
+                  "
+                  title={!companyId ? 'Выберите компанию для добавления задачи' : ''}
+                >
+                  <span className="text-lg">+</span>
+                  <span>Добавить задачу</span>
+                </button>
+              )}
             </div>
           </div>
         ))}

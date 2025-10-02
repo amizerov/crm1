@@ -11,6 +11,7 @@ export async function updateTaskAction(formData: FormData) {
   const rawExecutorId = formData.get('executorId') as string
   const rawParentId = formData.get('parentId') as string
   const rawCompanyId = formData.get('companyId') as string
+  const rawProjectId = formData.get('projectId') as string
   
   const taskData = {
     id: parseInt(formData.get('id') as string),
@@ -22,7 +23,8 @@ export async function updateTaskAction(formData: FormData) {
     statusId: parseInt(formData.get('statusId') as string),
     priorityId: rawPriorityId ? parseInt(rawPriorityId) : undefined,
     executorId: rawExecutorId ? parseInt(rawExecutorId) : undefined,
-    companyId: rawCompanyId ? parseInt(rawCompanyId) : undefined
+    companyId: rawCompanyId ? parseInt(rawCompanyId) : undefined,
+    projectId: rawProjectId ? parseInt(rawProjectId) : undefined
   }
 
   await updateTask(taskData)
