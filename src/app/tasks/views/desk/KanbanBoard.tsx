@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition, useEffect, useRef } from 'react';
+import { quickAddTask } from '../../actions/quickAddTask';
+import { updateTaskStatus } from '../../actions/updateTaskStatus';
 
 interface Task {
   id: number;
@@ -34,6 +36,7 @@ interface KanbanBoardProps {
   onTaskClick: (task: Task) => void;
   isPending: boolean;
   companyId?: number;
+  projectId?: number;
   onTaskCreated?: () => void;
 }
 
@@ -43,16 +46,27 @@ export default function KanbanBoard({
   onTaskClick,
   isPending,
   companyId,
+  projectId,
   onTaskCreated
 }: KanbanBoardProps) {
   const [addingToStatus, setAddingToStatus] = useState<number | null>(null);
   const [newTaskName, setNewTaskName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-  // Фильтруем статусы: исключаем "Готово" и все статусы после него
+  const [isActionPending, startTransition] = useTransition();
+  const isSubmitting = isCreating || isActionPending;
+  
+  // Кастомный drag and drop
+  const [draggedTask, setDraggedTask] = useState<Task | null>(null);
+  const [dragOverStatus, setDragOverStatus] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const draggedElementRef = useRef<HTMLDivElement | null>(null);
+
+  // Фильтруем статусы: исключаем только "На паузе" и "Отменено"
   const activeStatuses = statuses.filter(status => 
-    status.status !== 'Готово' && 
-    status.status !== 'Отменено' && 
-    status.status !== 'Караул'
+    status.status !== 'На паузе' && 
+    status.status !== 'Отменено'
   );
   
   // Группируем задачи по активным статусам
@@ -77,34 +91,35 @@ export default function KanbanBoard({
     return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
   };
 
-  const handleAddTask = async (statusId: number) => {
+  const handleAddTask = (statusId: number) => {
     if (!newTaskName.trim() || !companyId) return;
 
     setIsCreating(true);
-    try {
-      const response = await fetch('/api/tasks/quick-add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+
+    startTransition(async () => {
+      try {
+        const result = await quickAddTask({
           taskName: newTaskName.trim(),
           statusId,
-          companyId
-        })
-      });
+          companyId,
+          projectId: projectId && projectId > 0 ? projectId : undefined
+        });
 
-      if (response.ok) {
-        setNewTaskName('');
-        setAddingToStatus(null);
-        // Вызываем обновление задач
-        if (onTaskCreated) {
-          await onTaskCreated();
+        if (result?.success) {
+          setNewTaskName('');
+          setAddingToStatus(null);
+          if (onTaskCreated) {
+            await onTaskCreated();
+          }
+        } else if (result?.error) {
+          console.error('Error creating task:', result.error);
         }
+      } catch (error) {
+        console.error('Error creating task:', error);
+      } finally {
+        setIsCreating(false);
       }
-    } catch (error) {
-      console.error('Error creating task:', error);
-    } finally {
-      setIsCreating(false);
-    }
+    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, statusId: number) => {
@@ -117,13 +132,95 @@ export default function KanbanBoard({
     }
   };
 
+  // Кастомный drag and drop
+  const handleMouseDown = (e: React.MouseEvent, task: Task) => {
+    // Только левая кнопка мыши
+    if (e.button !== 0) return;
+    
+    const target = e.currentTarget as HTMLElement;
+    const rect = target.getBoundingClientRect();
+    
+    setDraggedTask(task);
+    setIsDragging(true);
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+    setDragPosition({
+      x: e.clientX,
+      y: e.clientY
+    });
+    
+    // Сохраняем размеры элемента
+    draggedElementRef.current = target.cloneNode(true) as HTMLDivElement;
+    draggedElementRef.current.style.width = rect.width + 'px';
+    
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      setDragPosition({
+        x: e.clientX,
+        y: e.clientY
+      });
+
+      // Определяем, над какой колонкой находимся
+      const elements = document.elementsFromPoint(e.clientX, e.clientY);
+      const column = elements.find(el => el.hasAttribute('data-status-id'));
+      
+      if (column) {
+        const statusId = parseInt(column.getAttribute('data-status-id') || '0');
+        setDragOverStatus(statusId);
+      } else {
+        setDragOverStatus(null);
+      }
+    };
+
+    const handleMouseUp = async () => {
+      if (draggedTask && dragOverStatus && draggedTask.statusId !== dragOverStatus) {
+        startTransition(async () => {
+          const result = await updateTaskStatus(draggedTask.id, dragOverStatus);
+          
+          if (result?.success) {
+            if (onTaskCreated) {
+              await onTaskCreated();
+            }
+          } else if (result?.error) {
+            console.error('Error updating task status:', result.error);
+          }
+        });
+      }
+      
+      setIsDragging(false);
+      setDraggedTask(null);
+      setDragOverStatus(null);
+      draggedElementRef.current = null;
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, draggedTask, dragOverStatus, onTaskCreated]);
+
   return (
     <div className="h-full w-full p-4 overflow-hidden">
       <div className="flex gap-4 h-full overflow-x-auto pb-4">
         {tasksByStatus.map(({ status, tasks: statusTasks }) => (
           <div 
             key={status.id}
-            className="flex-shrink-0 h-full flex flex-col bg-gray-100 dark:bg-gray-800 rounded-lg"
+            data-status-id={status.id}
+            className={`flex-shrink-0 h-full flex flex-col rounded-lg transition-colors ${
+              dragOverStatus === status.id
+                ? 'bg-blue-100 dark:bg-blue-900/30 ring-2 ring-blue-500'
+                : 'bg-gray-100 dark:bg-gray-800'
+            }`}
             style={{ width: 'calc((100% - 64px) / 5)' }}
           >
             {/* Заголовок колонки */}
@@ -152,15 +249,22 @@ export default function KanbanBoard({
                 statusTasks.map(task => (
                   <div
                     key={task.id}
-                    onClick={() => onTaskClick(task)}
-                    className="
+                    onMouseDown={(e) => handleMouseDown(e, task)}
+                    onClick={() => !isDragging && onTaskClick(task)}
+                    className={`
                       bg-white dark:bg-gray-700 
                       p-4 rounded-lg shadow-sm
-                      border border-gray-200 dark:border-gray-600
-                      hover:shadow-md hover:border-blue-300 dark:hover:border-blue-500
+                      border-2
+                      hover:shadow-md
                       cursor-pointer
                       transition-all duration-200
-                    "
+                      select-none
+                      ${
+                        draggedTask?.id === task.id && isDragging
+                          ? 'opacity-30'
+                          : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500'
+                      }
+                    `}
                   >
                     {/* Название задачи */}
                     <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">
@@ -214,7 +318,7 @@ export default function KanbanBoard({
                     onKeyDown={(e) => handleKeyDown(e, status.id)}
                     placeholder="Напишите название задачи"
                     autoFocus
-                    disabled={isCreating}
+                    disabled={isSubmitting}
                     className="
                       w-full px-3 py-2
                       text-sm
@@ -228,7 +332,7 @@ export default function KanbanBoard({
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleAddTask(status.id)}
-                      disabled={!newTaskName.trim() || isCreating}
+                      disabled={!newTaskName.trim() || isSubmitting}
                       className="
                         px-3 py-1.5
                         text-sm text-white
@@ -238,14 +342,14 @@ export default function KanbanBoard({
                         transition-colors
                       "
                     >
-                      {isCreating ? 'Создание...' : 'Добавить задачу'}
+                      {isSubmitting ? 'Создание...' : 'Добавить задачу'}
                     </button>
                     <button
                       onClick={() => {
                         setAddingToStatus(null);
                         setNewTaskName('');
                       }}
-                      disabled={isCreating}
+                      disabled={isSubmitting}
                       className="
                         px-3 py-1.5
                         text-sm text-gray-700 dark:text-gray-300
@@ -261,7 +365,7 @@ export default function KanbanBoard({
               ) : (
                 <button
                   onClick={() => setAddingToStatus(status.id)}
-                  disabled={!companyId}
+                  disabled={!companyId || isSubmitting}
                   className="
                     w-full px-3 py-2 
                     text-sm text-gray-700 dark:text-gray-300
@@ -281,6 +385,53 @@ export default function KanbanBoard({
           </div>
         ))}
       </div>
+
+      {/* Плавающая карточка при перетаскивании */}
+      {isDragging && draggedTask && draggedElementRef.current && (
+        <div
+          style={{
+            position: 'fixed',
+            left: dragPosition.x - dragOffset.x,
+            top: dragPosition.y - dragOffset.y,
+            pointerEvents: 'none',
+            zIndex: 10000,
+            width: draggedElementRef.current.style.width,
+            transform: 'rotate(3deg)',
+            transition: 'none'
+          }}
+          className="bg-white dark:bg-gray-700 p-4 rounded-lg shadow-2xl border-2 border-blue-500"
+        >
+          {/* Название задачи */}
+          <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">
+            {draggedTask.taskName}
+          </h4>
+
+          {/* Приоритет */}
+          {draggedTask.priorityName && (
+            <div className="mb-2">
+              <span className={`text-xs px-2 py-1 rounded ${getPriorityColor(draggedTask.priorityName)}`}>
+                {draggedTask.priorityName}
+              </span>
+            </div>
+          )}
+
+          {/* Дедлайн и исполнитель */}
+          <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
+            {draggedTask.dedline && (
+              <div className="flex items-center gap-1">
+                <span>📅</span>
+                <span>{formatDate(draggedTask.dedline)}</span>
+              </div>
+            )}
+            {draggedTask.executorName && (
+              <div className="flex items-center gap-1">
+                <span>👤</span>
+                <span className="truncate max-w-[100px]">{draggedTask.executorName}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

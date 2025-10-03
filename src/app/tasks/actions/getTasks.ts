@@ -36,7 +36,8 @@ export async function getTasks(executorId?: number, companyId?: number): Promise
     }
 
     // Строим WHERE условие для фильтрации
-    let whereClause = "WHERE st.status NOT IN ('Готово', 'Отменено')";
+    // Исключаем только "На паузе" и "Отменено" - для канбан доски нужны все остальные включая "Готово"
+    let whereClause = "WHERE st.status NOT IN ('На паузе', 'Отменено')";
     const params: any = {};
     
     // Получаем все компании пользователя (собственные, где он член, и где он сотрудник)

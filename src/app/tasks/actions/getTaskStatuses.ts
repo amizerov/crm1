@@ -1,3 +1,5 @@
+'use server'
+
 import { query } from '@/db/connect';
 
 type StatusTask = {

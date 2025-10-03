@@ -61,29 +61,56 @@ export default function DeskView({
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(true);
   const [isPending, startTransition] = useTransition();
+  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
 
   // При загрузке компонента проверяем localStorage
   useEffect(() => {
     const savedCompanyId = localStorage.getItem('selectedCompanyId');
-    if (savedCompanyId) {
-      const companyId = parseInt(savedCompanyId);
-      if (companyId === 0 || userCompanies.some(c => c.id === companyId)) {
-        setSelectedCompanyId(companyId);
-        
-        // Загружаем задачи и проекты для сохраненной компании
-        startTransition(async () => {
+    const savedProjectId = localStorage.getItem('selectedProjectId');
+    
+    const loadInitialData = async () => {
+      if (savedCompanyId) {
+        const companyId = parseInt(savedCompanyId);
+        if (companyId === 0 || userCompanies.some(c => c.id === companyId)) {
+          setSelectedCompanyId(companyId);
+          
+          // Загружаем задачи и проекты для сохраненной компании
           const newTasks = await getTasks(undefined, companyId === 0 ? undefined : companyId);
           setAllTasks(newTasks);
-          setTasks(newTasks);
           
           if (companyId !== 0) {
             const companyProjects = await getProjectsByCompanyForFilter(companyId);
             setProjects(companyProjects);
+            
+            // Восстанавливаем выбранный проект, если он сохранен и существует
+            if (savedProjectId) {
+              const projectId = parseInt(savedProjectId);
+              if (projectId === 0 || companyProjects.some(p => p.id === projectId)) {
+                setSelectedProjectId(projectId);
+                
+                // Фильтруем задачи по проекту
+                if (projectId === 0) {
+                  setTasks(newTasks);
+                } else {
+                  const filtered = newTasks.filter(task => task.projectId === projectId);
+                  setTasks(filtered);
+                }
+              } else {
+                setTasks(newTasks);
+              }
+            } else {
+              setTasks(newTasks);
+            }
+          } else {
+            setTasks(newTasks);
           }
-        });
+        }
       }
-    }
-
+      setIsInitialLoading(false);
+    };
+    
+    loadInitialData();
+    
     // Проверяем сохраненное состояние полноэкранного режима
     const savedFullscreen = localStorage.getItem('deskFullscreen');
     if (savedFullscreen !== null) {
@@ -148,10 +175,13 @@ export default function DeskView({
     localStorage.setItem('deskFullscreen', newFullscreen.toString());
   };
 
-  const handleCompanyChange = (companyId: number) => {
+  const handleCompanyChange = async (companyId: number) => {
     setSelectedCompanyId(companyId);
     setSelectedProjectId(0); // Сбрасываем выбор проекта при смене компании
     localStorage.setItem('selectedCompanyId', companyId.toString());
+    localStorage.removeItem('selectedProjectId'); // Удаляем сохраненный проект при смене компании
+    
+    setIsInitialLoading(true);
     
     startTransition(async () => {
       const newTasks = await getTasks(undefined, companyId === 0 ? undefined : companyId);
@@ -165,6 +195,8 @@ export default function DeskView({
       } else {
         setProjects([]);
       }
+      
+      setIsInitialLoading(false);
     });
   };
 
@@ -186,16 +218,23 @@ export default function DeskView({
 
   const handleProjectChange = (projectId: number) => {
     setSelectedProjectId(projectId);
+    localStorage.setItem('selectedProjectId', projectId.toString()); // Сохраняем выбранный проект
     
-    // Фильтруем задачи на клиенте
-    if (projectId === 0) {
-      // Все проекты - показываем все задачи компании
-      setTasks(allTasks);
-    } else {
-      // Фильтруем по projectId
-      const filtered = allTasks.filter(task => task.projectId === projectId);
-      setTasks(filtered);
-    }
+    setIsInitialLoading(true);
+    
+    // Используем setTimeout для показа лоадера перед фильтрацией
+    setTimeout(() => {
+      // Фильтруем задачи на клиенте
+      if (projectId === 0) {
+        // Все проекты - показываем все задачи компании
+        setTasks(allTasks);
+      } else {
+        // Фильтруем по projectId
+        const filtered = allTasks.filter(task => task.projectId === projectId);
+        setTasks(filtered);
+      }
+      setIsInitialLoading(false);
+    }, 100);
   };
 
   const handleTaskClick = (task: Task) => {
@@ -266,7 +305,7 @@ export default function DeskView({
       </div>
 
       {/* Основной контент - занимает оставшееся место */}
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-1 min-h-0 relative">
         {/* Левая панель - Компании и Проекты */}
         <LeftPanel 
           userCompanies={userCompanies}
@@ -279,25 +318,36 @@ export default function DeskView({
         />
 
         {/* Центральная область - Kanban доска */}
-        <div className="flex-1 min-w-0">
-          <KanbanBoard 
-            tasks={tasks}
-            statuses={statuses}
-            onTaskClick={handleTaskClick}
-            isPending={isPending}
-            companyId={selectedCompanyId || undefined}
-            onTaskCreated={handleRefreshTasks}
-          />
+        <div className="flex-1 min-w-0 relative">
+          {isInitialLoading ? (
+            <div className="absolute inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50">
+              <div className="flex flex-col items-center gap-4">
+                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500"></div>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">Загрузка задач...</p>
+              </div>
+            </div>
+          ) : (
+            <KanbanBoard 
+              tasks={tasks}
+              statuses={statuses}
+              onTaskClick={handleTaskClick}
+              isPending={isPending}
+              companyId={selectedCompanyId || undefined}
+              projectId={selectedProjectId || undefined}
+              onTaskCreated={handleRefreshTasks}
+            />
+          )}
         </div>
-
-        {/* Правая панель - Детали задачи */}
-        {selectedTask && (
-          <TaskDetailsPanel 
-            task={selectedTask}
-            onClose={handleClosePanel}
-          />
-        )}
       </div>
+
+      {/* Правая панель - Детали задачи (поверх контента) */}
+      {selectedTask && (
+        <TaskDetailsPanel 
+          task={selectedTask}
+          onClose={handleClosePanel}
+          onTaskUpdated={handleRefreshTasks}
+        />
+      )}
     </div>
   );
 }
