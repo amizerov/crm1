@@ -3,9 +3,9 @@ import { getCurrentUser } from '@/db/loginUser';
 import { getTasks } from '../../actions/getTasks';
 import { getUserCompanies } from '../../actions/getUserCompanies';
 import { getTaskStatuses } from '../../actions/getTaskStatuses';
-import DeskLayout from './DeskLayout';
+import ListLayout from './ListLayout';
 
-export default async function DeskPage() {
+export default async function ListPage() {
   // Проверяем авторизацию
   const currentUser = await getCurrentUser();
   if (!currentUser) {
@@ -19,7 +19,7 @@ export default async function DeskPage() {
   ]);
 
   return (
-    <DeskLayout 
+    <ListLayout 
       initialTasks={tasks}
       userCompanies={userCompanies}
       statuses={statuses}

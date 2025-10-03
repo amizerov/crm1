@@ -3,9 +3,10 @@
 import { useState, useEffect, useTransition } from 'react';
 import { getTasks } from '../../actions/getTasks';
 import { getProjectsByCompanyForFilter } from '../../actions/getProjects';
-import LeftPanel from './LeftPanel';
-import KanbanBoard from './KanbanBoard';
-import TaskDetailsPanel from './TaskDetailsPanel';
+import LeftPanel from '../common/LeftPanel';
+import TaskList from './TaskList';
+import TaskDetails from '../desk/TaskDetails';
+import Header from '../common/Header';
 
 interface Task {
   id: number;
@@ -40,33 +41,40 @@ interface Status {
   status: string;
 }
 
-interface DeskViewProps {
+interface ListLayoutProps {
   initialTasks: Task[];
   userCompanies: UserCompany[];
   statuses: Status[];
   currentUserId: number;
 }
 
-export default function DeskView({ 
+export default function ListLayout({ 
   initialTasks, 
   userCompanies, 
   statuses,
   currentUserId 
-}: DeskViewProps) {
+}: ListLayoutProps) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [allTasks, setAllTasks] = useState<Task[]>(initialTasks); // Храним все задачи для клиентской фильтрации
+  const [allTasks, setAllTasks] = useState<Task[]>(initialTasks);
   const [selectedCompanyId, setSelectedCompanyId] = useState<number>(0);
-  const [selectedProjectId, setSelectedProjectId] = useState<number>(0); // 0 = Все проекты
+  const [selectedProjectId, setSelectedProjectId] = useState<number>(0);
   const [projects, setProjects] = useState<{ id: number; projectName: string }[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState<boolean>(true);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false); // Для списка по умолчанию обычный режим
   const [isPending, startTransition] = useTransition();
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
+  const [isLeftPanelVisible, setIsLeftPanelVisible] = useState<boolean>(true);
 
   // При загрузке компонента проверяем localStorage
   useEffect(() => {
     const savedCompanyId = localStorage.getItem('selectedCompanyId');
     const savedProjectId = localStorage.getItem('selectedProjectId');
+    const savedLeftPanelVisible = localStorage.getItem('leftPanelVisible');
+    
+    // Восстанавливаем состояние левой панели
+    if (savedLeftPanelVisible !== null) {
+      setIsLeftPanelVisible(savedLeftPanelVisible === 'true');
+    }
     
     const loadInitialData = async () => {
       if (savedCompanyId) {
@@ -111,14 +119,14 @@ export default function DeskView({
     
     loadInitialData();
     
-    // Проверяем сохраненное состояние полноэкранного режима
-    const savedFullscreen = localStorage.getItem('deskFullscreen');
+    // Проверяем сохраненное состояние полноэкранного режима для списка
+    const savedFullscreen = localStorage.getItem('listFullscreen');
     if (savedFullscreen !== null) {
       setIsFullscreen(savedFullscreen === 'true');
     }
   }, [userCompanies]);
 
-  // Скрываем/показываем header и footer при монтировании и изменении isFullscreen
+  // Скрываем/показываем header и footer при изменении isFullscreen
   useEffect(() => {
     const header = document.querySelector('header');
     const footer = document.querySelector('footer');
@@ -137,18 +145,16 @@ export default function DeskView({
       if (header) header.style.display = '';
       if (footer) footer.style.display = '';
       
-      // Делаем body flexbox с высотой 100vh
-      body.style.overflow = 'hidden';
-      html.style.overflow = 'hidden';
-      body.style.height = '100vh';
-      body.style.display = 'flex';
-      body.style.flexDirection = 'column';
+      body.style.overflow = '';
+      html.style.overflow = '';
+      body.style.height = '';
+      body.style.display = '';
+      body.style.flexDirection = '';
       
-      // Main растягивается и имеет overflow-hidden
       if (main) {
-        main.style.flex = '1';
-        main.style.overflow = 'hidden';
-        main.style.minHeight = '0';
+        main.style.flex = '';
+        main.style.overflow = '';
+        main.style.minHeight = '';
       }
     }
 
@@ -172,14 +178,22 @@ export default function DeskView({
   const toggleFullscreen = () => {
     const newFullscreen = !isFullscreen;
     setIsFullscreen(newFullscreen);
-    localStorage.setItem('deskFullscreen', newFullscreen.toString());
+    localStorage.setItem('listFullscreen', newFullscreen.toString());
+  };
+
+  const toggleLeftPanel = () => {
+    setIsLeftPanelVisible(prev => {
+      const newValue = !prev;
+      localStorage.setItem('leftPanelVisible', newValue.toString());
+      return newValue;
+    });
   };
 
   const handleCompanyChange = async (companyId: number) => {
     setSelectedCompanyId(companyId);
-    setSelectedProjectId(0); // Сбрасываем выбор проекта при смене компании
+    setSelectedProjectId(0);
     localStorage.setItem('selectedCompanyId', companyId.toString());
-    localStorage.removeItem('selectedProjectId'); // Удаляем сохраненный проект при смене компании
+    localStorage.removeItem('selectedProjectId');
     
     setIsInitialLoading(true);
     
@@ -188,7 +202,6 @@ export default function DeskView({
       setAllTasks(newTasks);
       setTasks(newTasks);
       
-      // Загружаем проекты для выбранной компании
       if (companyId !== 0) {
         const companyProjects = await getProjectsByCompanyForFilter(companyId);
         setProjects(companyProjects);
@@ -201,12 +214,10 @@ export default function DeskView({
   };
 
   const handleRefreshTasks = async () => {
-    // Перезагружаем задачи для текущей компании
     startTransition(async () => {
       const newTasks = await getTasks(undefined, selectedCompanyId === 0 ? undefined : selectedCompanyId);
       setAllTasks(newTasks);
       
-      // Применяем текущий фильтр проекта
       if (selectedProjectId === 0) {
         setTasks(newTasks);
       } else {
@@ -218,18 +229,14 @@ export default function DeskView({
 
   const handleProjectChange = (projectId: number) => {
     setSelectedProjectId(projectId);
-    localStorage.setItem('selectedProjectId', projectId.toString()); // Сохраняем выбранный проект
+    localStorage.setItem('selectedProjectId', projectId.toString());
     
     setIsInitialLoading(true);
     
-    // Используем setTimeout для показа лоадера перед фильтрацией
     setTimeout(() => {
-      // Фильтруем задачи на клиенте
       if (projectId === 0) {
-        // Все проекты - показываем все задачи компании
         setTasks(allTasks);
       } else {
-        // Фильтруем по projectId
         const filtered = allTasks.filter(task => task.projectId === projectId);
         setTasks(filtered);
       }
@@ -259,65 +266,32 @@ export default function DeskView({
         overflow: 'hidden'
       }}
     >
-      {/* Верхняя панель с навигацией - компактная, фиксированная высота */}
-      <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100 whitespace-nowrap">
-            📋 Канбан доска
-          </h1>
-          <a
-            href="/tasks"
-            className="
-              px-2 py-1.5
-              bg-gray-200 hover:bg-gray-300 
-              dark:bg-gray-700 dark:hover:bg-gray-600
-              text-gray-900 dark:text-gray-100
-              rounded
-              text-xs font-medium
-              no-underline inline-flex items-center gap-1
-              transition-colors
-              whitespace-nowrap
-            "
-          >
-            <span>📑</span>
-            <span className="hidden sm:inline">Таблица</span>
-          </a>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Кнопка полноэкранного режима */}
-          <button
-            onClick={toggleFullscreen}
-            className="
-              px-3 py-2
-              bg-gray-300 hover:bg-gray-400 
-              dark:bg-gray-600 dark:hover:bg-gray-500
-              text-gray-500 dark:text-gray-400
-              rounded cursor-pointer
-              text-[10px]
-              transition-colors
-              opacity-50 hover:opacity-100
-            "
-            title={isFullscreen ? 'Выйти из полноэкранного режима' : 'Развернуть на весь экран'}
-          >
-            <span>⤢</span>
-          </button>
-        </div>
-      </div>
+      {/* Navigation Header */}
+      <Header 
+        isLeftPanelVisible={isLeftPanelVisible}
+        onToggleLeftPanel={toggleLeftPanel}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggleFullscreen}
+        title="📋 Список задач"
+        tableUrl="/tasks/views/desk"
+      />
 
-      {/* Основной контент - занимает оставшееся место */}
+      {/* Основной контент */}
       <div className="flex flex-1 min-h-0 relative">
-        {/* Левая панель - Компании и Проекты */}
-        <LeftPanel 
-          userCompanies={userCompanies}
-          selectedCompanyId={selectedCompanyId}
-          onCompanyChange={handleCompanyChange}
-          projects={projects}
-          selectedProjectId={selectedProjectId}
-          onProjectChange={handleProjectChange}
-          isPending={isPending}
-        />
+        {/* Left Panel */}
+        {isLeftPanelVisible && (
+          <LeftPanel 
+            userCompanies={userCompanies}
+            selectedCompanyId={selectedCompanyId}
+            onCompanyChange={handleCompanyChange}
+            projects={projects}
+            selectedProjectId={selectedProjectId}
+            onProjectChange={handleProjectChange}
+            isPending={isPending}
+          />
+        )}
 
-        {/* Центральная область - Kanban доска */}
+        {/* Task List */}
         <div className="flex-1 min-w-0 relative">
           {isInitialLoading ? (
             <div className="absolute inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50">
@@ -327,9 +301,8 @@ export default function DeskView({
               </div>
             </div>
           ) : (
-            <KanbanBoard 
+            <TaskList 
               tasks={tasks}
-              statuses={statuses}
               onTaskClick={handleTaskClick}
               isPending={isPending}
               companyId={selectedCompanyId || undefined}
@@ -340,9 +313,9 @@ export default function DeskView({
         </div>
       </div>
 
-      {/* Правая панель - Детали задачи (поверх контента) */}
+      {/* Task Details Panel */}
       {selectedTask && (
-        <TaskDetailsPanel 
+        <TaskDetails 
           task={selectedTask}
           onClose={handleClosePanel}
           onTaskUpdated={handleRefreshTasks}

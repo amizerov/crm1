@@ -248,12 +248,12 @@ export default function TaskDetailsPanel({ task, onClose, onTaskUpdated }: TaskD
         z-50
       "
       style={{ 
-        top: '64px', // Отступ от header (высота header примерно 64px)
-        bottom: '80px', // Отступ от footer (высота footer примерно 80px)
-        height: 'calc(100vh - 144px)', // Высота между header и footer
+        top: '3.7rem', // 64px в rem (py-3 + содержимое + border)
+        bottom: '0px',
+        height: 'calc(100vh - 4rem)',
         width: `${width}px`,
-        maxHeight: 'calc(100vh - 144px)', // Максимальная высота
-        overflow: 'hidden' // Предотвращаем переполнение
+        maxHeight: 'calc(100vh - 4rem)',
+        overflow: 'hidden'
       }}
     >
       {/* Ресайзер */}

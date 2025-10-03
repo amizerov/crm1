@@ -91,7 +91,7 @@ export default async function DashboardPage() {
         </InteractiveCard>
 
         <InteractiveCard 
-          href="/tasks"
+          href="/tasks/views/desk"
           style={{ 
             padding: '20px',
             backgroundColor: '#f8f9fa',

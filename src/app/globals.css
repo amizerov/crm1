@@ -9,6 +9,9 @@
   --font-sans: Arial, Helvetica, sans-serif;
   --font-mono: monospace;
   
+  /* CSS переменные для консистентности */
+  --header-height: 65px;
+  
   /* Адаптивная ширина контейнера */
   --container-width: 60%;
 }
