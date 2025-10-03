@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { addTask } from '../actions/addTask';
 import EmployeeSelector from './EmployeeSelector';
-import Link from 'next/link';
+import BackButton from '@/components/BackButton';
 
 interface Employee {
   id: number;
@@ -241,15 +242,12 @@ export default function AddTaskForm({
           >
             {isPending ? 'Создание...' : 'Создать задачу'}
           </button>
-          <Link href="/tasks">
-            <button 
-              type="button" 
-              className="btn-secondary"
-              style={{ padding: '12px 24px', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
-            >
-              Отмена
-            </button>
-          </Link>
+          <BackButton 
+            className="btn-secondary"
+            style={{ padding: '12px 24px', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', backgroundColor: '#6c757d' }}
+          >
+            Отмена
+          </BackButton>
         </div>
       </form>
     </div>

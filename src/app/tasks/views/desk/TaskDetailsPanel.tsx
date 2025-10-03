@@ -240,14 +240,21 @@ export default function TaskDetailsPanel({ task, onClose, onTaskUpdated }: TaskD
     <div 
       ref={panelRef}
       className="
-        fixed top-0 right-0 h-full 
+        fixed right-0 
         bg-white dark:bg-gray-800 
         border-l border-gray-200 dark:border-gray-700 
         flex flex-col 
         shadow-2xl
         z-50
       "
-      style={{ top: '0', width: `${width}px` }}
+      style={{ 
+        top: '64px', // Отступ от header (высота header примерно 64px)
+        bottom: '80px', // Отступ от footer (высота footer примерно 80px)
+        height: 'calc(100vh - 144px)', // Высота между header и footer
+        width: `${width}px`,
+        maxHeight: 'calc(100vh - 144px)', // Максимальная высота
+        overflow: 'hidden' // Предотвращаем переполнение
+      }}
     >
       {/* Ресайзер */}
       <div

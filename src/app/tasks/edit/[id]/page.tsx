@@ -12,6 +12,7 @@ import TaskProperty from './TaskProperty'
 import TaskActions from './TaskActions'
 import SubtasksList from './SubtasksList'
 import TaskDocuments from './TaskDocuments'
+import BackButton from '@/components/BackButton'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
@@ -109,9 +110,7 @@ export default async function EditTaskPage({ params }: EditTaskPageProps) {
   return (
     <main style={{ padding: 20, maxWidth: 1400, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Link href="/tasks" style={{ textDecoration: 'none', color: '#007bff', fontSize: 14 }}>
-          ← Назад к задачам
-        </Link>
+        <BackButton />
         
         {/* Индикация роли пользователя в задаче */}
         {isCurrentUserExecutor && (
