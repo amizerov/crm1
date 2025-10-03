@@ -69,13 +69,13 @@ export async function loginUser(formData: FormData) {
     });
     console.log('Пользователь успешно авторизован:', user.nicName);
     
+    // Возвращаем успешный результат
+    return { success: true, redirectTo: returnTo || '/dashboard' };
+    
   } catch (error) {
     console.error('Ошибка при авторизации:', error);
     throw error;
   }
-  
-  // Перенаправляем на дашборд после успешного логина
-  redirect('/dashboard');
 }
 
 export async function logoutUser() {
