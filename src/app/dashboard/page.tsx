@@ -233,6 +233,42 @@ export default async function DashboardPage() {
             Управление проектами
           </p>
         </InteractiveCard>
+
+        <InteractiveCard 
+          href="/templates"
+          style={{ 
+            padding: '20px',
+            backgroundColor: '#f8f9fa',
+            border: '1px solid #e9ecef',
+            borderRadius: '12px',
+            textAlign: 'center',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            minHeight: '160px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+        >
+          <div style={{ fontSize: '40px', marginBottom: '12px' }}>📝</div>
+          <h3 style={{ 
+            margin: '0 0 8px 0', 
+            fontSize: '18px', 
+            color: '#20c997',
+            fontWeight: '600'
+          }}>
+            Шаблоны процессов
+          </h3>
+          <p style={{ 
+            margin: 0, 
+            color: '#6c757d', 
+            fontSize: '13px',
+            lineHeight: '1.4'
+          }}>
+            Управление шаблонами
+          </p>
+        </InteractiveCard>
       </div>
     </div>
   );
