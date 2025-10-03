@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import WindowsWindow from '@/components/WindowsWindow';
 import { Employee } from '@/app/employees/actions';
+import EditTaskEmployeeSelector from '../../components/EditTaskEmployeeSelector';
 
 interface Task {
   id: number;
@@ -308,45 +309,11 @@ export default function TaskProperty({
           <div style={{ flex: 1, overflow: 'auto', paddingRight: 8 }}>
             {/* Исполнитель и Создатель в одной строке */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: 5, fontWeight: 600, fontSize: 14 }}>
-                  Исполнитель
-                </label>
-                <select 
-                  name="executorId" 
-                  defaultValue={task.executorId || ''}
-                  style={{ 
-                    width: '100%', 
-                    padding: '10px 12px', 
-                    border: '1px solid #ced4da', 
-                    borderRadius: 4,
-                    fontSize: 14
-                  }}
-                >
-                  <option value="">Не назначен</option>
-                  {employees.map((employee: Employee) => (
-                    <option key={employee.id} value={employee.id}>
-                      {employee.displayName || employee.Name}
-                      {employee.userId && employee.userId === currentUserId && ' 👤 (это вы)'}
-                    </option>
-                  ))}
-                </select>
-                {/* Показываем информацию о текущем исполнителе */}
-                {task.executorId && (
-                  <div style={{ fontSize: 12, color: '#6c757d', marginTop: 4 }}>
-                    {(() => {
-                      const executor = employees.find((emp: Employee) => emp.id === task.executorId);
-                      if (executor?.userId === currentUserId) {
-                        return '✅ Вы являетесь исполнителем этой задачи';
-                      }
-                      if (executor?.userId) {
-                        return `👤 Исполнитель связан с пользователем: ${executor.userNicName || executor.userFullName}`;
-                      }
-                      return '👷 Исполнитель - только сотрудник (без доступа к системе)';
-                    })()}
-                  </div>
-                )}
-              </div>
+              <EditTaskEmployeeSelector
+                task={task}
+                currentUserId={currentUserId}
+                initialEmployees={employees}
+              />
 
               <div>
                 <label style={{ display: 'block', marginBottom: 5, fontWeight: 600, fontSize: 14 }}>

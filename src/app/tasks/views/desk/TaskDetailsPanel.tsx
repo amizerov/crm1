@@ -6,7 +6,7 @@ import { updateTaskFromKanban } from '../../actions/updateTaskFromKanban';
 import { deleteTaskFromKanban } from '../../actions/deleteTaskFromKanban';
 import { getTaskStatuses } from '../../actions/getTaskStatuses';
 import { getPriorities } from '../../actions/getPriorities';
-import { getEmployees } from '@/app/employees/actions';
+import { getEmployees, getEmployeesByCompany } from '@/app/employees/actions';
 
 interface Task {
   id: number;
@@ -61,24 +61,28 @@ export default function TaskDetailsPanel({ task, onClose, onTaskUpdated }: TaskD
   });
   const [statuses, setStatuses] = useState<Array<{id: number; status: string}>>([]);
   const [priorities, setPriorities] = useState<Array<{id: number; priority: string}>>([]);
-  const [employees, setEmployees] = useState<Array<{id: number; employeeName: string}>>([]);
+  const [employees, setEmployees] = useState<Array<{id: number; Name: string; displayName?: string}>>([]);
   const [isPending, startTransition] = useTransition();
   const [isSaving, setIsSaving] = useState(false);
   
   // Загрузка справочников
   useEffect(() => {
     const loadData = async () => {
-      const [statusesData, prioritiesData, employeesData] = await Promise.all([
+      const [statusesData, prioritiesData] = await Promise.all([
         getTaskStatuses(),
-        getPriorities(),
-        getEmployees()
+        getPriorities()
       ]);
       setStatuses(statusesData);
       setPriorities(prioritiesData);
+      
+      // Загружаем сотрудников в зависимости от компании задачи
+      const employeesData = task.companyId 
+        ? await getEmployeesByCompany(task.companyId)
+        : await getEmployees();
       setEmployees(employeesData);
     };
     loadData();
-  }, []);
+  }, [task.companyId]); // Перезагружаем при смене компании
 
   // Изменение размера
   const handleResizeStart = (e: React.MouseEvent) => {
@@ -407,7 +411,7 @@ export default function TaskDetailsPanel({ task, onClose, onTaskUpdated }: TaskD
               >
                 <option value="0">Не назначен</option>
                 {employees.map(employee => (
-                  <option key={employee.id} value={employee.id}>{employee.employeeName}</option>
+                  <option key={employee.id} value={employee.id}>{employee.displayName || employee.Name}</option>
                 ))}
               </select>
             </div>

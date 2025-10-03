@@ -1,7 +1,7 @@
 import { getTaskById } from '@/app/tasks/actions/updateTask'
 import { getTaskStatuses } from '@/app/tasks/actions/getTaskStatuses'
 import { getPriorities } from '../../actions/getPriorities'
-import { getEmployees, type Employee } from '@/app/employees/actions'
+import { getEmployees, getEmployeesByCompany, type Employee } from '@/app/employees/actions'
 import { getTasksForParentSelection, getSubtasks } from '@/app/tasks/actions/getTasks'
 import { getTaskActions } from '@/app/tasks/actions/taskActions'
 import { getTaskDocuments } from '@/app/tasks/actions/taskDocuments'
@@ -31,11 +31,10 @@ export default async function EditTaskPage({ params }: EditTaskPageProps) {
     redirect('/login')
   }
 
-  const [task, statuses, priorities, employees, parentTasks, taskActions, subtasks, documents, userCompanies] = await Promise.all([
+  const [task, statuses, priorities, parentTasks, taskActions, subtasks, documents, userCompanies] = await Promise.all([
     getTaskById(taskId),
     getTaskStatuses(),
     getPriorities(),
-    getEmployees(),
     getTasksForParentSelection(taskId),
     getTaskActions(taskId),
     getSubtasks(taskId),
@@ -43,14 +42,19 @@ export default async function EditTaskPage({ params }: EditTaskPageProps) {
     getUserCompanies()
   ])
 
-  // Получаем проекты для компании задачи (если задача корневая и привязана к компании)
-  const projects = task && !task.parentId && task.companyId 
-    ? await getProjectsByCompanyForFilter(task.companyId)
-    : []
-
   if (!task) {
     notFound()
   }
+
+  // Получаем сотрудников компании задачи
+  const employees = task.companyId 
+    ? await getEmployeesByCompany(task.companyId)
+    : await getEmployees() // Fallback для задач без компании
+
+  // Получаем проекты для компании задачи (если задача корневая и привязана к компании)
+  const projects = !task.parentId && task.companyId
+    ? await getProjectsByCompanyForFilter(task.companyId)
+    : []
 
   async function handleUpdateTask(formData: FormData) {
     'use server'
