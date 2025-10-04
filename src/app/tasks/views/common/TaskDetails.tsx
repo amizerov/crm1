@@ -39,9 +39,10 @@ interface TaskDetailsPanelProps {
   task: Task;
   onClose: () => void;
   onTaskUpdated?: () => void;
+  onTaskDeleted?: (taskId: number) => void;
 }
 
-export default function TaskDetailsPanel({ task: initialTask, onClose, onTaskUpdated }: TaskDetailsPanelProps) {
+export default function TaskDetailsPanel({ task: initialTask, onClose, onTaskUpdated, onTaskDeleted }: TaskDetailsPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -138,6 +139,7 @@ export default function TaskDetailsPanel({ task: initialTask, onClose, onTaskUpd
   // Закрытие при клике вне панели
   useEffect(() => {
     if (isResizing) return; // Не закрывать при изменении размера
+    if (showDeleteModal) return; // НЕ закрывать панель, если открыто модальное окно удаления!
 
     const handleClickOutside = (event: MouseEvent) => {
       if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
@@ -154,7 +156,7 @@ export default function TaskDetailsPanel({ task: initialTask, onClose, onTaskUpd
       clearTimeout(timeoutId);
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [onClose, isResizing]);
+  }, [onClose, isResizing, showDeleteModal]);
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return 'Не указано';
@@ -240,23 +242,39 @@ export default function TaskDetailsPanel({ task: initialTask, onClose, onTaskUpd
   
   const handleDelete = async () => {
     setShowDeleteModal(false);
+    
+    // 1. Оптимистично удаляем задачу из UI
+    if (onTaskDeleted) {
+      onTaskDeleted(task.id);
+    }
+    
+    // 2. Закрываем панель
+    onClose();
+    
+    // 3. Отправляем запрос на сервер в фоне
     setIsSaving(true);
     startTransition(async () => {
       try {
         const result = await deleteTaskFromKanban(task.id);
         
         if (result.success) {
-          onClose(); // Закрываем панель
-          if (onTaskUpdated) {
-            await onTaskUpdated(); // Обновляем список задач
-          }
+          // Успешно удалено - НЕ обновляем с сервера, т.к. оптимистичное удаление уже сработало
+          // Обновление произойдет при следующем обновлении списка задач (создание, перемещение и т.д.)
         } else {
           console.error('Error deleting task:', result.error);
           alert(result.error || 'Ошибка при удалении');
+          // При ошибке обновляем данные с сервера (откат)
+          if (onTaskUpdated) {
+            await onTaskUpdated();
+          }
         }
       } catch (error) {
         console.error('Error deleting task:', error);
         alert('Ошибка при удалении задачи');
+        // При ошибке обновляем данные с сервера (откат)
+        if (onTaskUpdated) {
+          await onTaskUpdated();
+        }
       } finally {
         setIsSaving(false);
       }
@@ -714,35 +732,56 @@ export default function TaskDetailsPanel({ task: initialTask, onClose, onTaskUpd
 
     {/* Модальное окно подтверждения удаления */}
     {showDeleteModal && (
-      <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 rounded-lg shadow-2xl border-2 border-rose-500 p-6 z-[61] max-w-md w-full mx-4">
-        <div className="flex items-start gap-4">
-          <div className="flex-shrink-0 text-4xl">⚠️</div>
-          <div className="flex-1">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
-              Подтверждение удаления
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Вы уверены, что хотите удалить задачу &quot;{task.taskName}&quot;? 
-              Это действие нельзя будет отменить.
-            </p>
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 bg-slate-500 hover:bg-slate-600 text-white rounded transition-colors cursor-pointer"
-              >
-                Отмена
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={isSaving}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 disabled:bg-rose-400 disabled:cursor-not-allowed text-white rounded transition-colors cursor-pointer"
-              >
-                {isSaving ? 'Удаление...' : 'Удалить'}
-              </button>
+      <>
+        {/* Backdrop - затемнение фона */}
+        <div 
+          className="fixed inset-0 bg-black/50 z-[60]"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowDeleteModal(false);
+          }}
+        />
+        
+        {/* Модальное окно */}
+        <div 
+          className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 rounded-lg shadow-2xl border-2 border-rose-500 p-6 z-[61] max-w-md w-full mx-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0 text-4xl">⚠️</div>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
+                Подтверждение удаления
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                Вы уверены, что хотите удалить задачу &quot;{task.taskName}&quot;? 
+                Это действие нельзя будет отменить.
+              </p>
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDeleteModal(false);
+                  }}
+                  className="px-4 py-2 bg-slate-500 hover:bg-slate-600 text-white rounded transition-colors cursor-pointer"
+                >
+                  Отмена
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete();
+                  }}
+                  disabled={isSaving}
+                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 disabled:bg-rose-400 disabled:cursor-not-allowed text-white rounded transition-colors cursor-pointer"
+                >
+                  {isSaving ? 'Удаление...' : 'Удалить'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </>
     )}
     </>
   );

@@ -38,6 +38,7 @@ interface KanbanBoardProps {
   companyId?: number;
   projectId?: number;
   onTaskCreated?: () => void;
+  onTaskDeleted?: (taskId: number) => void;
   selectedTaskId?: number;
 }
 
@@ -49,6 +50,7 @@ export default function KanbanBoard({
   companyId,
   projectId,
   onTaskCreated,
+  onTaskDeleted,
   selectedTaskId
 }: KanbanBoardProps) {
   const [addingToStatus, setAddingToStatus] = useState<number | null>(null);
@@ -56,6 +58,12 @@ export default function KanbanBoard({
   const [isCreating, setIsCreating] = useState(false);
   const [isActionPending, startTransition] = useTransition();
   const isSubmitting = isCreating || isActionPending;
+  
+  // Оптимистичное обновление - локальная копия задач
+  const [optimisticTasks, setOptimisticTasks] = useState<Task[]>(tasks);
+  
+  // Задачи, которые находятся в процессе обновления
+  const [updatingTasks, setUpdatingTasks] = useState<Set<number>>(new Set());
   
   // Кастомный drag and drop
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
@@ -65,16 +73,32 @@ export default function KanbanBoard({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const draggedElementRef = useRef<HTMLDivElement | null>(null);
 
+  // Синхронизация с пропсами tasks
+  useEffect(() => {
+    setOptimisticTasks(tasks);
+  }, [tasks]);
+
+  // Функция для оптимистичного удаления задачи
+  const handleTaskDelete = (taskId: number) => {
+    // Мгновенно удаляем задачу из UI
+    setOptimisticTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+    
+    // Вызываем колбэк родителя, если он есть
+    if (onTaskDeleted) {
+      onTaskDeleted(taskId);
+    }
+  };
+
   // Фильтруем статусы: исключаем только "На паузе" и "Отменено"
   const activeStatuses = statuses.filter(status => 
     status.status !== 'На паузе' && 
     status.status !== 'Отменено'
   );
   
-  // Группируем задачи по активным статусам
+  // Группируем задачи по активным статусам (используем optimisticTasks)
   const tasksByStatus = activeStatuses.map(status => ({
     status,
-    tasks: tasks.filter(task => task.statusId === status.id && task.level === 0) // Только корневые задачи
+    tasks: optimisticTasks.filter(task => task.statusId === status.id && task.level === 0) // Только корневые задачи
   }));
 
   const getPriorityColor = (priorityName?: string) => {
@@ -183,23 +207,76 @@ export default function KanbanBoard({
 
     const handleMouseUp = async () => {
       if (draggedTask && dragOverStatus && draggedTask.statusId !== dragOverStatus) {
+        const oldStatusId = draggedTask.statusId;
+        const newStatusId = dragOverStatus;
+        const taskId = draggedTask.id;
+        
+        // Находим название нового статуса
+        const newStatus = statuses.find(s => s.id === newStatusId);
+        const newStatusName = newStatus?.status || '';
+        
+        // 1. ОПТИМИСТИЧНОЕ ОБНОВЛЕНИЕ - сразу меняем UI
+        setOptimisticTasks(prevTasks => 
+          prevTasks.map(task => 
+            task.id === taskId 
+              ? { ...task, statusId: newStatusId, statusName: newStatusName }
+              : task
+          )
+        );
+        
+        // 2. Сбрасываем состояние drag'а
+        setIsDragging(false);
+        setDraggedTask(null);
+        setDragOverStatus(null);
+        draggedElementRef.current = null;
+        
+        // 3. Помечаем задачу как обновляющуюся
+        setUpdatingTasks(prev => new Set(prev).add(taskId));
+        
+        // 4. Отправляем запрос в БД в фоне
         startTransition(async () => {
-          const result = await updateTaskStatus(draggedTask.id, dragOverStatus);
+          const result = await updateTaskStatus(taskId, newStatusId);
           
           if (result?.success) {
+            // Успешно обновлено - обновляем данные с сервера для синхронизации
             if (onTaskCreated) {
               await onTaskCreated();
             }
+            // Убираем маркер обновления с небольшой задержкой для визуального эффекта
+            setTimeout(() => {
+              setUpdatingTasks(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(taskId);
+                return newSet;
+              });
+            }, 300);
           } else if (result?.error) {
             console.error('Error updating task status:', result.error);
+            // В случае ошибки - откатываем изменения
+            setOptimisticTasks(prevTasks => 
+              prevTasks.map(task => 
+                task.id === taskId 
+                  ? { ...task, statusId: oldStatusId }
+                  : task
+              )
+            );
+            // Убираем маркер обновления
+            setUpdatingTasks(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(taskId);
+              return newSet;
+            });
+            // Можно также показать уведомление об ошибке
+            alert('Ошибка при перемещении задачи: ' + result.error);
           }
         });
+      } else {
+        // Если просто отпустили без перемещения
+        setIsDragging(false);
+        setDraggedTask(null);
+        setDragOverStatus(null);
+        draggedElementRef.current = null;
       }
-      
-      setIsDragging(false);
-      setDraggedTask(null);
-      setDragOverStatus(null);
-      draggedElementRef.current = null;
     };
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -209,7 +286,7 @@ export default function KanbanBoard({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, draggedTask, dragOverStatus, onTaskCreated]);
+  }, [isDragging, draggedTask, dragOverStatus, onTaskCreated, statuses]);
 
   return (
     <div className="h-full w-full overflow-x-auto">
@@ -256,7 +333,10 @@ export default function KanbanBoard({
                   Нет задач
                 </div>
               ) : (
-                statusTasks.map(task => (
+                statusTasks.map(task => {
+                  const isUpdating = updatingTasks.has(task.id);
+                  
+                  return (
                   <div
                     key={task.id}
                     onMouseDown={(e) => handleMouseDown(e, task)}
@@ -269,17 +349,27 @@ export default function KanbanBoard({
                       cursor-pointer
                       transition-all duration-200
                       select-none
+                      relative
                       ${
                         draggedTask?.id === task.id && isDragging
                           ? 'opacity-30'
                           : selectedTaskId === task.id
                             ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-200 dark:ring-blue-800 bg-blue-50 dark:bg-blue-900/20'
-                            : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500'
+                            : isUpdating
+                              ? 'border-green-500 dark:border-green-400 ring-2 ring-green-200 dark:ring-green-800'
+                              : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500'
                       }
                     `}
                   >
+                    {/* Индикатор обновления */}
+                    {isUpdating && (
+                      <div className="absolute top-2 right-2">
+                        <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                      </div>
+                    )}
+                    
                     {/* Название задачи */}
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2 line-clamp-2 pr-6">
                       {task.taskName}
                     </h4>
 
@@ -315,7 +405,8 @@ export default function KanbanBoard({
                       </div>
                     )}
                   </div>
-                ))
+                  );
+                })
               )}
             </div>
 

@@ -64,11 +64,14 @@ export default function DeskLayout({
   const [selectedCompanyId, setSelectedCompanyId] = useState<number>(0);
   const [selectedProjectId, setSelectedProjectId] = useState<number>(0);
   const [projects, setProjects] = useState<{ id: number; projectName: string }[]>([]);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(true);
   const [isPending, startTransition] = useTransition();
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
   const [isLeftPanelVisible, setIsLeftPanelVisible] = useState<boolean>(true);
+  
+  // Вычисляем selectedTask на основе ID
+  const selectedTask = selectedTaskId ? tasks.find(t => t.id === selectedTaskId) || null : null;
 
   // При загрузке компонента проверяем localStorage
   useEffect(() => {
@@ -242,6 +245,12 @@ export default function DeskLayout({
     });
   };
 
+  const handleTaskDelete = (taskId: number) => {
+    // Оптимистично удаляем задачу из локального состояния
+    setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+    setAllTasks(prevAllTasks => prevAllTasks.filter(task => task.id !== taskId));
+  };
+
   const handleProjectChange = async (projectId: number) => {
     setSelectedProjectId(projectId);
     localStorage.setItem('selectedProjectId', projectId.toString());
@@ -265,11 +274,11 @@ export default function DeskLayout({
   };
 
   const handleTaskClick = (task: Task) => {
-    setSelectedTask(task);
+    setSelectedTaskId(task.id);
   };
 
   const handleClosePanel = () => {
-    setSelectedTask(null);
+    setSelectedTaskId(null);
   };
 
   return (
@@ -330,6 +339,7 @@ export default function DeskLayout({
               companyId={selectedCompanyId || undefined}
               projectId={selectedProjectId || undefined}
               onTaskCreated={handleRefreshTasks}
+              onTaskDeleted={handleTaskDelete}
               selectedTaskId={selectedTask?.id}
             />
           )}
@@ -339,9 +349,11 @@ export default function DeskLayout({
       {/* Task Details Panel */}
       {selectedTask && (
         <TaskDetailsPanel 
+          key={selectedTask.id}
           task={selectedTask}
           onClose={handleClosePanel}
           onTaskUpdated={handleRefreshTasks}
+          onTaskDeleted={handleTaskDelete}
         />
       )}
     </div>
