@@ -26,21 +26,31 @@ export async function getUsers(): Promise<User[]> {
 export async function getUserCompanies(userId: number) {
   try {
     const companies = await query(`
-      SELECT DISTINCT
-        c.id,
-        c.companyName,
-        c.ownerId,
-        u.nicName as ownerName,
-        CASE 
-          WHEN c.ownerId = @userId THEN 1 
-          ELSE 0 
-        END as isOwner
-      FROM Company c
-      LEFT JOIN [User] u ON c.ownerId = u.id
-      WHERE c.ownerId = @userId OR c.id IN (
-        SELECT companyId FROM [User] WHERE id = @userId AND companyId IS NOT NULL
-      )
-      ORDER BY c.companyName
+    SELECT DISTINCT 
+      c.id, 
+      c.companyName, 
+      c.ownerId,
+      u.fullName as ownerName,
+      CASE WHEN c.ownerId = @userId THEN 1 ELSE 0 END as isOwner
+    FROM Company c
+    LEFT JOIN [User] u ON c.ownerId = u.id
+    WHERE c.id IN (
+      -- Компании, где пользователь владелец
+      SELECT DISTINCT id 
+      FROM Company 
+      WHERE ownerId = @userId
+      UNION
+      -- Компании из User_Company
+      SELECT DISTINCT companyId 
+      FROM User_Company 
+      WHERE userId = @userId
+      UNION
+      -- Компании, где пользователь сотрудник
+      SELECT DISTINCT companyId
+      FROM Employee
+      WHERE userId = @userId
+    )
+    ORDER BY c.companyName
     `, { userId });
     
     return companies;

@@ -98,13 +98,13 @@ export async function getTotalSum(companyId?: number): Promise<number> {
       SELECT SUM(summa) as totalSum 
       FROM Client 
       WHERE summa IS NOT NULL AND companyId IN (
-        SELECT DISTINCT companyId 
-        FROM Employee 
-        WHERE userId = @userId
-        UNION
         SELECT DISTINCT id 
         FROM Company 
         WHERE ownerId = @userId
+        UNION
+        SELECT DISTINCT companyId 
+        FROM User_Company 
+        WHERE userId = @userId
       )
     `, { userId: currentUser.id });
     
@@ -114,13 +114,13 @@ export async function getTotalSum(companyId?: number): Promise<number> {
   // Проверяем, что пользователь имеет доступ к указанной компании
   const hasAccess = await query(`
     SELECT 1 FROM (
-      SELECT DISTINCT companyId as id
-      FROM Employee 
-      WHERE userId = @userId
-      UNION
-      SELECT DISTINCT id 
+      SELECT DISTINCT id
       FROM Company 
       WHERE ownerId = @userId
+      UNION
+      SELECT DISTINCT companyId as id
+      FROM User_Company 
+      WHERE userId = @userId
     ) AS userCompanies
     WHERE id = @companyId
   `, { userId: currentUser.id, companyId });
@@ -214,28 +214,31 @@ export async function getClientsByCompany(companyId?: number) {
       FROM Client c
       LEFT JOIN Company comp ON c.companyId = comp.id
       WHERE c.companyId IN (
-        SELECT DISTINCT companyId 
-        FROM Employee 
-        WHERE userId = @userId
-        UNION
+        -- Компании, где пользователь владелец
         SELECT DISTINCT id 
         FROM Company 
         WHERE ownerId = @userId
+        UNION
+        -- Компании из User_Company
+        SELECT DISTINCT companyId 
+        FROM User_Company 
+        WHERE userId = @userId
       )
       ORDER BY c.id DESC
     `, { userId: currentUser.id });
   }
 
   // Проверяем, что пользователь имеет доступ к указанной компании
+  // (владелец или в User_Company)
   const hasAccess = await query(`
     SELECT 1 FROM (
-      SELECT DISTINCT companyId as id
-      FROM Employee 
-      WHERE userId = @userId
-      UNION
-      SELECT DISTINCT id 
+      SELECT DISTINCT id
       FROM Company 
       WHERE ownerId = @userId
+      UNION
+      SELECT DISTINCT companyId as id
+      FROM User_Company 
+      WHERE userId = @userId
     ) AS userCompanies
     WHERE id = @companyId
   `, { userId: currentUser.id, companyId });

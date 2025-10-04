@@ -3,13 +3,16 @@
 import { updateProject } from '../../actions';
 import Link from 'next/link';
 import type { Project } from '../../actions';
+import type { Template } from '@/app/templates/actions/getTemplates';
+import DelBtn from './DelBtn';
 
 interface ProjectFormProps {
   project: Project;
   companies: { id: number; companyName: string }[];
+  templates: Template[];
 }
 
-export default function ProjectForm({ project, companies }: ProjectFormProps) {
+export default function ProjectForm({ project, companies, templates }: ProjectFormProps) {
   return (
     <form action={updateProject} style={{ 
       backgroundColor: '#f8f9fa', 
@@ -74,7 +77,7 @@ export default function ProjectForm({ project, companies }: ProjectFormProps) {
         />
       </div>
 
-      <div style={{ marginBottom: 32 }}>
+      <div style={{ marginBottom: 20 }}>
         <label htmlFor="companyId" style={{ 
           display: 'block', 
           marginBottom: 8, 
@@ -106,6 +109,44 @@ export default function ProjectForm({ project, companies }: ProjectFormProps) {
         </select>
       </div>
 
+      <div style={{ marginBottom: 32 }}>
+        <label htmlFor="templateId" style={{ 
+          display: 'block', 
+          marginBottom: 8, 
+          fontWeight: 'bold',
+          color: '#333'
+        }}>
+          Шаблон процесса
+        </label>
+        <select
+          id="templateId"
+          name="templateId"
+          defaultValue={project.templateId || ''}
+          style={{
+            width: '100%',
+            padding: '12px',
+            border: '1px solid #ddd',
+            borderRadius: 4,
+            fontSize: '16px',
+            boxSizing: 'border-box'
+          }}
+        >
+          <option value="">Без шаблона (использовать стандартные статусы)</option>
+          {templates.map(template => (
+            <option key={template.id} value={template.id}>
+              {template.templName}
+            </option>
+          ))}
+        </select>
+        <div style={{ 
+          fontSize: '14px', 
+          color: '#6c757d', 
+          marginTop: '8px' 
+        }}>
+          Шаблон определяет шаги процесса (статусы) для задач этого проекта
+        </div>
+      </div>
+
       <div style={{ 
         marginBottom: 24,
         padding: 16,
@@ -128,30 +169,33 @@ export default function ProjectForm({ project, companies }: ProjectFormProps) {
       <div style={{ 
         display: 'flex', 
         gap: 16, 
-        justifyContent: 'flex-end' 
+        justifyContent: 'space-between' 
       }}>
-        <Link href="/projects">
-          <button type="button" style={{ 
+        <DelBtn projectId={project.id} />
+        <div style={{ display: 'flex', gap: 16 }}>
+          <Link href="/projects">
+            <button type="button" style={{ 
+              padding: '12px 24px', 
+              backgroundColor: '#6c757d', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: 4, 
+              cursor: 'pointer' 
+            }}>
+              Отмена
+            </button>
+          </Link>
+          <button type="submit" style={{ 
             padding: '12px 24px', 
-            backgroundColor: '#6c757d', 
+            backgroundColor: '#007bff', 
             color: 'white', 
             border: 'none', 
             borderRadius: 4, 
             cursor: 'pointer' 
           }}>
-            Отмена
+            Сохранить
           </button>
-        </Link>
-        <button type="submit" style={{ 
-          padding: '12px 24px', 
-          backgroundColor: '#007bff', 
-          color: 'white', 
-          border: 'none', 
-          borderRadius: 4, 
-          cursor: 'pointer' 
-        }}>
-          Сохранить изменения
-        </button>
+        </div>
       </div>
     </form>
   );

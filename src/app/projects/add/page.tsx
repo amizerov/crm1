@@ -1,6 +1,7 @@
 import { getCurrentUser } from '@/db/loginUser';
 import { redirect } from 'next/navigation';
 import { addProject, getCompanies } from '../actions';
+import { getTemplates } from '@/app/templates/actions/getTemplates';
 import Link from 'next/link';
 
 export default async function AddProjectPage() {
@@ -9,7 +10,10 @@ export default async function AddProjectPage() {
     redirect('/login');
   }
 
-  const companies = await getCompanies();
+  const [companies, templates] = await Promise.all([
+    getCompanies(),
+    getTemplates()
+  ]);
 
   return (
     <div style={{ padding: '20px 0', maxWidth: '600px', margin: '0 auto' }}>
@@ -90,7 +94,7 @@ export default async function AddProjectPage() {
           />
         </div>
 
-        <div style={{ marginBottom: 32 }}>
+        <div style={{ marginBottom: 20 }}>
           <label htmlFor="companyId" style={{ 
             display: 'block', 
             marginBottom: 8, 
@@ -120,6 +124,43 @@ export default async function AddProjectPage() {
               </option>
             ))}
           </select>
+        </div>
+
+        <div style={{ marginBottom: 32 }}>
+          <label htmlFor="templateId" style={{ 
+            display: 'block', 
+            marginBottom: 8, 
+            fontWeight: 'bold',
+            color: '#333'
+          }}>
+            Шаблон процесса
+          </label>
+          <select
+            id="templateId"
+            name="templateId"
+            style={{
+              width: '100%',
+              padding: '12px',
+              border: '1px solid #ddd',
+              borderRadius: 4,
+              fontSize: '16px',
+              boxSizing: 'border-box'
+            }}
+          >
+            <option value="">Без шаблона (использовать стандартные статусы)</option>
+            {templates.map((template) => (
+              <option key={template.id} value={template.id}>
+                {template.templName}
+              </option>
+            ))}
+          </select>
+          <div style={{ 
+            fontSize: '14px', 
+            color: '#6c757d', 
+            marginTop: '8px' 
+          }}>
+            Шаблон определяет шаги процесса (статусы) для задач этого проекта
+          </div>
         </div>
 
         <div style={{ 

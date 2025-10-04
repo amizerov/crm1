@@ -51,7 +51,7 @@ export default function DelBtn({ projectId }: DelBtnProps) {
         opacity: isDeleting ? 0.6 : 1
       }}
     >
-      {isDeleting ? 'Удаление...' : '🗑 Удалить проект'}
+      {isDeleting ? 'Удаление...' : '🗑 Удалить'}
     </button>
   );
 }
