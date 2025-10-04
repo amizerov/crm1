@@ -31,6 +31,7 @@ interface TaskListProps {
   companyId?: number;
   projectId?: number;
   onTaskCreated?: () => void;
+  selectedTaskId?: number;
 }
 
 export default function TaskList({ 
@@ -39,7 +40,8 @@ export default function TaskList({
   isPending = false,
   companyId,
   projectId,
-  onTaskCreated
+  onTaskCreated,
+  selectedTaskId
 }: TaskListProps) {
   // Группируем задачи по статусам
   const tasksByStatus = tasks.reduce((acc, task) => {
@@ -152,7 +154,11 @@ export default function TaskList({
                   {!isCollapsed && statusTasks.map((task) => (
                     <div
                       key={task.id}
-                      className="grid grid-cols-12 gap-4 px-6 py-3 border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors group"
+                      className={`grid grid-cols-12 gap-4 px-6 py-3 border-b cursor-pointer transition-colors group ${
+                        selectedTaskId === task.id
+                          ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30'
+                          : 'border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                      }`}
                       onClick={() => onTaskClick?.(task)}
                     >
                       {/* Имя задачи */}

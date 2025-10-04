@@ -212,28 +212,29 @@ export default function KanbanBoard({
   }, [isDragging, draggedTask, dragOverStatus, onTaskCreated]);
 
   return (
-    <div className="h-full w-full overflow-hidden">
+    <div className="h-full w-full overflow-x-auto">
       <div 
-        className="h-full overflow-x-auto p-4"
+        className="h-full p-4"
         style={{
           display: 'grid',
           gridTemplateColumns: `repeat(${activeStatuses.length}, minmax(240px, 1fr))`,
           gap: '1rem',
           gridAutoFlow: 'column',
+          gridTemplateRows: '1fr',
         }}
       >
         {tasksByStatus.map(({ status, tasks: statusTasks }) => (
           <div 
             key={status.id}
             data-status-id={status.id}
-            className={`h-full flex flex-col rounded-lg transition-colors min-w-[240px] ${
+            className={`flex flex-col rounded-lg transition-colors min-w-[240px] overflow-hidden ${
               dragOverStatus === status.id
                 ? 'bg-blue-100 dark:bg-blue-900/30 ring-2 ring-blue-500'
                 : 'bg-gray-100 dark:bg-gray-800'
             }`}
           >
             {/* Заголовок колонки */}
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-gray-900 dark:text-gray-100">
                   {status.status}
@@ -245,7 +246,7 @@ export default function KanbanBoard({
             </div>
 
             {/* Список задач */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ minHeight: 0 }}>
               {isPending && statusTasks.length === 0 ? (
                 <div className="text-center py-8">
                   <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-blue-500"></div>
@@ -319,7 +320,7 @@ export default function KanbanBoard({
             </div>
 
             {/* Форма добавления задачи */}
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
               {addingToStatus === status.id ? (
                 <div className="space-y-2">
                   <input

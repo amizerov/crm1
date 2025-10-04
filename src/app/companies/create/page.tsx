@@ -126,6 +126,15 @@ async function createCompany(formData: FormData) {
       companyId: newCompanyId,
       userId: currentUser.id
     });
+    await query(`
+      IF NOT EXISTS (SELECT 1 FROM User_Company WHERE userId = @userId AND companyId = @companyId)
+      BEGIN
+        INSERT INTO User_Company (userId, companyId) VALUES (@userId, @companyId)
+      END
+    `, {
+      userId: currentUser.id,
+      companyId: newCompanyId
+    });
 
     // Обновляем кеш
     revalidatePath('/companies');

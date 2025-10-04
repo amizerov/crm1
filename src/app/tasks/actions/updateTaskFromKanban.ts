@@ -10,6 +10,7 @@ interface UpdateTaskFromKanbanInput {
   statusId: number;
   priorityId?: number;
   executorId?: number;
+  startDate?: string;
   dedline?: string;
 }
 
@@ -21,6 +22,21 @@ interface UpdateTaskFromKanbanResult {
 export async function updateTaskFromKanban(data: UpdateTaskFromKanbanInput): Promise<UpdateTaskFromKanbanResult> {
   try {
     const pool = await connectDB();
+    
+    // Преобразуем дату начала
+    let startDateParsed = null;
+    if (data.startDate) {
+      try {
+        startDateParsed = new Date(data.startDate);
+        // Проверяем корректность даты
+        if (isNaN(startDateParsed.getTime())) {
+          startDateParsed = null;
+        }
+      } catch (e) {
+        console.error('Invalid startDate:', e);
+        startDateParsed = null;
+      }
+    }
     
     // Преобразуем дату дедлайна
     let dedlineDate = null;
@@ -45,6 +61,7 @@ export async function updateTaskFromKanban(data: UpdateTaskFromKanbanInput): Pro
       .input('statusId', sql.Int, data.statusId)
       .input('priorityId', sql.Int, data.priorityId || null)
       .input('executorId', sql.Int, data.executorId || null)
+      .input('startDate', sql.DateTime, startDateParsed)
       .input('dedline', sql.DateTime, dedlineDate)
       .query(`
         UPDATE Task 
@@ -54,6 +71,7 @@ export async function updateTaskFromKanban(data: UpdateTaskFromKanbanInput): Pro
           statusId = @statusId,
           priorityId = @priorityId,
           executorId = @executorId,
+          startDate = @startDate,
           dedline = @dedline,
           dtu = GETDATE()
         WHERE id = @id

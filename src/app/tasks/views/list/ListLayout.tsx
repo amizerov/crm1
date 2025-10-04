@@ -311,6 +311,7 @@ export default function ListLayout({
               companyId={selectedCompanyId || undefined}
               projectId={selectedProjectId || undefined}
               onTaskCreated={handleRefreshTasks}
+              selectedTaskId={selectedTask?.id}
             />
           )}
         </div>

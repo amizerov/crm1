@@ -22,6 +22,9 @@ type Task = {
   statusName: string;
   priorityName?: string;
   executorName?: string;
+  userName?: string;
+  projectName?: string;
+  companyName?: string;
   // Иерархия
   level?: number;
   hasChildren?: boolean;
@@ -109,12 +112,16 @@ export async function getTasks(executorId?: number, companyId?: number): Promise
           st.status as statusName,
           p.priority as priorityName,
           e.Name as executorName,
-          pr.projectName
+          u.fullName as userName,
+          pr.projectName,
+          c.companyName
         FROM Task t
         LEFT JOIN StatusTask st ON t.statusId = st.id
         LEFT JOIN Priority p ON t.priorityId = p.id
         LEFT JOIN Employee e ON t.executorId = e.id
+        LEFT JOIN [User] u ON t.userId = u.id
         LEFT JOIN Project pr ON t.projectId = pr.id
+        LEFT JOIN Company c ON t.companyId = c.id
         ${companyWhereClause}
         ORDER BY t.dtc DESC
       `, companyParams);
@@ -139,12 +146,16 @@ export async function getTasks(executorId?: number, companyId?: number): Promise
           st.status as statusName,
           p.priority as priorityName,
           e.Name as executorName,
-          pr.projectName
+          u.fullName as userName,
+          pr.projectName,
+          c.companyName
         FROM Task t
         LEFT JOIN StatusTask st ON t.statusId = st.id
         LEFT JOIN Priority p ON t.priorityId = p.id
         LEFT JOIN Employee e ON t.executorId = e.id
+        LEFT JOIN [User] u ON t.userId = u.id
         LEFT JOIN Project pr ON t.projectId = pr.id
+        LEFT JOIN Company c ON t.companyId = c.id
         ${whereClause}
         ORDER BY t.dtc DESC
       `, params);
@@ -222,15 +233,22 @@ export async function getCompletedTasks(executorId?: number): Promise<Task[]> {
         t.executorId,
         t.userId,
         t.companyId,
+        t.projectId,
         t.dtc,
         t.dtu,
         st.status as statusName,
         p.priority as priorityName,
-        e.Name as executorName
+        e.Name as executorName,
+        u.fullName as userName,
+        pr.projectName,
+        c.companyName
       FROM Task t
       LEFT JOIN StatusTask st ON t.statusId = st.id
       LEFT JOIN Priority p ON t.priorityId = p.id
       LEFT JOIN Employee e ON t.executorId = e.id
+      LEFT JOIN [User] u ON t.userId = u.id
+      LEFT JOIN Project pr ON t.projectId = pr.id
+      LEFT JOIN Company c ON t.companyId = c.id
       ${whereClause}
       ORDER BY t.dtu DESC, t.dtc DESC
     `, params);
@@ -396,16 +414,25 @@ export async function getSubtasks(parentTaskId: number): Promise<Task[]> {
         t.startDate,
         t.dedline,
         t.executorId,
+        t.userId,
+        t.companyId,
+        t.projectId,
         t.dtc,
         t.dtu,
         st.status as statusName,
         p.priority as priorityName,
         e.Name as executorName,
+        u.fullName as userName,
+        pr.projectName,
+        c.companyName,
         0 as level
       FROM Task t
       LEFT JOIN StatusTask st ON t.statusId = st.id
       LEFT JOIN Priority p ON t.priorityId = p.id
+      LEFT JOIN [User] u ON t.userId = u.id
       LEFT JOIN Employee e ON t.executorId = e.id
+      LEFT JOIN Project pr ON t.projectId = pr.id
+      LEFT JOIN Company c ON t.companyId = c.id
       WHERE t.parentId = @parentTaskId
       ORDER BY t.taskName
     `, { parentTaskId });

@@ -100,6 +100,7 @@ export async function getEmployeesByCompany(companyId?: number) {
     }
 
     const result = await query(`
+      -- Получаем сотрудников компании
       SELECT 
         e.id,
         e.Name,
@@ -112,14 +113,34 @@ export async function getEmployeesByCompany(companyId?: number) {
         CASE 
           WHEN e.userId IS NOT NULL THEN e.Name + ' (' + COALESCE(u.nicName, u.fullName, 'Пользователь') + ')'
           ELSE e.Name + ' (только сотрудник)'
-        END as displayName,
-        e.dtc,
-        e.dtu
+        END as displayName
       FROM Employee e
       LEFT JOIN Company c ON e.companyId = c.id
       LEFT JOIN [User] u ON e.userId = u.id
       WHERE e.companyId = @companyId
-      ORDER BY e.Name
+
+      UNION
+
+      -- Добавляем пользователей из User_Company, которых нет в Employee
+      SELECT 
+        uc.userId as id, -- Отрицательный ID для пользователей из User_Company
+        COALESCE(u.nicName, u.fullName, u.login) as Name,
+        uc.companyId,
+        uc.userId,
+        c.companyName,
+        u.nicName as userNicName,
+        u.fullName as userFullName,
+        COALESCE(u.nicName, u.fullName, u.login) as displayName
+      FROM User_Company uc
+      INNER JOIN [User] u ON uc.userId = u.id
+      INNER JOIN Company c ON uc.companyId = c.id
+      WHERE uc.companyId = @companyId
+      AND NOT EXISTS (
+        SELECT 1 FROM Employee e 
+        WHERE e.companyId = uc.companyId AND e.userId = uc.userId
+      )
+
+      ORDER BY Name
     `, { companyId });
 
     const employees = (result as any).recordset || result;
