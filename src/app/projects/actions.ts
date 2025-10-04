@@ -9,7 +9,6 @@ export interface Project {
   projectName: string;
   description?: string;
   companyId: number;
-  templateId?: number;
   userId: number;
   companyName?: string;
   userNicName?: string;
@@ -33,7 +32,6 @@ export async function getProjects() {
         p.projectName,
         p.description,
         p.companyId,
-        p.templateId,
         p.userId,
         c.companyName,
         u.nicName as userNicName,
@@ -213,7 +211,6 @@ export async function getProjectById(id: number): Promise<Project | null> {
         p.projectName,
         p.description,
         p.companyId,
-        p.templateId,
         p.userId,
         c.companyName,
         u.nicName as userNicName,
@@ -264,7 +261,8 @@ export async function addProject(formData: FormData) {
     const projectName = formData.get('projectName') as string;
     const description = formData.get('description') as string;
     const companyId = formData.get('companyId') as string;
-    const templateId = formData.get('templateId') as string;
+    const statusSource = formData.get('statusSource') as string; // 'default' или templateId
+    const templateId = statusSource && statusSource !== 'default' ? parseInt(statusSource) : null;
 
     if (!projectName || !companyId) {
       throw new Error('Необходимо заполнить обязательные поля');
@@ -276,16 +274,26 @@ export async function addProject(formData: FormData) {
     const nextId = maxIdData[0].nextId;
 
     await query(`
-      INSERT INTO Project (id, projectName, description, companyId, templateId, userId, dtc)
-      VALUES (@id, @projectName, @description, @companyId, @templateId, @userId, GETDATE())
+      INSERT INTO Project (id, projectName, description, companyId, userId, dtc)
+      VALUES (@id, @projectName, @description, @companyId, @userId, GETDATE())
     `, {
       id: nextId,
       projectName,
       description: description || null,
       companyId: parseInt(companyId),
-      templateId: templateId ? parseInt(templateId) : null,
       userId: currentUser.id
     });
+
+    // Создаём статусы для проекта
+    if (templateId) {
+      // Из шаблона
+      const { createProjectStatusesFromTemplate } = await import('./actions/statusActions');
+      await createProjectStatusesFromTemplate(nextId, templateId);
+    } else {
+      // По умолчанию
+      const { createProjectStatusesFromDefault } = await import('./actions/statusActions');
+      await createProjectStatusesFromDefault(nextId);
+    }
 
     redirect('/projects');
   } catch (error) {
@@ -307,7 +315,6 @@ export async function updateProject(formData: FormData) {
     const projectName = formData.get('projectName') as string;
     const description = formData.get('description') as string;
     const companyId = formData.get('companyId') as string;
-    const templateId = formData.get('templateId') as string;
 
     if (!id || !projectName || !companyId) {
       throw new Error('Необходимо заполнить обязательные поля');
@@ -319,7 +326,6 @@ export async function updateProject(formData: FormData) {
         projectName = @projectName,
         description = @description,
         companyId = @companyId,
-        templateId = @templateId,
         dtu = GETDATE()
       WHERE id = @id
         AND companyId IN (
@@ -338,7 +344,6 @@ export async function updateProject(formData: FormData) {
       projectName,
       description: description || null,
       companyId: parseInt(companyId),
-      templateId: templateId ? parseInt(templateId) : null,
       userId: currentUser.id
     });
 

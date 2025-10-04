@@ -3,6 +3,7 @@
 import { useState, useEffect, useTransition } from 'react';
 import { getTasks } from '../../actions/getTasks';
 import { getProjectsByCompanyForFilter } from '../../actions/getProjects';
+import { getTaskStatuses } from '../../actions/getTaskStatuses';
 import LeftPanel from '../common/LeftPanel';
 import KanbanBoard from './KanbanBoard';
 import TaskDetailsPanel from '../common/TaskDetails';
@@ -39,6 +40,7 @@ interface UserCompany {
 interface Status {
   id: number;
   status: string;
+  stepOrder: number;
 }
 
 interface DeskLayoutProps {
@@ -52,12 +54,13 @@ interface DeskLayoutProps {
 export default function DeskLayout({ 
   initialTasks, 
   userCompanies, 
-  statuses,
+  statuses: initialStatuses,
   currentUserId,
   onViewChange
 }: DeskLayoutProps) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [allTasks, setAllTasks] = useState<Task[]>(initialTasks);
+  const [statuses, setStatuses] = useState<Status[]>(initialStatuses);
   const [selectedCompanyId, setSelectedCompanyId] = useState<number>(0);
   const [selectedProjectId, setSelectedProjectId] = useState<number>(0);
   const [projects, setProjects] = useState<{ id: number; projectName: string }[]>([]);
@@ -97,6 +100,10 @@ export default function DeskLayout({
               const projectId = parseInt(savedProjectId);
               if (projectId === 0 || companyProjects.some(p => p.id === projectId)) {
                 setSelectedProjectId(projectId);
+                
+                // Загружаем статусы для проекта
+                const projectStatuses = await getTaskStatuses(projectId === 0 ? undefined : projectId);
+                setStatuses(projectStatuses);
                 
                 // Фильтруем задачи по проекту
                 if (projectId === 0) {
@@ -206,6 +213,10 @@ export default function DeskLayout({
       setAllTasks(newTasks);
       setTasks(newTasks);
       
+      // Загружаем статусы по умолчанию (projectId IS NULL)
+      const defaultStatuses = await getTaskStatuses();
+      setStatuses(defaultStatuses);
+      
       if (companyId !== 0) {
         const companyProjects = await getProjectsByCompanyForFilter(companyId);
         setProjects(companyProjects);
@@ -231,13 +242,18 @@ export default function DeskLayout({
     });
   };
 
-  const handleProjectChange = (projectId: number) => {
+  const handleProjectChange = async (projectId: number) => {
     setSelectedProjectId(projectId);
     localStorage.setItem('selectedProjectId', projectId.toString());
     
     setIsInitialLoading(true);
     
-    setTimeout(() => {
+    startTransition(async () => {
+      // Загружаем статусы для проекта (если projectId = 0, загружаются статусы по умолчанию)
+      const projectStatuses = await getTaskStatuses(projectId === 0 ? undefined : projectId);
+      setStatuses(projectStatuses);
+      
+      // Фильтруем задачи
       if (projectId === 0) {
         setTasks(allTasks);
       } else {
@@ -245,7 +261,7 @@ export default function DeskLayout({
         setTasks(filtered);
       }
       setIsInitialLoading(false);
-    }, 100);
+    });
   };
 
   const handleTaskClick = (task: Task) => {

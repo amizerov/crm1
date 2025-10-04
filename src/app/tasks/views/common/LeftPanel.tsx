@@ -114,7 +114,7 @@ export default function LeftPanel({
               disabled:opacity-50 disabled:cursor-not-allowed
             "
           >
-            <option value={0}>Все проекты</option>
+            <option value={0}>Без проекта</option>
             {projects.map((project) => (
               <option key={project.id} value={project.id}>
                 {project.projectName}

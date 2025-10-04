@@ -127,17 +127,19 @@ export default async function AddProjectPage() {
         </div>
 
         <div style={{ marginBottom: 32 }}>
-          <label htmlFor="templateId" style={{ 
+          <label htmlFor="statusSource" style={{ 
             display: 'block', 
             marginBottom: 8, 
             fontWeight: 'bold',
             color: '#333'
           }}>
-            Шаблон процесса
+            Шаги процесса (статусы задач) *
           </label>
           <select
-            id="templateId"
-            name="templateId"
+            id="statusSource"
+            name="statusSource"
+            required
+            defaultValue="default"
             style={{
               width: '100%',
               padding: '12px',
@@ -147,10 +149,10 @@ export default async function AddProjectPage() {
               boxSizing: 'border-box'
             }}
           >
-            <option value="">Без шаблона (использовать стандартные статусы)</option>
+            <option value="default">📋 Стандартные шаги (Идея → Готово к взятию → В работе → Тестирование → Готово)</option>
             {templates.map((template) => (
               <option key={template.id} value={template.id}>
-                {template.templName}
+                📝 Из шаблона: {template.templName}
               </option>
             ))}
           </select>
@@ -159,7 +161,7 @@ export default async function AddProjectPage() {
             color: '#6c757d', 
             marginTop: '8px' 
           }}>
-            Шаблон определяет шаги процесса (статусы) для задач этого проекта
+            Выберите шаги процесса для этого проекта. Их можно будет изменить после создания проекта.
           </div>
         </div>
 
