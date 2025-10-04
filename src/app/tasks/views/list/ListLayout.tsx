@@ -5,7 +5,7 @@ import { getTasks } from '../../actions/getTasks';
 import { getProjectsByCompanyForFilter } from '../../actions/getProjects';
 import LeftPanel from '../common/LeftPanel';
 import TaskList from './TaskList';
-import TaskDetails from '../desk/TaskDetails';
+import TaskDetails from '../common/TaskDetails';
 import Header from '../common/Header';
 
 interface Task {
@@ -46,13 +46,15 @@ interface ListLayoutProps {
   userCompanies: UserCompany[];
   statuses: Status[];
   currentUserId: number;
+  onViewChange?: (view: 'list' | 'desk') => void;
 }
 
 export default function ListLayout({ 
   initialTasks, 
   userCompanies, 
   statuses,
-  currentUserId 
+  currentUserId,
+  onViewChange
 }: ListLayoutProps) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [allTasks, setAllTasks] = useState<Task[]>(initialTasks);
@@ -273,7 +275,8 @@ export default function ListLayout({
         isFullscreen={isFullscreen}
         onToggleFullscreen={toggleFullscreen}
         title="📋 Список задач"
-        tableUrl="/tasks/views/desk"
+        currentView="list"
+        onViewChange={onViewChange}
       />
 
       {/* Основной контент */}

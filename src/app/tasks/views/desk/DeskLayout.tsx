@@ -5,7 +5,7 @@ import { getTasks } from '../../actions/getTasks';
 import { getProjectsByCompanyForFilter } from '../../actions/getProjects';
 import LeftPanel from '../common/LeftPanel';
 import KanbanBoard from './KanbanBoard';
-import TaskDetailsPanel from './TaskDetails';
+import TaskDetailsPanel from '../common/TaskDetails';
 import Header from '../common/Header';
 
 interface Task {
@@ -46,13 +46,15 @@ interface DeskLayoutProps {
   userCompanies: UserCompany[];
   statuses: Status[];
   currentUserId: number;
+  onViewChange?: (view: 'list' | 'desk') => void;
 }
 
 export default function DeskLayout({ 
   initialTasks, 
   userCompanies, 
   statuses,
-  currentUserId 
+  currentUserId,
+  onViewChange
 }: DeskLayoutProps) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [allTasks, setAllTasks] = useState<Task[]>(initialTasks);
@@ -275,7 +277,8 @@ export default function DeskLayout({
         isFullscreen={isFullscreen}
         onToggleFullscreen={toggleFullscreen}
         title="📋 Канбан доска"
-        tableUrl="/tasks"
+        currentView="desk"
+        onViewChange={onViewChange}
       />
 
       {/* Основной контент */}

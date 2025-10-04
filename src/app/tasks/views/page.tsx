@@ -1,11 +1,11 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/db/loginUser';
-import { getTasks } from '../../actions/getTasks';
-import { getUserCompanies } from '../../actions/getUserCompanies';
-import { getTaskStatuses } from '../../actions/getTaskStatuses';
-import DeskLayout from './DeskLayout';
+import { getTasks } from '../actions/getTasks';
+import { getUserCompanies } from '../actions/getUserCompanies';
+import { getTaskStatuses } from '../actions/getTaskStatuses';
+import TasksViewLayout from './common/TasksViewLayout';
 
-export default async function DeskPage() {
+export default async function TasksViewsPage() {
   // Проверяем авторизацию
   const currentUser = await getCurrentUser();
   if (!currentUser) {
@@ -19,11 +19,12 @@ export default async function DeskPage() {
   ]);
 
   return (
-    <DeskLayout 
+    <TasksViewLayout 
       initialTasks={tasks}
       userCompanies={userCompanies}
       statuses={statuses}
       currentUserId={currentUser.id}
+      initialView="desk" // По умолчанию канбан
     />
   );
 }

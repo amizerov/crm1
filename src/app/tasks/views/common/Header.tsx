@@ -1,14 +1,13 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
-
 interface NavigationHeaderProps {
   isLeftPanelVisible: boolean;
   onToggleLeftPanel: () => void;
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
   title?: string;
-  tableUrl?: string;
+  currentView?: 'list' | 'desk';
+  onViewChange?: (view: 'list' | 'desk') => void;
 }
 
 export default function Header({
@@ -17,33 +16,11 @@ export default function Header({
   isFullscreen,
   onToggleFullscreen,
   title = "📋 Канбан доска",
-  tableUrl = "/tasks"
+  currentView = 'desk',
+  onViewChange
 }: NavigationHeaderProps) {
-  const pathname = usePathname();
-  
-  // Определяем текущую страницу и альтернативный URL
-  const isListView = pathname.includes('/tasks/views/list');
-  const isDeskView = pathname.includes('/tasks/views/desk');
-  
-  const getAlternativeUrl = () => {
-    if (isListView) {
-      return '/tasks/views/desk';
-    } else if (isDeskView) {
-      return '/tasks/views/list';
-    }
-    return tableUrl;
-  };
-  
-  const getButtonText = () => {
-    if (isListView) {
-      return { icon: '📋', text: 'Канбан' };
-    } else if (isDeskView) {
-      return { icon: '📑', text: 'Список' };
-    }
-    return { icon: '📑', text: 'Таблица' };
-  };
-  
-  const buttonConfig = getButtonText();
+  const isListView = currentView === 'list';
+  const isDeskView = currentView === 'desk';
 
   return (
     <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between gap-3">
@@ -76,23 +53,51 @@ export default function Header({
         <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100 whitespace-nowrap">
           {title}
         </h1>
-        <a
-          href={getAlternativeUrl()}
-          className="
-            px-2 py-1.5
-            bg-gray-200 hover:bg-gray-300 
-            dark:bg-gray-700 dark:hover:bg-gray-600
-            text-gray-900 dark:text-gray-100
-            rounded
-            text-xs font-medium
-            no-underline inline-flex items-center gap-1
-            transition-colors
-            whitespace-nowrap
-          "
-        >
-          <span>{buttonConfig.icon}</span>
-          <span className="hidden sm:inline">{buttonConfig.text}</span>
-        </a>
+        
+        {/* Кнопки переключения вида */}
+        {onViewChange && (
+          <div className="flex items-center gap-1 ml-4">
+            <button
+              onClick={() => onViewChange('list')}
+              className={`
+                px-3 py-1.5
+                rounded
+                text-xs font-medium
+                inline-flex items-center gap-1
+                transition-colors
+                whitespace-nowrap
+                cursor-pointer
+                ${isListView 
+                  ? 'bg-gray-400 text-white dark:bg-gray-500' 
+                  : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100'
+                }
+              `}
+            >
+              <span>📑</span>
+              <span className="hidden sm:inline">Список</span>
+            </button>
+            
+            <button
+              onClick={() => onViewChange('desk')}
+              className={`
+                px-3 py-1.5
+                rounded
+                text-xs font-medium
+                inline-flex items-center gap-1
+                transition-colors
+                whitespace-nowrap
+                cursor-pointer
+                ${isDeskView 
+                  ? 'bg-gray-400 text-white dark:bg-gray-500' 
+                  : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100'
+                }
+              `}
+            >
+              <span>📋</span>
+              <span className="hidden sm:inline">Канбан</span>
+            </button>
+          </div>
+        )}
       </div>
       <div className="flex items-center gap-2 flex-wrap">
         {/* Кнопка полноэкранного режима */}
