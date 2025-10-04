@@ -177,6 +177,7 @@ export default function TaskDetailsPanel({ task, onClose, onTaskUpdated }: TaskD
           if (onTaskUpdated) {
             await onTaskUpdated();
           }
+          onClose(); // Закрываем панель после успешного сохранения
         } else {
           console.error('Error updating task:', result.error);
           alert(result.error || 'Ошибка при сохранении');

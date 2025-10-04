@@ -67,14 +67,14 @@ export default function TemplatesList({ templates }: TemplatesListProps) {
           <div className="flex gap-2">
             <button
               onClick={() => handleEdit(template.id)}
-              className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded text-sm transition-colors"
+              className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded text-sm transition-colors cursor-pointer"
             >
               ✏️ Редактировать
             </button>
             <button
               onClick={() => handleDelete(template.id, template.templName)}
               disabled={deleting === template.id}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition-colors disabled:opacity-50 cursor-pointer"
               title="Удалить шаблон"
             >
               {deleting === template.id ? '...' : '🗑️'}

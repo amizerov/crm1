@@ -38,6 +38,7 @@ interface KanbanBoardProps {
   companyId?: number;
   projectId?: number;
   onTaskCreated?: () => void;
+  selectedTaskId?: number;
 }
 
 export default function KanbanBoard({ 
@@ -47,7 +48,8 @@ export default function KanbanBoard({
   isPending,
   companyId,
   projectId,
-  onTaskCreated
+  onTaskCreated,
+  selectedTaskId
 }: KanbanBoardProps) {
   const [addingToStatus, setAddingToStatus] = useState<number | null>(null);
   const [newTaskName, setNewTaskName] = useState('');
@@ -210,18 +212,25 @@ export default function KanbanBoard({
   }, [isDragging, draggedTask, dragOverStatus, onTaskCreated]);
 
   return (
-    <div className="h-full w-full p-4 overflow-hidden">
-      <div className="flex gap-4 h-full overflow-x-auto pb-4">
+    <div className="h-full w-full overflow-hidden">
+      <div 
+        className="h-full overflow-x-auto p-4"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${activeStatuses.length}, minmax(240px, 1fr))`,
+          gap: '1rem',
+          gridAutoFlow: 'column',
+        }}
+      >
         {tasksByStatus.map(({ status, tasks: statusTasks }) => (
           <div 
             key={status.id}
             data-status-id={status.id}
-            className={`flex-shrink-0 h-full flex flex-col rounded-lg transition-colors ${
+            className={`h-full flex flex-col rounded-lg transition-colors min-w-[240px] ${
               dragOverStatus === status.id
                 ? 'bg-blue-100 dark:bg-blue-900/30 ring-2 ring-blue-500'
                 : 'bg-gray-100 dark:bg-gray-800'
             }`}
-            style={{ width: 'calc((100% - 64px) / 5)' }}
           >
             {/* Заголовок колонки */}
             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
@@ -262,7 +271,9 @@ export default function KanbanBoard({
                       ${
                         draggedTask?.id === task.id && isDragging
                           ? 'opacity-30'
-                          : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500'
+                          : selectedTaskId === task.id
+                            ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-200 dark:ring-blue-800 bg-blue-50 dark:bg-blue-900/20'
+                            : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500'
                       }
                     `}
                   >

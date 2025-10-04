@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 interface Task {
   id: number;
   parentId?: number;
@@ -39,110 +41,189 @@ export default function TaskList({
   projectId,
   onTaskCreated
 }: TaskListProps) {
+  // Группируем задачи по статусам
+  const tasksByStatus = tasks.reduce((acc, task) => {
+    const statusName = task.statusName || 'Без статуса';
+    if (!acc[statusName]) {
+      acc[statusName] = [];
+    }
+    acc[statusName].push(task);
+    return acc;
+  }, {} as Record<string, Task[]>);
+
+  // Сортируем статусы в правильном порядке
+  const statusOrder = ['Идея', 'Готово к взятию', 'В работе', 'Тестирование', 'Готово', 'На паузе', 'Отменено'];
+  const sortedStatuses = Object.keys(tasksByStatus).sort((a, b) => {
+    const indexA = statusOrder.indexOf(a);
+    const indexB = statusOrder.indexOf(b);
+    if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+    if (indexA === -1) return 1;
+    if (indexB === -1) return -1;
+    return indexA - indexB;
+  });
+
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+
+  const toggleSection = (status: string) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [status]: !prev[status]
+    }));
+  };
+
+  const getPriorityColor = (priorityName?: string) => {
+    switch(priorityName) {
+      case 'Низкий': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+      case 'Средний': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
+      case 'Высокий': return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
+      case 'Срочный': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+      default: return 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
+    }
+  };
   return (
-    <div className="h-full bg-white dark:bg-gray-900 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Список задач
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Всего задач: {tasks.length}
+    <div className="h-full overflow-auto bg-white dark:bg-gray-900">
+      {isPending ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="flex flex-col items-center gap-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">Загрузка задач...</p>
+          </div>
+        </div>
+      ) : tasks.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-gray-400 dark:text-gray-500 mb-4">
+            <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+            Нет задач
+          </h3>
+          <p className="text-gray-500 dark:text-gray-400">
+            Задачи появятся здесь после создания
           </p>
         </div>
+      ) : (
+        <div className="w-full">
+          {/* Заголовки таблицы */}
+          <div className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <div className="grid grid-cols-12 gap-4 px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <div className="col-span-5">Имя</div>
+              <div className="col-span-3">Исполнитель</div>
+              <div className="col-span-2">Срок выполнения</div>
+              <div className="col-span-2">Приоритет</div>
+            </div>
+          </div>
 
-        {isPending ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="flex flex-col items-center gap-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">Загрузка задач...</p>
-            </div>
-          </div>
-        ) : tasks.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-gray-400 dark:text-gray-500 mb-4">
-              <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-              </svg>
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-              Нет задач
-            </h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-6">
-              {companyId && companyId > 0 
-                ? 'В выбранной компании пока нет задач' 
-                : 'Пока нет задач для отображения'
-              }
-            </p>
-            <button
-              onClick={onTaskCreated}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/>
-              </svg>
-              Создать задачу
-            </button>
-          </div>
-        ) : (
-          <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
-            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-              {tasks.map((task) => (
-                <li 
-                  key={task.id}
-                  className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                    onTaskClick ? 'cursor-pointer' : ''
-                  }`}
-                  onClick={() => onTaskClick?.(task)}
-                >
-                  <div className="px-6 py-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3">
-                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                            {task.taskName}
-                          </p>
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                            {task.statusName}
-                          </span>
-                          {task.priorityName && (
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              task.priorityName === 'Высокий' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-                              task.priorityName === 'Средний' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-                              'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                            }`}>
-                              {task.priorityName}
-                            </span>
-                          )}
-                        </div>
-                        {task.description && (
-                          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                            {task.description}
-                          </p>
-                        )}
-                        <div className="mt-2 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                          <span>ID: #{task.id}</span>
-                          {task.executorName && (
-                            <span>Исполнитель: {task.executorName}</span>
-                          )}
-                          {task.dedline && (
-                            <span>Дедлайн: {new Date(task.dedline).toLocaleDateString('ru-RU')}</span>
-                          )}
-                        </div>
+          {/* Тело таблицы */}
+          <div>
+            {sortedStatuses.map((status) => {
+              const statusTasks = tasksByStatus[status];
+              const isCollapsed = collapsedSections[status];
+              
+              return (
+                <div key={status}>
+                  {/* Заголовок секции статуса */}
+                  <button
+                    onClick={() => toggleSection(status)}
+                    className="w-full bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-b border-gray-200 dark:border-gray-700"
+                  >
+                    <div className="flex items-center gap-3 px-6 py-3">
+                      <svg 
+                        className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform flex-shrink-0 ${
+                          isCollapsed ? '-rotate-90' : ''
+                        }`} 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/>
+                      </svg>
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        {status}
+                      </h3>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded-full">
+                        {statusTasks.length}
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Строки задач */}
+                  {!isCollapsed && statusTasks.map((task) => (
+                    <div
+                      key={task.id}
+                      className="grid grid-cols-12 gap-4 px-6 py-3 border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors group"
+                      onClick={() => onTaskClick?.(task)}
+                    >
+                      {/* Имя задачи */}
+                      <div className="col-span-5 flex items-center gap-3">
+                        <button 
+                          className="w-4 h-4 rounded border-2 border-gray-300 dark:border-gray-600 flex-shrink-0 hover:border-blue-500 transition-colors cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                        />
+                        <span className="text-sm text-gray-900 dark:text-gray-100 truncate">
+                          {task.taskName}
+                        </span>
                       </div>
-                      <div className="ml-4 flex-shrink-0">
-                        <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/>
-                        </svg>
+
+                      {/* Исполнитель */}
+                      <div className="col-span-3 flex items-center">
+                        {task.executorName ? (
+                          <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                            {task.executorName}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-400 dark:text-gray-500">—</span>
+                        )}
+                      </div>
+
+                      {/* Срок выполнения */}
+                      <div className="col-span-2 flex items-center">
+                        {task.dedline ? (
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            {new Date(task.dedline).toLocaleDateString('ru-RU', { 
+                              day: 'numeric', 
+                              month: 'short' 
+                            })}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-400 dark:text-gray-500">—</span>
+                        )}
+                      </div>
+
+                      {/* Приоритет */}
+                      <div className="col-span-2 flex items-center">
+                        {task.priorityName ? (
+                          <span className={`text-xs px-2 py-1 rounded-full font-medium ${getPriorityColor(task.priorityName)}`}>
+                            {task.priorityName}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-400 dark:text-gray-500">—</span>
+                        )}
                       </div>
                     </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                  ))}
+
+                  {/* Кнопка добавления задачи */}
+                  {!isCollapsed && (
+                    <button
+                      className="w-full px-6 py-2 text-left text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors flex items-center gap-2 border-b border-gray-100 dark:border-gray-800"
+                      onClick={() => onTaskCreated?.()}
+                    >
+                      <svg className="w-4 h-4 ml-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/>
+                      </svg>
+                      Добавить задачу
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

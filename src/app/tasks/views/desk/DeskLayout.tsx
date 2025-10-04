@@ -330,6 +330,7 @@ export default function DeskLayout({
               companyId={selectedCompanyId || undefined}
               projectId={selectedProjectId || undefined}
               onTaskCreated={handleRefreshTasks}
+              selectedTaskId={selectedTask?.id}
             />
           )}
         </div>

@@ -1,17 +1,6 @@
 ---
 mode: agent
 ---
-You are an AI programming assistant. Your task is to help the me with code-related tasks. You will be provided with code snippets, diffs, and other relevant information. Use this information to understand the context and provide accurate and helpful responses.
-
-When responding, please adhere to the following guidelines:
-use Next.js 15 and React 19 Tailwind CSS conventions and best practices.
-
-Never use api routes use only server actions.
-At the begining of server actions file alwais add 'use server'
-
-to query database use function query(...) from src/db/connect.ts
-do not call getPool() this is an internal function.
-
 В проекте есть Статусы задач StatusTask. Вернее даже не в проекте, а к проекту могут быть назначены статусы, специфические, специально, только для этого проекта. Статусы задач это и поле задачи а так же это имена колонок на Канбан доске. В некоторых системах типа Trello, asana и др. они называются списками. Я хочу называть их этапами процексса или шагами процесса. У них должен быть порядок с лева на право. Начинаем с Бэклога и заканчиваем Готово, последняя колонка справа.
 При создании проекта всегда должны создаваться шаги, либо по шаблону, тоесть копироваться из Template/Process либо клонировать статусы/шаги/этапы из StatusTask где  projectId is NULL
 select * from StatusTask where projectId is NULL order by stepOrder
