@@ -145,27 +145,22 @@ export default function TaskDetailsPanel({ task: initialTask, currentUserId, onC
     };
   }, [isResizing, width]);
 
-  // Закрытие при клике вне панели
+  // Закрытие по клавише Escape
   useEffect(() => {
-    if (isResizing) return; // Не закрывать при изменении размера
     if (showDeleteModal) return; // НЕ закрывать панель, если открыто модальное окно удаления!
 
-    const handleClickOutside = (event: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
         onClose();
       }
     };
 
-    // Добавляем слушатель с небольшой задержкой, чтобы не закрыть панель сразу после открытия
-    const timeoutId = setTimeout(() => {
-      document.addEventListener('mousedown', handleClickOutside);
-    }, 100);
+    document.addEventListener('keydown', handleEscape);
 
     return () => {
-      clearTimeout(timeoutId);
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
     };
-  }, [onClose, isResizing, showDeleteModal]);
+  }, [onClose, showDeleteModal]);
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return 'Не указано';
@@ -332,9 +327,10 @@ export default function TaskDetailsPanel({ task: initialTask, currentUserId, onC
         `}
         style={{ zIndex: 51 }}
       />
-      {/* Табы в стиле Windows */}
+      {/* Табы в стиле Windows + кнопка закрытия */}
       <div className="flex-shrink-0 bg-slate-100 dark:bg-slate-900 px-2 pt-1 border-b border-slate-300 dark:border-slate-600">
-        <div className="flex gap-0.5">
+        <div className="flex items-center justify-between">
+          <div className="flex gap-0.5 flex-1">
           <button
             onClick={() => setActiveTab('details')}
             className={`
@@ -386,6 +382,36 @@ export default function TaskDetailsPanel({ task: initialTask, currentUserId, onC
             `}
           >
             История
+          </button>
+          </div>
+          
+          {/* Кнопка закрытия */}
+          <button
+            onClick={onClose}
+            className="
+              w-6 h-6 rounded-full 
+              bg-gray-300 dark:bg-gray-700 
+              hover:bg-gray-400 dark:hover:bg-gray-600
+              flex items-center justify-center
+              transition-colors
+              cursor-pointer
+              mr-1
+            "
+            title="Закрыть (Escape)"
+          >
+            <svg 
+              className="w-3 h-3 text-gray-600 dark:text-gray-300" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d="M6 18L18 6M6 6l12 12" 
+              />
+            </svg>
           </button>
         </div>
       </div>

@@ -76,6 +76,11 @@ export default function KanbanBoard({
   // Refs для автоскролла
   const boardRef = useRef<HTMLDivElement | null>(null);
   const columnRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Состояние для pan-скролла (drag-to-scroll)
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, scrollLeft: 0 });
   
   // Состояние для отслеживания ширины правой панели
   const [rightPanelWidth, setRightPanelWidth] = useState(0);
@@ -97,14 +102,13 @@ export default function KanbanBoard({
       const detailsPanel = document.querySelector('[data-task-details-panel]');
       if (detailsPanel) {
         const width = detailsPanel.getBoundingClientRect().width;
-        // Добавляем дополнительный отступ для гарантии видимости
-        const totalWidth = width + 100;
-        console.log('Panel width:', width, 'Total padding:', totalWidth);
-        setRightPanelWidth(totalWidth);
+        // Используем только реальную ширину панели без лишнего отступа
+        console.log('Panel width:', width, 'Total padding:', width);
+        setRightPanelWidth(width);
       } else {
-        // Fallback - базовая ширина панели + отступ
-        console.log('Panel not found, using fallback: 700px');
-        setRightPanelWidth(700);
+        // Fallback - базовая ширина панели
+        console.log('Panel not found, using fallback: 600px');
+        setRightPanelWidth(600);
       }
     };
 
@@ -138,6 +142,34 @@ export default function KanbanBoard({
     }
   }, [selectedTaskId, rightPanelWidth]); // Добавлена зависимость от rightPanelWidth!
 
+  // useEffect для обработки pan-скролла (drag-to-scroll)
+  useEffect(() => {
+    if (!isPanning) return;
+
+    const handlePanMove = (e: MouseEvent) => {
+      if (!boardRef.current) return;
+      
+      const dx = e.clientX - panStart.x;
+      boardRef.current.scrollLeft = panStart.scrollLeft - dx;
+    };
+
+    const handlePanEnd = () => {
+      setIsPanning(false);
+      if (boardRef.current) {
+        boardRef.current.style.cursor = 'grab';
+        boardRef.current.style.userSelect = '';
+      }
+    };
+
+    document.addEventListener('mousemove', handlePanMove);
+    document.addEventListener('mouseup', handlePanEnd);
+
+    return () => {
+      document.removeEventListener('mousemove', handlePanMove);
+      document.removeEventListener('mouseup', handlePanEnd);
+    };
+  }, [isPanning, panStart]);
+
   // Функция для оптимистичного удаления задачи
   const handleTaskDelete = (taskId: number) => {
     // Мгновенно удаляем задачу из UI
@@ -158,6 +190,14 @@ export default function KanbanBoard({
       const boardRect = boardElement.getBoundingClientRect();
       const columnRect = columnElement.getBoundingClientRect();
       
+      // Проверяем, является ли это последним столбцом
+      const activeStatuses = statuses.filter(status => 
+        status.status !== 'На паузе' && 
+        status.status !== 'Отменено'
+      );
+      const lastStatusId = activeStatuses[activeStatuses.length - 1]?.id;
+      const isLastColumn = statusId === lastStatusId;
+      
       // Используем актуальную ширину правой панели из state
       const rightMargin = 20; // Небольшой отступ для красоты
       const totalRightSpace = rightPanelWidth + rightMargin;
@@ -171,6 +211,7 @@ export default function KanbanBoard({
       console.log('scrollToColumn:', {
         statusId,
         force,
+        isLastColumn,
         rightPanelWidth,
         totalRightSpace,
         isColumnVisible,
@@ -184,14 +225,15 @@ export default function KanbanBoard({
       if (force || !isColumnVisible) {
         // Если столбец справа от видимой области ИЛИ force=true
         if (force || columnRect.right > visibleRight) {
-          // Прокручиваем так, чтобы столбец был виден + немного следующего столбца
-          // Добавляем 100px чтобы показать часть следующего столбца
+          // Для последнего столбца не добавляем запас, для остальных добавляем 100px
+          const scrollExtra = isLastColumn ? 60 : 100;
+          
           const targetScrollLeft = 
             boardElement.scrollLeft + 
             (columnRect.right - visibleRight) + 
-            100; // Показываем текущий столбец + ~100px следующего
+            scrollExtra; // Запас только если не последний столбец
           
-          console.log('Scrolling to:', targetScrollLeft);
+          console.log('Scrolling to:', targetScrollLeft, 'Extra:', scrollExtra);
           
           boardElement.scrollTo({
             left: targetScrollLeft,
@@ -200,10 +242,14 @@ export default function KanbanBoard({
         }
         // Если столбец слева от видимой области
         else if (columnRect.left < boardRect.left) {
+          // Прокручиваем так, чтобы был виден текущий столбец + часть предыдущего слева
+          // Вычитаем 80px чтобы показать ~80px предыдущего столбца слева
           const targetScrollLeft = 
             boardElement.scrollLeft + 
             (columnRect.left - boardRect.left) - 
-            20;
+            80; // Показываем текущий столбец + ~80px предыдущего
+          
+          console.log('Scrolling left to:', targetScrollLeft);
           
           boardElement.scrollTo({
             left: Math.max(0, targetScrollLeft),
@@ -214,10 +260,53 @@ export default function KanbanBoard({
     }
   };
 
-  // Обработчик ховера на столбце
+  // Обработчик начала pan-скролла (drag-to-scroll) на пустом месте доски
+  const handleBoardMouseDown = (e: React.MouseEvent) => {
+    // Проверяем, что клик НЕ на карточке задачи
+    const target = e.target as HTMLElement;
+    const isTaskCard = target.closest('[data-task-card]');
+    
+    // Если клик на карточке - пропускаем (обработается handleMouseDown для drag задачи)
+    if (isTaskCard) return;
+    
+    // Если клик на кнопке или input - пропускаем
+    if (target.tagName === 'BUTTON' || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+    
+    // Запускаем pan-скролл
+    e.preventDefault();
+    setIsPanning(true);
+    setPanStart({
+      x: e.clientX,
+      scrollLeft: boardRef.current?.scrollLeft || 0
+    });
+    
+    // Меняем курсор
+    if (boardRef.current) {
+      boardRef.current.style.cursor = 'grabbing';
+      boardRef.current.style.userSelect = 'none';
+    }
+  };
+
+  // Обработчик ховера на столбце с задержкой
   const handleColumnHover = (statusId: number) => {
-    if (!isDragging) { // Не скроллим во время драга
+    if (isDragging || isPanning) return; // Не скроллим во время драга или pan
+    
+    // Очищаем предыдущий таймер
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    
+    // Устанавливаем задержку 300ms перед прокруткой
+    hoverTimeoutRef.current = setTimeout(() => {
       scrollToColumn(statusId);
+    }, 500);
+  };
+  
+  // Обработчик выхода мыши из столбца - отменяем отложенную прокрутку
+  const handleColumnLeave = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
     }
   };
 
@@ -423,10 +512,12 @@ export default function KanbanBoard({
   return (
     <div 
       ref={boardRef}
+      onMouseDown={handleBoardMouseDown}
       className="h-full w-full overflow-x-auto"
       style={{
         scrollbarWidth: 'thin',
         scrollbarColor: '#cbd5e0 #f7fafc',
+        cursor: isPanning ? 'grabbing' : 'grab',
       }}
     >
       <div 
@@ -455,6 +546,7 @@ export default function KanbanBoard({
             }}
             data-status-id={status.id}
             onMouseEnter={() => handleColumnHover(status.id)}
+            onMouseLeave={handleColumnLeave}
             className={`flex flex-col rounded-lg transition-colors min-w-[240px] overflow-hidden ${
               dragOverStatus === status.id
                 ? 'bg-blue-100 dark:bg-blue-900/30 ring-2 ring-blue-500'
@@ -490,6 +582,7 @@ export default function KanbanBoard({
                   return (
                   <div
                     key={task.id}
+                    data-task-card="true"
                     onMouseDown={(e) => handleMouseDown(e, task)}
                     onClick={() => !isDragging && onTaskClick(task)}
                     className={`
