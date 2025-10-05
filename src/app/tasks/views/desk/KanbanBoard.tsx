@@ -72,6 +72,10 @@ export default function KanbanBoard({
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const draggedElementRef = useRef<HTMLDivElement | null>(null);
+  
+  // Refs для автоскролла
+  const boardRef = useRef<HTMLDivElement | null>(null);
+  const columnRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   // Синхронизация с пропсами tasks
   useEffect(() => {
@@ -86,6 +90,42 @@ export default function KanbanBoard({
     // Вызываем колбэк родителя, если он есть
     if (onTaskDeleted) {
       onTaskDeleted(taskId);
+    }
+  };
+
+  // Функция автоматической прокрутки к столбцу при ховере на задаче
+  const scrollToColumn = (statusId: number) => {
+    const columnElement = columnRefs.current.get(statusId);
+    const boardElement = boardRef.current;
+    
+    if (columnElement && boardElement) {
+      const boardRect = boardElement.getBoundingClientRect();
+      const columnRect = columnElement.getBoundingClientRect();
+      
+      // Проверяем, виден ли столбец полностью
+      const isColumnVisible = 
+        columnRect.left >= boardRect.left && 
+        columnRect.right <= boardRect.right;
+      
+      if (!isColumnVisible) {
+        // Вычисляем позицию для прокрутки с небольшим отступом слева
+        const scrollLeft = 
+          columnElement.offsetLeft - 
+          boardElement.offsetLeft - 
+          20; // 20px отступ от края
+        
+        boardElement.scrollTo({
+          left: Math.max(0, scrollLeft),
+          behavior: 'smooth'
+        });
+      }
+    }
+  };
+
+  // Обработчик ховера на задаче
+  const handleTaskHover = (statusId: number) => {
+    if (!isDragging) { // Не скроллим во время драга
+      scrollToColumn(statusId);
     }
   };
 
@@ -289,7 +329,14 @@ export default function KanbanBoard({
   }, [isDragging, draggedTask, dragOverStatus, onTaskCreated, statuses]);
 
   return (
-    <div className="h-full w-full overflow-x-auto">
+    <div 
+      ref={boardRef}
+      className="h-full w-full overflow-x-auto"
+      style={{
+        scrollbarWidth: 'thin',
+        scrollbarColor: '#cbd5e0 #f7fafc'
+      }}
+    >
       <div 
         className="h-full p-4"
         style={{
@@ -303,6 +350,13 @@ export default function KanbanBoard({
         {tasksByStatus.map(({ status, tasks: statusTasks }) => (
           <div 
             key={status.id}
+            ref={(el) => {
+              if (el) {
+                columnRefs.current.set(status.id, el);
+              } else {
+                columnRefs.current.delete(status.id);
+              }
+            }}
             data-status-id={status.id}
             className={`flex flex-col rounded-lg transition-colors min-w-[240px] overflow-hidden ${
               dragOverStatus === status.id
@@ -340,6 +394,7 @@ export default function KanbanBoard({
                   <div
                     key={task.id}
                     onMouseDown={(e) => handleMouseDown(e, task)}
+                    onMouseEnter={() => handleTaskHover(task.statusId)}
                     onClick={() => !isDragging && onTaskClick(task)}
                     className={`
                       bg-white dark:bg-gray-700 

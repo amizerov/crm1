@@ -351,6 +351,7 @@ export default function DeskLayout({
         <TaskDetailsPanel 
           key={selectedTask.id}
           task={selectedTask}
+          currentUserId={currentUserId}
           onClose={handleClosePanel}
           onTaskUpdated={handleRefreshTasks}
           onTaskDeleted={handleTaskDelete}
