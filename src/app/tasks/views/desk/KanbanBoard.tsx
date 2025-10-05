@@ -149,7 +149,7 @@ export default function KanbanBoard({
     }
   };
 
-  // Функция автоматической прокрутки к столбцу при ховере на задаче
+  // Функция автоматической прокрутки к столбцу при ховере на столбце
   const scrollToColumn = (statusId: number, force: boolean = false) => {
     const columnElement = columnRefs.current.get(statusId);
     const boardElement = boardRef.current;
@@ -184,11 +184,12 @@ export default function KanbanBoard({
       if (force || !isColumnVisible) {
         // Если столбец справа от видимой области ИЛИ force=true
         if (force || columnRect.right > visibleRight) {
-          // При force всегда прокручиваем так, чтобы столбец был полностью виден слева от панели
+          // Прокручиваем так, чтобы столбец был виден + немного следующего столбца
+          // Добавляем 100px чтобы показать часть следующего столбца
           const targetScrollLeft = 
             boardElement.scrollLeft + 
             (columnRect.right - visibleRight) + 
-            60; // Увеличенный отступ для гарантии
+            100; // Показываем текущий столбец + ~100px следующего
           
           console.log('Scrolling to:', targetScrollLeft);
           
@@ -213,8 +214,8 @@ export default function KanbanBoard({
     }
   };
 
-  // Обработчик ховера на задаче
-  const handleTaskHover = (statusId: number) => {
+  // Обработчик ховера на столбце
+  const handleColumnHover = (statusId: number) => {
     if (!isDragging) { // Не скроллим во время драга
       scrollToColumn(statusId);
     }
@@ -453,6 +454,7 @@ export default function KanbanBoard({
               }
             }}
             data-status-id={status.id}
+            onMouseEnter={() => handleColumnHover(status.id)}
             className={`flex flex-col rounded-lg transition-colors min-w-[240px] overflow-hidden ${
               dragOverStatus === status.id
                 ? 'bg-blue-100 dark:bg-blue-900/30 ring-2 ring-blue-500'
@@ -489,7 +491,6 @@ export default function KanbanBoard({
                   <div
                     key={task.id}
                     onMouseDown={(e) => handleMouseDown(e, task)}
-                    onMouseEnter={() => handleTaskHover(task.statusId)}
                     onClick={() => !isDragging && onTaskClick(task)}
                     className={`
                       bg-white dark:bg-gray-700 
