@@ -76,11 +76,67 @@ export default function KanbanBoard({
   // Refs для автоскролла
   const boardRef = useRef<HTMLDivElement | null>(null);
   const columnRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  
+  // Состояние для отслеживания ширины правой панели
+  const [rightPanelWidth, setRightPanelWidth] = useState(0);
 
   // Синхронизация с пропсами tasks
   useEffect(() => {
     setOptimisticTasks(tasks);
   }, [tasks]);
+
+  // Отслеживаем ширину правой панели
+  useEffect(() => {
+    if (!selectedTaskId) {
+      setRightPanelWidth(0);
+      return;
+    }
+
+    // Функция для обновления ширины панели
+    const updatePanelWidth = () => {
+      const detailsPanel = document.querySelector('[data-task-details-panel]');
+      if (detailsPanel) {
+        const width = detailsPanel.getBoundingClientRect().width;
+        // Добавляем дополнительный отступ для гарантии видимости
+        const totalWidth = width + 100;
+        console.log('Panel width:', width, 'Total padding:', totalWidth);
+        setRightPanelWidth(totalWidth);
+      } else {
+        // Fallback - базовая ширина панели + отступ
+        console.log('Panel not found, using fallback: 700px');
+        setRightPanelWidth(700);
+      }
+    };
+
+    // Обновляем сразу
+    updatePanelWidth();
+
+    // Отслеживаем изменения размера (при ресайзе панели)
+    const resizeObserver = new ResizeObserver(updatePanelWidth);
+    const detailsPanel = document.querySelector('[data-task-details-panel]');
+    
+    if (detailsPanel) {
+      resizeObserver.observe(detailsPanel);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [selectedTaskId]);
+
+  // Автоматическая прокрутка к выбранной задаче при открытии панели деталей
+  useEffect(() => {
+    if (selectedTaskId && rightPanelWidth > 0) {
+      // Прокручиваем к столбцу ТОЛЬКО когда rightPanelWidth обновилась
+      const selectedTask = optimisticTasks.find(task => task.id === selectedTaskId);
+      if (selectedTask) {
+        // Увеличиваем задержку до окончания анимации панели (300ms + запас)
+        setTimeout(() => {
+          scrollToColumn(selectedTask.statusId, true); // force = true при открытии панели
+        }, 350); // 300ms анимация панели + 50ms запас
+      }
+    }
+  }, [selectedTaskId, rightPanelWidth]); // Добавлена зависимость от rightPanelWidth!
 
   // Функция для оптимистичного удаления задачи
   const handleTaskDelete = (taskId: number) => {
@@ -94,7 +150,7 @@ export default function KanbanBoard({
   };
 
   // Функция автоматической прокрутки к столбцу при ховере на задаче
-  const scrollToColumn = (statusId: number) => {
+  const scrollToColumn = (statusId: number, force: boolean = false) => {
     const columnElement = columnRefs.current.get(statusId);
     const boardElement = boardRef.current;
     
@@ -102,22 +158,57 @@ export default function KanbanBoard({
       const boardRect = boardElement.getBoundingClientRect();
       const columnRect = columnElement.getBoundingClientRect();
       
-      // Проверяем, виден ли столбец полностью
+      // Используем актуальную ширину правой панели из state
+      const rightMargin = 20; // Небольшой отступ для красоты
+      const totalRightSpace = rightPanelWidth + rightMargin;
+      
+      // Проверяем видимость столбца с учётом правой панели
+      const visibleRight = boardRect.right - totalRightSpace;
       const isColumnVisible = 
         columnRect.left >= boardRect.left && 
-        columnRect.right <= boardRect.right;
+        columnRect.right <= visibleRight;
       
-      if (!isColumnVisible) {
-        // Вычисляем позицию для прокрутки с небольшим отступом слева
-        const scrollLeft = 
-          columnElement.offsetLeft - 
-          boardElement.offsetLeft - 
-          20; // 20px отступ от края
-        
-        boardElement.scrollTo({
-          left: Math.max(0, scrollLeft),
-          behavior: 'smooth'
-        });
+      console.log('scrollToColumn:', {
+        statusId,
+        force,
+        rightPanelWidth,
+        totalRightSpace,
+        isColumnVisible,
+        columnLeft: columnRect.left,
+        columnRight: columnRect.right,
+        visibleRight,
+        boardLeft: boardRect.left
+      });
+      
+      // Если force=true (открытие панели) ИЛИ столбец не виден
+      if (force || !isColumnVisible) {
+        // Если столбец справа от видимой области ИЛИ force=true
+        if (force || columnRect.right > visibleRight) {
+          // При force всегда прокручиваем так, чтобы столбец был полностью виден слева от панели
+          const targetScrollLeft = 
+            boardElement.scrollLeft + 
+            (columnRect.right - visibleRight) + 
+            60; // Увеличенный отступ для гарантии
+          
+          console.log('Scrolling to:', targetScrollLeft);
+          
+          boardElement.scrollTo({
+            left: targetScrollLeft,
+            behavior: 'smooth'
+          });
+        }
+        // Если столбец слева от видимой области
+        else if (columnRect.left < boardRect.left) {
+          const targetScrollLeft = 
+            boardElement.scrollLeft + 
+            (columnRect.left - boardRect.left) - 
+            20;
+          
+          boardElement.scrollTo({
+            left: Math.max(0, targetScrollLeft),
+            behavior: 'smooth'
+          });
+        }
       }
     }
   };
@@ -334,17 +425,21 @@ export default function KanbanBoard({
       className="h-full w-full overflow-x-auto"
       style={{
         scrollbarWidth: 'thin',
-        scrollbarColor: '#cbd5e0 #f7fafc'
+        scrollbarColor: '#cbd5e0 #f7fafc',
       }}
     >
       <div 
         className="h-full p-4"
         style={{
           display: 'grid',
-          gridTemplateColumns: `repeat(${activeStatuses.length}, minmax(240px, 1fr))`,
+          gridTemplateColumns: `repeat(${activeStatuses.length}, minmax(240px, 320px))`,
           gap: '1rem',
           gridAutoFlow: 'column',
           gridTemplateRows: '1fr',
+          // Добавляем padding справа к grid-контейнеру равный ширине панели
+          paddingRight: rightPanelWidth ? `${rightPanelWidth}px` : '0px',
+          transition: 'padding-right 0.3s ease-in-out',
+          minWidth: 'fit-content'
         }}
       >
         {tasksByStatus.map(({ status, tasks: statusTasks }) => (

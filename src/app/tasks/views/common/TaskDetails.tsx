@@ -300,6 +300,7 @@ export default function TaskDetailsPanel({ task: initialTask, currentUserId, onC
     <>
       <div 
         ref={panelRef}
+        data-task-details-panel
         className="
           fixed right-0 
           bg-white dark:bg-gray-800 
@@ -314,7 +315,9 @@ export default function TaskDetailsPanel({ task: initialTask, currentUserId, onC
           height: 'calc(100vh - 4rem)',
           width: `${width}px`,
           maxHeight: 'calc(100vh - 4rem)',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          // Плавная анимация изменения ширины панели
+          transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
       >
       {/* Ресайзер */}
