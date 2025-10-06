@@ -87,7 +87,6 @@ export async function getUserCompanies(): Promise<UserCompany[]> {
       primaryCompanyId: currentUser.companyId 
     });
 
-    console.log('Полученные компании:', companies);
     return companies.map((company: any) => ({
       id: company.id,
       companyName: company.companyName,

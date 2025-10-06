@@ -188,6 +188,13 @@ export default function TaskDetailsPanel({ task: initialTask, currentUserId, onC
     setIsSaving(true);
     startTransition(async () => {
       try {
+        // Конвертируем локальное время в UTC для сохранения в БД
+        const convertToUTC = (dateStr: string | undefined) => {
+          if (!dateStr) return undefined;
+          const localDate = new Date(dateStr);
+          return localDate.toISOString().replace('T', ' ').slice(0, 19);
+        };
+        
         const result = await updateTaskFromKanban({
           id: task.id,
           taskName: formData.taskName,
@@ -195,12 +202,12 @@ export default function TaskDetailsPanel({ task: initialTask, currentUserId, onC
           statusId: formData.statusId,
           priorityId: formData.priorityId || undefined,
           executorId: formData.executorId || undefined,
-          startDate: formData.startDate || undefined,
-          dedline: formData.dedline || undefined
+          startDate: convertToUTC(formData.startDate),
+          dedline: convertToUTC(formData.dedline)
         });
         
         if (result.success) {
-          // Обновляем локальное состояние задачи с новыми данными
+          // Обновляем локальное состояние задачи с новыми данными (используем UTC значения)
           setTask(prev => ({
             ...prev,
             taskName: formData.taskName,
@@ -208,8 +215,8 @@ export default function TaskDetailsPanel({ task: initialTask, currentUserId, onC
             statusId: formData.statusId,
             priorityId: formData.priorityId,
             executorId: formData.executorId,
-            startDate: formData.startDate,
-            dedline: formData.dedline,
+            startDate: convertToUTC(formData.startDate),
+            dedline: convertToUTC(formData.dedline),
             updatedAt: new Date()
           }));
           

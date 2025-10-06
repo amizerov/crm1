@@ -18,43 +18,105 @@ export async function uploadTaskDocument(taskId: number, formData: FormData) {
       throw new Error('Файл не выбран');
     }
 
-    // Проверка размера файла (максимум 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      throw new Error('Размер файла не должен превышать 10MB');
-    }
+    const isChunk = formData.get('isChunk') === 'true';
+    const chunkIndex = formData.get('chunkIndex');
+    const totalChunks = formData.get('totalChunks');
+    const originalName = formData.get('originalName') as string;
+    const fileId = formData.get('fileId') as string;
 
     // Создаем папку uploads/tasks если её нет
     const uploadsDir = join(process.cwd(), 'public', 'uploads', 'tasks');
     await mkdir(uploadsDir, { recursive: true });
 
     // Генерируем уникальное имя файла
-    const timestamp = Date.now();
-    const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const fileName = `${timestamp}_${cleanFileName}`;
-    const filePath = join(uploadsDir, fileName);
+    const cleanFileName = (originalName || file.name).replace(/[^a-zA-Z0-9.-]/g, '_');
+    // Для чанков используем fileId, для обычных файлов - timestamp
+    const fileName = isChunk 
+      ? `${fileId}_${cleanFileName}` 
+      : `${Date.now()}_${cleanFileName}`;
+    
+    if (isChunk) {
+      // Обработка чанков
+      const tempDir = join(uploadsDir, 'temp');
+      await mkdir(tempDir, { recursive: true });
+      
+      const chunkPath = join(tempDir, `${fileName}.part${chunkIndex}`);
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      await writeFile(chunkPath, buffer);
 
-    // Сохраняем файл
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
+      // Если это последний чанк - собираем файл
+      const currentChunk = parseInt(chunkIndex as string);
+      const total = parseInt(totalChunks as string);
+      
+      if (currentChunk === total - 1) {
+        // Собираем все чанки
+        const chunks: Buffer[] = [];
+        let totalSize = 0;
+        
+        for (let i = 0; i < total; i++) {
+          const partPath = join(tempDir, `${fileName}.part${i}`);
+          const fs = require('fs');
+          const partBuffer = fs.readFileSync(partPath);
+          chunks.push(partBuffer);
+          totalSize += partBuffer.length;
+          
+          // Удаляем временный чанк
+          fs.unlinkSync(partPath);
+        }
+        
+        // Объединяем чанки
+        const finalBuffer = Buffer.concat(chunks);
+        const filePath = join(uploadsDir, fileName);
+        await writeFile(filePath, finalBuffer);
+        
+        // Сохраняем информацию о файле в БД
+        await query(`
+          INSERT INTO TaskDocuments 
+          (taskId, fileName, originalName, filePath, fileSize, mimeType, uploadedBy)
+          VALUES (@taskId, @fileName, @originalName, @filePath, @fileSize, @mimeType, @uploadedBy)
+        `, {
+          taskId,
+          fileName,
+          originalName: originalName || file.name,
+          filePath: `/uploads/tasks/${fileName}`,
+          fileSize: totalSize,
+          mimeType: file.type || 'application/octet-stream',
+          uploadedBy: currentUser.id
+        });
+        
+        revalidatePath(`/tasks/edit/${taskId}`);
+        return { success: true, message: 'Документ успешно загружен' };
+      }
+      
+      // Промежуточный чанк загружен успешно
+      return { success: true, message: `Чанк ${currentChunk + 1}/${total} загружен` };
+      
+    } else {
+      // Обычная загрузка для маленьких файлов
+      const filePath = join(uploadsDir, fileName);
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      await writeFile(filePath, buffer);
 
-    // Сохраняем информацию о файле в БД
-    await query(`
-      INSERT INTO TaskDocuments 
-      (taskId, fileName, originalName, filePath, fileSize, mimeType, uploadedBy)
-      VALUES (@taskId, @fileName, @originalName, @filePath, @fileSize, @mimeType, @uploadedBy)
-    `, {
-      taskId,
-      fileName,
-      originalName: file.name,
-      filePath: `/uploads/tasks/${fileName}`,
-      fileSize: file.size,
-      mimeType: file.type || 'application/octet-stream',
-      uploadedBy: currentUser.id
-    });
+      // Сохраняем информацию о файле в БД
+      await query(`
+        INSERT INTO TaskDocuments 
+        (taskId, fileName, originalName, filePath, fileSize, mimeType, uploadedBy)
+        VALUES (@taskId, @fileName, @originalName, @filePath, @fileSize, @mimeType, @uploadedBy)
+      `, {
+        taskId,
+        fileName,
+        originalName: file.name,
+        filePath: `/uploads/tasks/${fileName}`,
+        fileSize: file.size,
+        mimeType: file.type || 'application/octet-stream',
+        uploadedBy: currentUser.id
+      });
 
-    revalidatePath(`/tasks/edit/${taskId}`);
-    return { success: true, message: 'Документ успешно загружен' };
+      revalidatePath(`/tasks/edit/${taskId}`);
+      return { success: true, message: 'Документ успешно загружен' };
+    }
 
   } catch (error: any) {
     console.error('Ошибка загрузки документа:', error);

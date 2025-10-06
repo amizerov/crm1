@@ -80,7 +80,10 @@ export default function TaskDetailsTab({
   };
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+    if (!dateStr) return 'Не указано';
+    // Добавляем 'Z' к дате из БД, чтобы она интерпретировалась как UTC
+    const dateString = String(dateStr);
+    const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
     return date.toLocaleString('ru-RU', {
       day: '2-digit',
       month: '2-digit',
@@ -92,8 +95,16 @@ export default function TaskDetailsTab({
 
   const formatDateForInput = (dateStr?: string) => {
     if (!dateStr) return '';
-    const date = new Date(dateStr);
-    return date.toISOString().slice(0, 16);
+    // Добавляем 'Z' к дате из БД, чтобы она интерпретировалась как UTC
+    const dateString = String(dateStr);
+    const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
+    // Получаем локальное время для input
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
   return (

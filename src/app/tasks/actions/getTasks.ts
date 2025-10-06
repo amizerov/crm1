@@ -82,9 +82,6 @@ export async function getTasks(executorId?: number, companyId?: number): Promise
       params.executorId = executorId;
     }
     
-    console.log('getTasks - whereClause:', whereClause);
-    console.log('getTasks - params:', params);
-    
     // Если есть фильтр по компании, получаем только задачи этой компании
     // (включая корневые задачи и их подзадачи только если они принадлежат этой компании)
     let allTasks;
