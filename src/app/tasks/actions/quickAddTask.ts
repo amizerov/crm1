@@ -2,6 +2,7 @@
 
 import { query } from '@/db/connect';
 import { getCurrentUser } from '@/db/loginUser';
+import { logTaskHistory } from './taskHistory';
 
 interface QuickAddTaskInput {
     taskName: string;
@@ -49,6 +50,13 @@ export async function quickAddTask(payload: QuickAddTaskInput): Promise<QuickAdd
       });
 
     const newTaskId = result[0]?.id;
+
+    // Логируем создание задачи
+    if (newTaskId) {
+      await logTaskHistory(newTaskId, {
+        actionType: 'created'
+      });
+    }
 
     return { success: true, taskId: newTaskId };
   } catch (error) {

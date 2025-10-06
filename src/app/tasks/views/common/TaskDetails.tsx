@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition, useCallback } from 'react';
 import { updateTaskFromKanban } from '../../actions/updateTaskFromKanban';
 import { deleteTaskFromKanban } from '../../actions/deleteTaskFromKanban';
 import { getTaskStatuses } from '../../actions/getTaskStatuses';
@@ -49,6 +49,46 @@ interface TaskDetailsPanelProps {
 }
 
 export default function TaskDetailsPanel({ task: initialTask, currentUserId, onClose, onTaskUpdated, onTaskDeleted }: TaskDetailsPanelProps) {
+  // Вспомогательная функция для форматирования дат для полей ввода
+  const formatDateForInput = useCallback((dateInput?: string | Date | null) => {
+    if (!dateInput) return '';
+    try {
+      let date: Date;
+      
+      // Если уже объект Date, используем его
+      if (dateInput instanceof Date) {
+        date = dateInput;
+      } else {
+        // Если строка, парсим её
+        const dateString = String(dateInput).trim();
+        
+        // Преобразуем в ISO формат если нужно
+        const isoString = dateString.includes(' ') 
+          ? dateString.replace(' ', 'T') 
+          : dateString;
+        
+        date = new Date(isoString);
+      }
+      
+      // Проверяем валидность даты
+      if (isNaN(date.getTime())) {
+        return '';
+      }
+      
+      // Преобразуем в формат для datetime-local: "2025-10-06T12:00"
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    } catch (error) {
+      console.error('Error formatting date for input:', dateInput, error);
+      return '';
+    }
+  }, []);
+
   const panelRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -83,9 +123,22 @@ export default function TaskDetailsPanel({ task: initialTask, currentUserId, onC
     statusId: task.statusId,
     priorityId: task.priorityId || 0,
     executorId: task.executorId || 0,
-    startDate: task.startDate || '',
-    dedline: task.dedline || ''
+    startDate: formatDateForInput(task.startDate),
+    dedline: formatDateForInput(task.dedline)
   });
+  
+  // Обновляем formData при изменении task
+  useEffect(() => {
+    setFormData({
+      taskName: task.taskName,
+      description: task.description || '',
+      statusId: task.statusId,
+      priorityId: task.priorityId || 0,
+      executorId: task.executorId || 0,
+      startDate: formatDateForInput(task.startDate),
+      dedline: formatDateForInput(task.dedline)
+    });
+  }, [task, formatDateForInput]);
   const [statuses, setStatuses] = useState<Array<{id: number; status: string}>>([]);
   const [priorities, setPriorities] = useState<Array<{id: number; priority: string}>>([]);
   const [employees, setEmployees] = useState<Array<{id: number; Name: string; displayName?: string}>>([]);
@@ -188,13 +241,33 @@ export default function TaskDetailsPanel({ task: initialTask, currentUserId, onC
     setIsSaving(true);
     startTransition(async () => {
       try {
-        // Конвертируем локальное время в UTC для сохранения в БД
-        const convertToUTC = (dateStr: string | undefined) => {
-          if (!dateStr) return undefined;
-          const localDate = new Date(dateStr);
-          return localDate.toISOString().replace('T', ' ').slice(0, 19);
+
+        // Преобразуем формат datetime-local (YYYY-MM-DDTHH:mm) в формат БД (YYYY-MM-DD HH:mm:ss)
+        const formatForDB = (dateStr: string | undefined) => {
+          try {
+            if (!dateStr) return undefined;
+            
+            // Конвертируем в строку на всякий случай
+            const str = String(dateStr);
+            
+            // Проверяем, что это строка в формате datetime-local (YYYY-MM-DDTHH:mm)
+            if (str.includes('T')) {
+              // datetime-local дает строку типа "2025-10-06T12:00"
+              // Просто заменяем T на пробел и добавляем :00 для секунд
+              return str.replace('T', ' ') + ':00';
+            }
+            
+            // Если это уже SQL формат, возвращаем как есть
+            return str;
+          } catch (error) {
+            console.error('Error formatting date for DB:', error);
+            return undefined;
+          }
         };
-        
+
+        const sd = formatForDB(formData.startDate);
+        const dd = formatForDB(formData.dedline);
+
         const result = await updateTaskFromKanban({
           id: task.id,
           taskName: formData.taskName,
@@ -202,23 +275,40 @@ export default function TaskDetailsPanel({ task: initialTask, currentUserId, onC
           statusId: formData.statusId,
           priorityId: formData.priorityId || undefined,
           executorId: formData.executorId || undefined,
-          startDate: convertToUTC(formData.startDate),
-          dedline: convertToUTC(formData.dedline)
+          startDate: sd,
+          dedline: dd
         });
         
         if (result.success) {
-          // Обновляем локальное состояние задачи с новыми данными (используем UTC значения)
-          setTask(prev => ({
-            ...prev,
-            taskName: formData.taskName,
-            description: formData.description,
-            statusId: formData.statusId,
-            priorityId: formData.priorityId,
-            executorId: formData.executorId,
-            startDate: convertToUTC(formData.startDate),
-            dedline: convertToUTC(formData.dedline),
-            updatedAt: new Date()
-          }));
+          // Обновляем локальное состояние задачи с новыми данными
+          // Преобразуем строки дат обратно в объекты Date для корректного отображения
+          setTask(prev => {
+            const updateData: any = {
+              ...prev,
+              taskName: formData.taskName,
+              description: formData.description,
+              statusId: formData.statusId,
+              priorityId: formData.priorityId,
+              executorId: formData.executorId,
+              updatedAt: new Date()
+            };
+            
+            // Добавляем startDate если есть
+            if (sd) {
+              updateData.startDate = new Date(sd);
+            } else {
+              updateData.startDate = null;
+            }
+            
+            // Добавляем dedline если есть
+            if (dd) {
+              updateData.dedline = new Date(dd);
+            } else {
+              updateData.dedline = null;
+            }
+            
+            return updateData;
+          });
           
           setIsEditing(false);
           if (onTaskUpdated) {
@@ -245,8 +335,8 @@ export default function TaskDetailsPanel({ task: initialTask, currentUserId, onC
       statusId: task.statusId,
       priorityId: task.priorityId || 0,
       executorId: task.executorId || 0,
-      startDate: task.startDate || '',
-      dedline: task.dedline || ''
+      startDate: formatDateForInput(task.startDate),
+      dedline: formatDateForInput(task.dedline)
     });
     setIsEditing(false);
   };
@@ -290,12 +380,6 @@ export default function TaskDetailsPanel({ task: initialTask, currentUserId, onC
         setIsSaving(false);
       }
     });
-  };
-  
-  const formatDateForInput = (dateStr?: string) => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    return date.toISOString().slice(0, 16);
   };
 
   return (
@@ -567,7 +651,7 @@ export default function TaskDetailsPanel({ task: initialTask, currentUserId, onC
 
         {/* Вкладка История */}
         {activeTab === 'history' && (
-          <TaskHistoryTab taskId={task.id} />
+          <TaskHistoryTab taskId={task.id} key={`history-${task.id}-${activeTab}`} />
         )}
       </div>
     </div>

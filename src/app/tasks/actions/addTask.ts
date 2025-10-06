@@ -2,6 +2,7 @@
 
 import { query } from '@/db/connect'
 import { getCurrentUser } from '@/db/loginUser'
+import { logTaskHistory } from './taskHistory'
 
 export interface AddTaskData {
   parentId?: number
@@ -71,8 +72,9 @@ export async function addTask(formData: FormData) {
   console.log('Task data being inserted:', taskData)
 
   try {
-    await query(`
+    const result = await query(`
       INSERT INTO Task (parentId, taskName, description, startDate, dedline, statusId, priorityId, executorId, userId, companyId, projectId)
+      OUTPUT INSERTED.id
       VALUES (@parentId, @taskName, @description, @startDate, @dedline, @statusId, @priorityId, @executorId, @userId, @companyId, @projectId)
     `, {
       parentId: taskData.parentId || null,
@@ -87,6 +89,14 @@ export async function addTask(formData: FormData) {
       companyId: taskData.companyId,
       projectId: taskData.projectId || null
     })
+
+    // Логируем создание задачи
+    const newTaskId = result[0]?.id;
+    if (newTaskId) {
+      await logTaskHistory(newTaskId, {
+        actionType: 'created'
+      });
+    }
   } catch (error) {
     console.error('Error adding task:', error)
     console.error('Task data that failed:', taskData)

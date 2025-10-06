@@ -2,6 +2,8 @@
 
 import { connectDB } from '@/db/connect';
 import sql from 'mssql';
+import { logTaskHistory } from './taskHistory';
+import { query } from '@/db/connect';
 
 interface UpdateTaskFromKanbanInput {
   id: number;
@@ -21,6 +23,28 @@ interface UpdateTaskFromKanbanResult {
 
 export async function updateTaskFromKanban(data: UpdateTaskFromKanbanInput): Promise<UpdateTaskFromKanbanResult> {
   try {
+    // Получаем старые значения для сравнения
+    const oldTask = await query(`
+      SELECT 
+        t.taskName,
+        t.description,
+        t.statusId,
+        t.priorityId,
+        t.executorId,
+        t.startDate,
+        t.dedline,
+        st.status as statusName,
+        p.priority as priorityName,
+        e.Name as executorName
+      FROM Task t
+      LEFT JOIN StatusTask st ON t.statusId = st.id
+      LEFT JOIN Priority p ON t.priorityId = p.id
+      LEFT JOIN Employee e ON t.executorId = e.id
+      WHERE t.id = @id
+    `, { id: data.id });
+
+    const oldTaskData = oldTask[0];
+    
     const pool = await connectDB();
     
     // Преобразуем дату начала
@@ -52,7 +76,7 @@ export async function updateTaskFromKanban(data: UpdateTaskFromKanbanInput): Pro
         dedlineDate = null;
       }
     }
-    
+
     await pool
       .request()
       .input('id', sql.Int, data.id)
@@ -76,6 +100,131 @@ export async function updateTaskFromKanban(data: UpdateTaskFromKanbanInput): Pro
           dtu = GETDATE()
         WHERE id = @id
       `);
+
+    // Получаем новые значения с именами для истории
+    const newTask = await query(`
+      SELECT 
+        t.taskName,
+        t.description,
+        t.statusId,
+        t.priorityId,
+        t.executorId,
+        t.startDate,
+        t.dedline,
+        st.status as statusName,
+        p.priority as priorityName,
+        e.Name as executorName
+      FROM Task t
+      LEFT JOIN StatusTask st ON t.statusId = st.id
+      LEFT JOIN Priority p ON t.priorityId = p.id
+      LEFT JOIN Employee e ON t.executorId = e.id
+      WHERE t.id = @id
+    `, { id: data.id });
+
+    const newTaskData = newTask[0];
+
+    // Логируем изменения
+    if (oldTaskData) {
+      // Изменение названия
+      if (oldTaskData.taskName !== newTaskData.taskName) {
+        await logTaskHistory(data.id, {
+          actionType: 'name_changed',
+          fieldName: 'taskName',
+          oldValue: oldTaskData.taskName,
+          newValue: newTaskData.taskName
+        });
+      }
+
+      // Изменение описания
+      if ((oldTaskData.description || '') !== (newTaskData.description || '')) {
+        await logTaskHistory(data.id, {
+          actionType: 'description_changed',
+          fieldName: 'description'
+        });
+      }
+
+      // Изменение статуса
+      if (oldTaskData.statusId !== newTaskData.statusId) {
+        await logTaskHistory(data.id, {
+          actionType: 'status_changed',
+          fieldName: 'status',
+          oldValue: oldTaskData.statusName,
+          newValue: newTaskData.statusName
+        });
+      }
+
+      // Изменение приоритета
+      if (oldTaskData.priorityId !== newTaskData.priorityId) {
+        await logTaskHistory(data.id, {
+          actionType: 'priority_changed',
+          fieldName: 'priority',
+          oldValue: oldTaskData.priorityName || 'Не указан',
+          newValue: newTaskData.priorityName || 'Не указан'
+        });
+      }
+
+      // Изменение исполнителя
+      if (oldTaskData.executorId !== newTaskData.executorId) {
+        await logTaskHistory(data.id, {
+          actionType: 'executor_changed',
+          fieldName: 'executor',
+          oldValue: oldTaskData.executorName || 'Не назначен',
+          newValue: newTaskData.executorName || 'Не назначен'
+        });
+      }
+
+      // Изменение даты начала
+      const oldStartDate = oldTaskData.startDate ? 
+        new Date(oldTaskData.startDate).toLocaleString('ru-RU', {
+          day: '2-digit',
+          month: '2-digit', 
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }) : null;
+      const newStartDate = newTaskData.startDate ? 
+        new Date(newTaskData.startDate).toLocaleString('ru-RU', {
+          day: '2-digit',
+          month: '2-digit', 
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }) : null;
+      if (oldStartDate !== newStartDate) {
+        await logTaskHistory(data.id, {
+          actionType: 'startdate_changed',
+          fieldName: 'startDate',
+          oldValue: oldStartDate,
+          newValue: newStartDate
+        });
+      }
+
+      // Изменение дедлайна
+      const oldDedline = oldTaskData.dedline ? 
+        new Date(oldTaskData.dedline).toLocaleString('ru-RU', {
+          day: '2-digit',
+          month: '2-digit', 
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }) : null;
+      const newDedline = newTaskData.dedline ? 
+        new Date(newTaskData.dedline).toLocaleString('ru-RU', {
+          day: '2-digit',
+          month: '2-digit', 
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }) : null;
+      if (oldDedline !== newDedline) {
+        await logTaskHistory(data.id, {
+          actionType: 'deadline_changed',
+          fieldName: 'dedline',
+          oldValue: oldDedline,
+          newValue: newDedline
+        });
+      }
+    }
 
     return { success: true };
   } catch (error) {

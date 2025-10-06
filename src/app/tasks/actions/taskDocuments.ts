@@ -5,6 +5,7 @@ import { join } from 'path';
 import { query } from '@/db/connect';
 import { revalidatePath } from 'next/cache';
 import { getCurrentUser } from '@/db/loginUser';
+import { logTaskHistory } from './taskHistory';
 
 export async function uploadTaskDocument(taskId: number, formData: FormData) {
   try {
@@ -85,6 +86,12 @@ export async function uploadTaskDocument(taskId: number, formData: FormData) {
           uploadedBy: currentUser.id
         });
         
+        // Логируем в историю
+        await logTaskHistory(taskId, {
+          actionType: 'document_added',
+          newValue: originalName || file.name
+        });
+        
         revalidatePath(`/tasks/edit/${taskId}`);
         return { success: true, message: 'Документ успешно загружен' };
       }
@@ -112,6 +119,12 @@ export async function uploadTaskDocument(taskId: number, formData: FormData) {
         fileSize: file.size,
         mimeType: file.type || 'application/octet-stream',
         uploadedBy: currentUser.id
+      });
+
+      // Логируем в историю
+      await logTaskHistory(taskId, {
+        actionType: 'document_added',
+        newValue: file.name
       });
 
       revalidatePath(`/tasks/edit/${taskId}`);
@@ -158,9 +171,11 @@ export async function deleteTaskDocument(documentId: number, taskId: number) {
 
     // Получаем информацию о файле
     const fileInfo = await query(
-      'SELECT filePath FROM TaskDocuments WHERE id = @id',
+      'SELECT filePath, originalName FROM TaskDocuments WHERE id = @id',
       { id: documentId }
     );
+
+    const originalName = fileInfo && fileInfo.length > 0 ? fileInfo[0].originalName : null;
 
     if (fileInfo && fileInfo.length > 0) {
       // Удаляем файл с диска
@@ -178,6 +193,14 @@ export async function deleteTaskDocument(documentId: number, taskId: number) {
       'DELETE FROM TaskDocuments WHERE id = @id',
       { id: documentId }
     );
+
+    // Логируем в историю
+    if (originalName) {
+      await logTaskHistory(taskId, {
+        actionType: 'document_deleted',
+        oldValue: originalName
+      });
+    }
 
     revalidatePath(`/tasks/edit/${taskId}`);
     return { success: true, message: 'Документ удален' };

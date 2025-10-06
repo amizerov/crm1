@@ -79,32 +79,83 @@ export default function TaskDetailsTab({
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return 'Не указано';
-    // Добавляем 'Z' к дате из БД, чтобы она интерпретировалась как UTC
-    const dateString = String(dateStr);
-    const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
-    return date.toLocaleString('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const formatDate = (dateInput: string | Date | null) => {
+    if (!dateInput) return 'Не указано';
+    
+    try {
+      let date: Date;
+      
+      // Если уже объект Date, используем его
+      if (dateInput instanceof Date) {
+        date = dateInput;
+      } else {
+        // Если строка, парсим её
+        const dateString = String(dateInput).trim();
+        
+        // Преобразуем в ISO формат если нужно
+        const isoString = dateString.includes(' ') 
+          ? dateString.replace(' ', 'T') 
+          : dateString;
+        
+        date = new Date(isoString);
+      }
+      
+      // Проверяем валидность даты
+      if (isNaN(date.getTime())) {
+        return 'Не указано';
+      }
+      
+      const formatted = date.toLocaleString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      return formatted;
+    } catch (error) {
+      console.error('Error formatting date:', dateInput, error);
+      return 'Не указано';
+    }
   };
 
-  const formatDateForInput = (dateStr?: string) => {
-    if (!dateStr) return '';
-    // Добавляем 'Z' к дате из БД, чтобы она интерпретировалась как UTC
-    const dateString = String(dateStr);
-    const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
-    // Получаем локальное время для input
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  const formatDateForInput = (dateInput?: string | Date) => {
+    if (!dateInput) return '';
+    try {
+      let date: Date;
+      
+      // Если уже объект Date, используем его
+      if (dateInput instanceof Date) {
+        date = dateInput;
+      } else {
+        // Если строка, парсим её
+        const dateString = String(dateInput).trim();
+        
+        // Преобразуем в ISO формат если нужно
+        const isoString = dateString.includes(' ') 
+          ? dateString.replace(' ', 'T') 
+          : dateString;
+        
+        date = new Date(isoString);
+      }
+      
+      // Проверяем валидность даты
+      if (isNaN(date.getTime())) {
+        return '';
+      }
+      
+      // Преобразуем в формат для datetime-local: "2025-10-06T12:00"
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    } catch (error) {
+      console.error('Error formatting date for input:', dateInput, error);
+      return '';
+    }
   };
 
   return (

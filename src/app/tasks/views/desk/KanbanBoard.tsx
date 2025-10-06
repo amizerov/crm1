@@ -103,11 +103,9 @@ export default function KanbanBoard({
       if (detailsPanel) {
         const width = detailsPanel.getBoundingClientRect().width;
         // Используем только реальную ширину панели без лишнего отступа
-        console.log('Panel width:', width, 'Total padding:', width);
         setRightPanelWidth(width);
       } else {
         // Fallback - базовая ширина панели
-        console.log('Panel not found, using fallback: 600px');
         setRightPanelWidth(600);
       }
     };
@@ -208,19 +206,6 @@ export default function KanbanBoard({
         columnRect.left >= boardRect.left && 
         columnRect.right <= visibleRight;
       
-      console.log('scrollToColumn:', {
-        statusId,
-        force,
-        isLastColumn,
-        rightPanelWidth,
-        totalRightSpace,
-        isColumnVisible,
-        columnLeft: columnRect.left,
-        columnRight: columnRect.right,
-        visibleRight,
-        boardLeft: boardRect.left
-      });
-      
       // Если force=true (открытие панели) ИЛИ столбец не виден
       if (force || !isColumnVisible) {
         // Если столбец справа от видимой области ИЛИ force=true
@@ -232,8 +217,6 @@ export default function KanbanBoard({
             boardElement.scrollLeft + 
             (columnRect.right - visibleRight) + 
             scrollExtra; // Запас только если не последний столбец
-          
-          console.log('Scrolling to:', targetScrollLeft, 'Extra:', scrollExtra);
           
           boardElement.scrollTo({
             left: targetScrollLeft,
@@ -248,8 +231,6 @@ export default function KanbanBoard({
             boardElement.scrollLeft + 
             (columnRect.left - boardRect.left) - 
             80; // Показываем текущий столбец + ~80px предыдущего
-          
-          console.log('Scrolling left to:', targetScrollLeft);
           
           boardElement.scrollTo({
             left: Math.max(0, targetScrollLeft),
