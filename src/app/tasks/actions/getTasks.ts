@@ -18,6 +18,7 @@ type Task = {
   projectId?: number;
   dtc: string;
   dtu?: string;
+  orderInStatus?: number;
   // Связанные данные
   statusName: string;
   priorityName?: string;
@@ -106,6 +107,7 @@ export async function getTasks(executorId?: number, companyId?: number): Promise
           t.projectId,
           t.dtc,
           t.dtu,
+          t.orderInStatus,
           st.status as statusName,
           p.priority as priorityName,
           e.Name as executorName,
@@ -120,7 +122,7 @@ export async function getTasks(executorId?: number, companyId?: number): Promise
         LEFT JOIN Project pr ON t.projectId = pr.id
         LEFT JOIN Company c ON t.companyId = c.id
         ${companyWhereClause}
-        ORDER BY t.dtc DESC
+        ORDER BY COALESCE(t.orderInStatus, 999999), t.dtc DESC
       `, companyParams);
     } else {
       // Без фильтра по компании - получаем все доступные задачи
@@ -140,6 +142,7 @@ export async function getTasks(executorId?: number, companyId?: number): Promise
           t.projectId,
           t.dtc,
           t.dtu,
+          t.orderInStatus,
           st.status as statusName,
           p.priority as priorityName,
           e.Name as executorName,
@@ -154,7 +157,7 @@ export async function getTasks(executorId?: number, companyId?: number): Promise
         LEFT JOIN Project pr ON t.projectId = pr.id
         LEFT JOIN Company c ON t.companyId = c.id
         ${whereClause}
-        ORDER BY t.dtc DESC
+        ORDER BY COALESCE(t.orderInStatus, 999999), t.dtc DESC
       `, params);
     }    return buildTaskHierarchy(allTasks);
   } catch (error) {
@@ -233,6 +236,7 @@ export async function getCompletedTasks(executorId?: number): Promise<Task[]> {
         t.projectId,
         t.dtc,
         t.dtu,
+        t.orderInStatus,
         st.status as statusName,
         p.priority as priorityName,
         e.Name as executorName,
@@ -247,7 +251,7 @@ export async function getCompletedTasks(executorId?: number): Promise<Task[]> {
       LEFT JOIN Project pr ON t.projectId = pr.id
       LEFT JOIN Company c ON t.companyId = c.id
       ${whereClause}
-      ORDER BY t.dtu DESC, t.dtc DESC
+      ORDER BY COALESCE(t.orderInStatus, 999999), t.dtu DESC, t.dtc DESC
     `, params);
 
     return buildTaskHierarchy(completedTasks);

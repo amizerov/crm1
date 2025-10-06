@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect, useRef } from 'react';
 import { quickAddTask } from '../../actions/quickAddTask';
 import { updateTaskStatus } from '../../actions/updateTaskStatus';
+import { updateTaskOrder } from '../../actions/updateTaskOrder';
 
 interface Task {
   id: number;
@@ -23,6 +24,7 @@ interface Task {
   executorName?: string;
   level?: number;
   hasChildren?: boolean;
+  orderInStatus?: number;
 }
 
 interface Status {
@@ -72,6 +74,9 @@ export default function KanbanBoard({
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const draggedElementRef = useRef<HTMLDivElement | null>(null);
+  
+  // Состояние для визуального индикатора позиции вставки
+  const [insertPosition, setInsertPosition] = useState<{ statusId: number; index: number } | null>(null);
   
   // Refs для автоскролла
   const boardRef = useRef<HTMLDivElement | null>(null);
@@ -298,9 +303,12 @@ export default function KanbanBoard({
   );
   
   // Группируем задачи по активным статусам (используем optimisticTasks)
+  // Сортируем задачи по orderInStatus
   const tasksByStatus = activeStatuses.map(status => ({
     status,
-    tasks: optimisticTasks.filter(task => task.statusId === status.id && task.level === 0) // Только корневые задачи
+    tasks: optimisticTasks
+      .filter(task => task.statusId === status.id && task.level === 0) // Только корневые задачи
+      .sort((a, b) => (a.orderInStatus || 0) - (b.orderInStatus || 0)) // Сортировка по порядку
   }));
 
   const getPriorityColor = (priorityName?: string) => {
@@ -360,6 +368,52 @@ export default function KanbanBoard({
     }
   };
 
+  // Функция для определения позиции вставки
+  const getInsertPosition = (e: MouseEvent, statusId: number): number => {
+    if (!draggedTask) return 0;
+    
+    const columnElement = columnRefs.current.get(statusId);
+    if (!columnElement) return 0;
+    
+    // Находим контейнер с задачами
+    const tasksContainer = columnElement.querySelector('[data-tasks-container]');
+    if (!tasksContainer) return 0;
+    
+    // Получаем задачи этой колонки из данных (не из DOM)
+    const columnTasks = optimisticTasks.filter(
+      task => task.statusId === statusId && 
+              task.level === 0 && 
+              task.id !== draggedTask.id // Исключаем перетаскиваемую
+    ).sort((a, b) => (a.orderInStatus || 0) - (b.orderInStatus || 0));
+    
+    if (columnTasks.length === 0) return 0;
+    
+    // Получаем DOM элементы для вычисления позиции
+    const taskCards = Array.from(tasksContainer.querySelectorAll('[data-task-card]'))
+      .filter(el => {
+        const card = el as HTMLElement;
+        return !card.classList.contains('opacity-30');
+      }) as HTMLElement[];
+    
+    if (taskCards.length === 0) return 0;
+    
+    const mouseY = e.clientY;
+    
+    // Находим ближайшую карточку
+    for (let i = 0; i < taskCards.length; i++) {
+      const card = taskCards[i];
+      const rect = card.getBoundingClientRect();
+      const cardMiddle = rect.top + rect.height / 2;
+      
+      if (mouseY < cardMiddle) {
+        return i; // Вставить перед этой карточкой
+      }
+    }
+    
+    // Вставить в конец
+    return taskCards.length;
+  };
+
   // Кастомный drag and drop
   const handleMouseDown = (e: React.MouseEvent, task: Task) => {
     // Только левая кнопка мыши
@@ -402,34 +456,114 @@ export default function KanbanBoard({
       if (column) {
         const statusId = parseInt(column.getAttribute('data-status-id') || '0');
         setDragOverStatus(statusId);
+        
+        // Определяем позицию вставки
+        const position = getInsertPosition(e, statusId);
+        setInsertPosition({ statusId, index: position });
       } else {
         setDragOverStatus(null);
+        setInsertPosition(null);
       }
     };
 
     const handleMouseUp = async () => {
-      if (draggedTask && dragOverStatus && draggedTask.statusId !== dragOverStatus) {
+      if (draggedTask && dragOverStatus) {
         const oldStatusId = draggedTask.statusId;
         const newStatusId = dragOverStatus;
         const taskId = draggedTask.id;
+        const oldOrder = draggedTask.orderInStatus ?? 0;
         
         // Находим название нового статуса
         const newStatus = statuses.find(s => s.id === newStatusId);
         const newStatusName = newStatus?.status || '';
         
-        // 1. ОПТИМИСТИЧНОЕ ОБНОВЛЕНИЕ - сразу меняем UI
-        setOptimisticTasks(prevTasks => 
-          prevTasks.map(task => 
-            task.id === taskId 
-              ? { ...task, statusId: newStatusId, statusName: newStatusName }
-              : task
-          )
-        );
+        // Определяем позицию вставки (если не была установлена, используем конец списка)
+        const targetPosition = insertPosition?.index ?? 0;
+        
+        console.log('🎯 Drag & Drop:', {
+          taskId,
+          taskName: draggedTask.taskName,
+          oldStatusId,
+          newStatusId,
+          oldOrder,
+          targetPosition,
+          insertPosition
+        });
+        
+        // 1. ОПТИМИСТИЧНОЕ ОБНОВЛЕНИЕ - пересчитываем порядок всех задач
+        setOptimisticTasks(prevTasks => {
+          // Создаем копию массива задач
+          const updatedTasks = prevTasks.map(task => ({ ...task }));
+          
+          // Находим перетаскиваемую задачу
+          const draggedTaskIndex = updatedTasks.findIndex(t => t.id === taskId);
+          if (draggedTaskIndex === -1) return prevTasks;
+          
+          const movedTask = updatedTasks[draggedTaskIndex];
+          
+          // Если перемещение внутри одной колонки
+          if (oldStatusId === newStatusId) {
+            // Получаем все задачи этой колонки (корневые)
+            const columnTasks = updatedTasks
+              .filter(t => t.statusId === newStatusId && t.level === 0)
+              .sort((a, b) => (a.orderInStatus || 0) - (b.orderInStatus || 0));
+            
+            // Удаляем перетаскиваемую из старой позиции
+            const taskIndexInColumn = columnTasks.findIndex(t => t.id === taskId);
+            if (taskIndexInColumn !== -1) {
+              columnTasks.splice(taskIndexInColumn, 1);
+            }
+            
+            // Вставляем на новую позицию
+            columnTasks.splice(targetPosition, 0, movedTask);
+            
+            // Пересчитываем orderInStatus для всех задач в колонке
+            columnTasks.forEach((task, index) => {
+              const taskInArray = updatedTasks.find(t => t.id === task.id);
+              if (taskInArray) {
+                taskInArray.orderInStatus = index;
+              }
+            });
+          } else {
+            // Перемещение между колонками
+            
+            // 1. Обновляем задачи в старой колонке (сдвигаем вверх после удаления)
+            updatedTasks
+              .filter(t => t.statusId === oldStatusId && t.level === 0)
+              .sort((a, b) => (a.orderInStatus || 0) - (b.orderInStatus || 0))
+              .forEach((task, index) => {
+                if (task.id !== taskId) {
+                  task.orderInStatus = index;
+                }
+              });
+            
+            // 2. Обновляем задачи в новой колонке (сдвигаем вниз для вставки)
+            const newColumnTasks = updatedTasks
+              .filter(t => t.statusId === newStatusId && t.level === 0)
+              .sort((a, b) => (a.orderInStatus || 0) - (b.orderInStatus || 0));
+            
+            // Вставляем перетаскиваемую задачу
+            newColumnTasks.splice(targetPosition, 0, movedTask);
+            
+            // Пересчитываем orderInStatus
+            newColumnTasks.forEach((task, index) => {
+              const taskInArray = updatedTasks.find(t => t.id === task.id);
+              if (taskInArray) {
+                taskInArray.statusId = newStatusId;
+                taskInArray.statusName = newStatusName;
+                taskInArray.orderInStatus = index;
+              }
+            });
+          }
+          
+          return updatedTasks;
+        });
         
         // 2. Сбрасываем состояние drag'а
         setIsDragging(false);
         setDraggedTask(null);
         setDragOverStatus(null);
+        setInsertPosition(null);
         draggedElementRef.current = null;
         
         // 3. Помечаем задачу как обновляющуюся
@@ -437,7 +571,12 @@ export default function KanbanBoard({
         
         // 4. Отправляем запрос в БД в фоне
         startTransition(async () => {
-          const result = await updateTaskStatus(taskId, newStatusId);
+          console.log('📤 Calling updateTaskOrder:', { taskId, newStatusId, targetPosition });
+          
+          // Используем updateTaskOrder если статус или позиция изменились
+          const result = await updateTaskOrder(taskId, newStatusId, targetPosition);
+          
+          console.log('📥 updateTaskOrder result:', result);
           
           if (result?.success) {
             // Успешно обновлено - обновляем данные с сервера для синхронизации
@@ -453,7 +592,7 @@ export default function KanbanBoard({
               });
             }, 300);
           } else if (result?.error) {
-            console.error('Error updating task status:', result.error);
+            console.error('Error updating task order:', result.error);
             // В случае ошибки - откатываем изменения
             setOptimisticTasks(prevTasks => 
               prevTasks.map(task => 
@@ -477,6 +616,7 @@ export default function KanbanBoard({
         setIsDragging(false);
         setDraggedTask(null);
         setDragOverStatus(null);
+        setInsertPosition(null);
         draggedElementRef.current = null;
       }
     };
@@ -488,7 +628,7 @@ export default function KanbanBoard({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, draggedTask, dragOverStatus, onTaskCreated, statuses]);
+  }, [isDragging, draggedTask, dragOverStatus, insertPosition, onTaskCreated, statuses]);
 
   return (
     <div 
@@ -547,26 +687,42 @@ export default function KanbanBoard({
             </div>
 
             {/* Список задач */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ minHeight: 0 }}>
+            <div className="flex-1 overflow-y-auto p-4" data-tasks-container style={{ minHeight: 0 }}>
               {isPending && statusTasks.length === 0 ? (
                 <div className="text-center py-8">
                   <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-blue-500"></div>
                 </div>
               ) : statusTasks.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400 text-sm">
-                  Нет задач
-                </div>
+                <>
+                  {/* Индикатор вставки в пустую колонку */}
+                  {insertPosition?.statusId === status.id && insertPosition.index === 0 && (
+                    <div className="h-1 bg-blue-500 rounded mb-3 animate-pulse" />
+                  )}
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400 text-sm">
+                    Нет задач
+                  </div>
+                </>
               ) : (
-                statusTasks.map(task => {
-                  const isUpdating = updatingTasks.has(task.id);
-                  
-                  return (
-                  <div
-                    key={task.id}
-                    data-task-card="true"
-                    onMouseDown={(e) => handleMouseDown(e, task)}
-                    onClick={() => !isDragging && onTaskClick(task)}
-                    className={`
+                <div className="space-y-3">
+                  {statusTasks.map((task, index) => {
+                    const isUpdating = updatingTasks.has(task.id);
+                    const showInsertionLine = 
+                      insertPosition?.statusId === status.id && 
+                      insertPosition.index === index &&
+                      draggedTask?.id !== task.id;
+                    
+                    return (
+                      <div key={task.id}>
+                        {/* Линия вставки ПЕРЕД карточкой */}
+                        {showInsertionLine && (
+                          <div className="h-1 bg-blue-500 rounded mb-3 animate-pulse" />
+                        )}
+                        
+                        <div
+                          data-task-card="true"
+                          onMouseDown={(e) => handleMouseDown(e, task)}
+                          onClick={() => !isDragging && onTaskClick(task)}
+                          className={`
                       bg-white dark:bg-gray-700 
                       p-4 rounded-lg shadow-sm
                       border-2
@@ -629,9 +785,17 @@ export default function KanbanBoard({
                         📋 Есть подзадачи
                       </div>
                     )}
-                  </div>
-                  );
-                })
+                        </div>
+                      </div>
+                    );
+                  })}
+                  
+                  {/* Линия вставки в КОНЕЦ списка */}
+                  {insertPosition?.statusId === status.id && 
+                   insertPosition.index === statusTasks.length && (
+                    <div className="h-1 bg-blue-500 rounded mt-3 animate-pulse" />
+                  )}
+                </div>
               )}
             </div>
 
