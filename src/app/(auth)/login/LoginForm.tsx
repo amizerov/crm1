@@ -168,7 +168,7 @@ export default function LoginForm({ returnTo }: LoginFormProps) {
         <p className="text-sm text-gray-600 dark:text-gray-400">
           Нет аккаунта?{' '}
           <a
-            href="/auth/register"
+            href="/register"
             className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
           >
             Зарегистрироваться

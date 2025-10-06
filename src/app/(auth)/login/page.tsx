@@ -25,8 +25,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     const returnTo = params.returnTo;
 
     return (
-        <div className="flex justify-center items-center min-h-[60vh] py-10 px-5">
-            <div className="bg-white dark:bg-gray-800 p-10 rounded-xl shadow-xl dark:shadow-2xl dark:shadow-black/50 w-full max-w-[400px] border border-gray-200 dark:border-gray-700">
+        <div className="w-full max-w-md">
+            <div className="bg-white dark:bg-gray-800 p-10 rounded-xl shadow-xl w-full">
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
                         Argo CRM

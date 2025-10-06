@@ -9,7 +9,7 @@ const transporter = nodemailer.createTransport({
   secure: false, // true для 465, false для других портов
   auth: {
     user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD,
+    pass: process.env.SMTP_PASSWORD?.replace(/^["']|["']$/g, ''), // Убираем кавычки если есть
   },
 });
 
@@ -17,7 +17,7 @@ const transporter = nodemailer.createTransport({
  * Отправка письма с подтверждением регистрации
  */
 export async function sendVerificationEmail(email: string, token: string) {
-  const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify?token=${token}`;
+  const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify?token=${token}`;
 
   const mailOptions = {
     from: `"Argo CRM" <${process.env.SMTP_USER}>`,
@@ -145,6 +145,9 @@ ${verificationUrl}
     return { success: true };
   } catch (error) {
     console.error('❌ Error sending email:', error);
+    if (error instanceof Error) {
+      console.error('❌ Error details:', error.message);
+    }
     return { error: 'Не удалось отправить email' };
   }
 }
