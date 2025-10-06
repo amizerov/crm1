@@ -254,6 +254,16 @@ export default function ListLayout({
     setSelectedTask(null);
   };
 
+  const handleTaskDeleted = (taskId: number) => {
+    // Удаляем задачу из локального состояния
+    setTasks(prev => prev.filter(task => task.id !== taskId));
+    setAllTasks(prev => prev.filter(task => task.id !== taskId));
+    // Закрываем панель, если удаленная задача была выбрана
+    if (selectedTask?.id === taskId) {
+      setSelectedTask(null);
+    }
+  };
+
   return (
     <div 
       className="flex flex-col bg-gray-50 dark:bg-gray-900"
@@ -321,8 +331,10 @@ export default function ListLayout({
       {selectedTask && (
         <TaskDetails 
           task={selectedTask}
+          currentUserId={currentUserId}
           onClose={handleClosePanel}
           onTaskUpdated={handleRefreshTasks}
+          onTaskDeleted={handleTaskDeleted}
         />
       )}
     </div>
