@@ -4,9 +4,9 @@ import { redirect } from 'next/navigation';
 import CompanyForm from './CompanyForm';
 
 type PageProps = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
 export default async function CompanyEditPage({ params }: PageProps) {

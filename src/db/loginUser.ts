@@ -3,6 +3,12 @@
 import { query } from './connect';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import bcrypt from 'bcrypt';
+
+export async function hashPassword(password: string): Promise<string> {
+  const saltRounds = 10;
+  return bcrypt.hash(password, saltRounds);
+}
 
 export async function loginUser(formData: FormData) {
   const login = formData.get('login') as string;
@@ -34,24 +40,68 @@ export async function loginUser(formData: FormData) {
       console.log('Тестовый пользователь admin создан');
     }
     
-    // Проверим, есть ли пользователь с таким логином
-    const userExistsResult = await query('SELECT id, login, nicName FROM [User] WHERE login = @login', { login });
+    // Проверим, есть ли пользователь с таким логином (получаем сразу все нужные поля)
+    const userExistsResult = await query(`
+      SELECT id, login, nicName, password, isVerified 
+      FROM [User] 
+      WHERE login = @login
+    `, { login });
     
     console.log('Пользователь с логином', login, 'найден:', userExistsResult.length > 0);
     
-    const result = await query(`
-      SELECT id, login, nicName 
-      FROM [User] 
-      WHERE login = @login AND password = @password
-    `, { login, password });
-
-    console.log('Результат авторизации:', result.length);
-
-    if (result.length === 0) {
+    if (userExistsResult.length === 0) {
       throw new Error('Неверный логин или пароль');
     }
 
-    const user = result[0];
+    const foundUser = userExistsResult[0];
+    const storedPassword = foundUser.password;
+    const isVerified = foundUser.isVerified;
+    
+    console.log('🔍 Данные пользователя:', {
+      id: foundUser.id,
+      login: foundUser.login,
+      hashedPassword: storedPassword?.startsWith('$2b$') || storedPassword?.startsWith('$2a$'),
+      isVerified: isVerified
+    });
+
+    let isPasswordValid = false;
+
+    // Проверяем, является ли пароль хешем bcrypt (начинается с $2b$ или $2a$)
+    if (storedPassword && (storedPassword.startsWith('$2b$') || storedPassword.startsWith('$2a$'))) {
+      // Новый пользователь с хешированным паролем
+      console.log('✅ Проверка хешированного пароля');
+      isPasswordValid = await bcrypt.compare(password, storedPassword);
+    } else {
+      // Старый пользователь с паролем в открытом виде
+      console.log('⚠️ Проверка пароля в открытом виде (старый пользователь)');
+      isPasswordValid = password === storedPassword;
+    }
+
+    if (!isPasswordValid) {
+      throw new Error('Неверный логин или пароль');
+    }
+
+    // Проверяем подтверждение email
+    // Для пользователей с хешированным паролем (новые через регистрацию) - ОБЯЗАТЕЛЬНАЯ проверка
+    if (storedPassword && (storedPassword.startsWith('$2b$') || storedPassword.startsWith('$2a$'))) {
+      console.log('🔐 Проверка подтверждения email для нового пользователя, isVerified:', isVerified);
+      
+      // Проверяем: isVerified должен быть 1 или true (иначе отказ)
+      if (isVerified === 0 || isVerified === false || isVerified === null || isVerified === undefined) {
+        console.log('❌ Email не подтвержден! Отказано в доступе.');
+        throw new Error('Пожалуйста, подтвердите ваш email перед входом. Проверьте почту.');
+      }
+      console.log('✅ Email подтвержден, доступ разрешен');
+    } else {
+      // Старый пользователь - проверяем только если поле isVerified существует и равно 0
+      console.log('⚠️ Старый пользователь (пароль в открытом виде), isVerified:', isVerified);
+      if (isVerified === 0 || isVerified === false) {
+        console.log('❌ Email не подтвержден у старого пользователя');
+        throw new Error('Пожалуйста, подтвердите ваш email перед входом. Проверьте почту.');
+      }
+    }
+
+    const user = foundUser;
     
     // Сохраняем данные пользователя в cookies (сессии)
     const cookieStore = await cookies();

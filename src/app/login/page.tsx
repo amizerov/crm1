@@ -2,9 +2,9 @@ import { getCurrentUser } from '@/db/loginUser';
 import { redirect } from 'next/navigation';
 import LoginForm from './LoginForm';
 
-type SearchParams = {
+type SearchParams = Promise<{
   returnTo?: string;
-};
+}>;
 
 type LoginPageProps = {
   searchParams: SearchParams;
@@ -15,9 +15,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     const currentUser = await getCurrentUser();
     if (currentUser) {
         // Если пользователь уже авторизован, перенаправляем на нужную страницу
-        const returnTo = searchParams.returnTo || '/dashboard';
+        const params = await searchParams;
+        const returnTo = params.returnTo || '/dashboard';
         redirect(returnTo);
     }
+
+    // Получаем параметры для передачи в форму
+    const params = await searchParams;
+    const returnTo = params.returnTo;
 
     return (
         <div className="flex justify-center items-center min-h-[60vh] py-10 px-5">
@@ -31,7 +36,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                     </p>
                 </div>
 
-                <LoginForm />
+                <LoginForm returnTo={returnTo} />
             </div>
         </div>
     );

@@ -2,6 +2,7 @@
 
 import { getCurrentUser } from '@/db/loginUser';
 import { query } from '@/db/connect';
+import { logTaskHistory } from './taskHistory';
 
 export async function updateTaskOrder(taskId: number, newStatusId: number, newOrder: number) {
   try {
@@ -32,6 +33,12 @@ export async function updateTaskOrder(taskId: number, newStatusId: number, newOr
     if (oldStatusId !== newStatusId) {
       console.log('🔄 Moving between columns');
       
+      // Получаем названия статусов для истории
+      const oldStatusResult = await query('SELECT status FROM StatusTask WHERE id = @id', { id: oldStatusId });
+      const newStatusResult = await query('SELECT status FROM StatusTask WHERE id = @id', { id: newStatusId });
+      const oldStatusName = oldStatusResult[0]?.status || `Статус ${oldStatusId}`;
+      const newStatusName = newStatusResult[0]?.status || `Статус ${newStatusId}`;
+      
       // 2.1. Сдвигаем задачи в новой колонке (освобождаем место)
       console.log('📍 Shifting tasks in NEW column down from position', newOrder);
       await query(`
@@ -61,6 +68,15 @@ export async function updateTaskOrder(taskId: number, newStatusId: number, newOr
         WHERE statusId = @oldStatusId 
         AND orderInStatus > @oldOrder
       `, { oldStatusId, oldOrder });
+
+      // 2.4. Записываем в историю
+      await logTaskHistory(taskId, {
+        actionType: 'order_changed',
+        fieldName: 'status_and_order',
+        oldValue: oldStatusName,
+        newValue: newStatusName,
+        description: `переместил(а) задачу из "${oldStatusName}" в "${newStatusName}"`
+      });
 
     } else {
       // 3. Перемещение внутри одной колонки
@@ -103,6 +119,18 @@ export async function updateTaskOrder(taskId: number, newStatusId: number, newOr
             dtu = GETDATE()
         WHERE id = @taskId
       `, { taskId, newOrder });
+
+      // Записываем в историю
+      const statusResult = await query('SELECT status FROM StatusTask WHERE id = @id', { id: newStatusId });
+      const statusName = statusResult[0]?.status || `Статус ${newStatusId}`;
+      
+      await logTaskHistory(taskId, {
+        actionType: 'order_changed',
+        fieldName: 'order_in_status',
+        oldValue: `позиция ${oldOrder + 1}`,
+        newValue: `позиция ${newOrder + 1}`,
+        description: `изменил(а) порядок задачи в "${statusName}" с позиции ${oldOrder + 1} на позицию ${newOrder + 1}`
+      });
     }
 
     // 4. ФИНАЛЬНАЯ ПРОВЕРКА: убедимся, что нумерация сквозная без пропусков

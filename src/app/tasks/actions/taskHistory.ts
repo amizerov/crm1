@@ -9,7 +9,7 @@ export interface TaskHistoryEntry {
                'updated' | 'deleted' | 'document_added' | 'document_deleted' | 
                'comment_added' | 'comment_edited' | 'comment_deleted' | 
                'moved' | 'deadline_changed' | 'startdate_changed' | 'description_changed' |
-               'name_changed' | 'executor_changed';
+               'name_changed' | 'executor_changed' | 'order_changed';
   fieldName?: string;
   oldValue?: string | null;
   newValue?: string | null;
@@ -158,6 +158,11 @@ export async function generateHistoryDescription(
       return 'удалил(а) комментарий';
     case 'moved':
       return `переместил(а) задачу в "${formatValue(newValue)}"`;
+    case 'order_changed':
+      if (fieldName === 'status_and_order') {
+        return `переместил(а) задачу из "${formatValue(oldValue)}" в "${formatValue(newValue)}"`;
+      }
+      return `изменил(а) порядок задачи`;
     case 'updated':
       return fieldName 
         ? `изменил(а) ${fieldName}: "${formatValue(oldValue)}" → "${formatValue(newValue)}"`

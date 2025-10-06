@@ -164,6 +164,18 @@ export default function LoginForm({ returnTo }: LoginFormProps) {
         </button>
       </form>
 
+      <div className="mt-6 text-center">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Нет аккаунта?{' '}
+          <a
+            href="/auth/register"
+            className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+          >
+            Зарегистрироваться
+          </a>
+        </p>
+      </div>
+
       <Notification
         message={notification.message}
         type={notification.type}
