@@ -3,10 +3,12 @@
 import { useState, useEffect, useTransition } from 'react';
 import { getTasks } from '../../actions/getTasks';
 import { getProjectsByCompanyForFilter } from '../../actions/getProjects';
+import { getTaskStatuses } from '../../actions/getTaskStatuses';
 import LeftPanel from '../common/LeftPanel';
 import TaskList from './TaskList';
 import TaskDetails from '../common/TaskDetails';
 import Header from '../common/Header';
+import { StatusTask } from '@/app/projects/actions/statusActions';
 
 interface Task {
   id: number;
@@ -44,7 +46,7 @@ interface Status {
 interface ListLayoutProps {
   initialTasks: Task[];
   userCompanies: UserCompany[];
-  statuses: Status[];
+  statuses: StatusTask[];
   currentUserId: number;
   onViewChange?: (view: 'list' | 'desk') => void;
 }
@@ -58,6 +60,7 @@ export default function ListLayout({
 }: ListLayoutProps) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [allTasks, setAllTasks] = useState<Task[]>(initialTasks);
+  const [currentStatuses, setCurrentStatuses] = useState<StatusTask[]>(statuses);
   const [selectedCompanyId, setSelectedCompanyId] = useState<number>(0);
   const [selectedProjectId, setSelectedProjectId] = useState<number>(0);
   const [projects, setProjects] = useState<{ id: number; projectName: string }[]>([]);
@@ -98,6 +101,10 @@ export default function ListLayout({
               if (projectId === 0 || companyProjects.some(p => p.id === projectId)) {
                 setSelectedProjectId(projectId);
                 
+                // Загружаем статусы для проекта
+                const projectStatuses = await getTaskStatuses(projectId === 0 ? undefined : projectId);
+                setCurrentStatuses(projectStatuses);
+                
                 // Фильтруем задачи по проекту
                 if (projectId === 0) {
                   setTasks(newTasks);
@@ -109,11 +116,18 @@ export default function ListLayout({
                 setTasks(newTasks);
               }
             } else {
+              // Загружаем статусы по умолчанию
+              const defaultStatuses = await getTaskStatuses();
+              setCurrentStatuses(defaultStatuses);
               setTasks(newTasks);
             }
           } else {
             setTasks(newTasks);
           }
+        } else {
+          // Если нет сохраненной компании, загружаем статусы по умолчанию
+          const defaultStatuses = await getTaskStatuses();
+          setCurrentStatuses(defaultStatuses);
         }
       }
       setIsInitialLoading(false);
@@ -204,6 +218,10 @@ export default function ListLayout({
       setAllTasks(newTasks);
       setTasks(newTasks);
       
+      // Загружаем статусы по умолчанию (projectId IS NULL)
+      const defaultStatuses = await getTaskStatuses();
+      setCurrentStatuses(defaultStatuses);
+      
       if (companyId !== 0) {
         const companyProjects = await getProjectsByCompanyForFilter(companyId);
         setProjects(companyProjects);
@@ -229,13 +247,18 @@ export default function ListLayout({
     });
   };
 
-  const handleProjectChange = (projectId: number) => {
+  const handleProjectChange = async (projectId: number) => {
     setSelectedProjectId(projectId);
     localStorage.setItem('selectedProjectId', projectId.toString());
     
     setIsInitialLoading(true);
     
-    setTimeout(() => {
+    startTransition(async () => {
+      // Загружаем статусы для проекта (если projectId = 0, загружаются статусы по умолчанию)
+      const projectStatuses = await getTaskStatuses(projectId === 0 ? undefined : projectId);
+      setCurrentStatuses(projectStatuses);
+      
+      // Фильтруем задачи
       if (projectId === 0) {
         setTasks(allTasks);
       } else {
@@ -243,7 +266,7 @@ export default function ListLayout({
         setTasks(filtered);
       }
       setIsInitialLoading(false);
-    }, 100);
+    });
   };
 
   const handleTaskClick = (task: Task) => {
@@ -284,7 +307,7 @@ export default function ListLayout({
         onToggleLeftPanel={toggleLeftPanel}
         isFullscreen={isFullscreen}
         onToggleFullscreen={toggleFullscreen}
-        title="📋 Список задач"
+        title="Список задач"
         currentView="list"
         onViewChange={onViewChange}
       />
@@ -316,6 +339,7 @@ export default function ListLayout({
           ) : (
             <TaskList 
               tasks={tasks}
+              statuses={currentStatuses}
               onTaskClick={handleTaskClick}
               isPending={isPending}
               companyId={selectedCompanyId || undefined}

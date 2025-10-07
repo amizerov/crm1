@@ -1,5 +1,6 @@
 'use client';
 
+import { StatusTask } from '@/app/projects/actions/statusActions';
 import { useState } from 'react';
 
 interface Task {
@@ -26,6 +27,7 @@ interface Task {
 
 interface TaskListProps {
   tasks: Task[];
+  statuses: StatusTask[];
   onTaskClick?: (task: Task) => void;
   isPending?: boolean;
   companyId?: number;
@@ -36,6 +38,7 @@ interface TaskListProps {
 
 export default function TaskList({ 
   tasks,
+  statuses,
   onTaskClick,
   isPending = false,
   companyId,
@@ -45,31 +48,23 @@ export default function TaskList({
 }: TaskListProps) {
   // Группируем задачи по статусам
   const tasksByStatus = tasks.reduce((acc, task) => {
-    const statusName = task.statusName || 'Без статуса';
-    if (!acc[statusName]) {
-      acc[statusName] = [];
+    const statusId = task.statusId;
+    if (!acc[statusId]) {
+      acc[statusId] = [];
     }
-    acc[statusName].push(task);
+    acc[statusId].push(task);
     return acc;
-  }, {} as Record<string, Task[]>);
+  }, {} as Record<number, Task[]>);
 
-  // Сортируем статусы в правильном порядке
-  const statusOrder = ['Идея', 'Готово к взятию', 'В работе', 'Тестирование', 'Готово', 'На паузе', 'Отменено'];
-  const sortedStatuses = Object.keys(tasksByStatus).sort((a, b) => {
-    const indexA = statusOrder.indexOf(a);
-    const indexB = statusOrder.indexOf(b);
-    if (indexA === -1 && indexB === -1) return a.localeCompare(b);
-    if (indexA === -1) return 1;
-    if (indexB === -1) return -1;
-    return indexA - indexB;
-  });
+  // Используем переданные статусы, отсортированные по stepOrder
+  const sortedStatuses = statuses.sort((a, b) => a.stepOrder - b.stepOrder);
 
-  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+  const [collapsedSections, setCollapsedSections] = useState<Record<number, boolean>>({});
 
-  const toggleSection = (status: string) => {
+  const toggleSection = (statusId: number) => {
     setCollapsedSections(prev => ({
       ...prev,
-      [status]: !prev[status]
+      [statusId]: !prev[statusId]
     }));
   };
 
@@ -120,14 +115,14 @@ export default function TaskList({
           {/* Тело таблицы */}
           <div>
             {sortedStatuses.map((status) => {
-              const statusTasks = tasksByStatus[status];
-              const isCollapsed = collapsedSections[status];
+              const statusTasks = tasksByStatus[status.id] || [];
+              const isCollapsed = collapsedSections[status.id];
               
               return (
-                <div key={status}>
+                <div key={status.id}>
                   {/* Заголовок секции статуса */}
                   <button
-                    onClick={() => toggleSection(status)}
+                    onClick={() => toggleSection(status.id)}
                     className="w-full bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-b border-gray-200 dark:border-gray-700"
                   >
                     <div className="flex items-center gap-3 px-6 py-3">
@@ -142,7 +137,7 @@ export default function TaskList({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/>
                       </svg>
                       <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        {status}
+                        {status.status}
                       </h3>
                       <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded-full">
                         {statusTasks.length}
@@ -151,7 +146,7 @@ export default function TaskList({
                   </button>
 
                   {/* Строки задач */}
-                  {!isCollapsed && statusTasks.map((task) => (
+                  {!isCollapsed && statusTasks.map((task: Task) => (
                     <div
                       key={task.id}
                       className={`grid grid-cols-12 gap-4 px-6 py-3 border-b cursor-pointer transition-colors group ${

@@ -301,7 +301,7 @@ export default function DeskLayout({
         onToggleLeftPanel={toggleLeftPanel}
         isFullscreen={isFullscreen}
         onToggleFullscreen={toggleFullscreen}
-        title="📋 Канбан доска"
+        title="Канбан доска"
         currentView="desk"
         onViewChange={onViewChange}
       />

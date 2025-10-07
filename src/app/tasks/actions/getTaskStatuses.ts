@@ -1,13 +1,7 @@
 'use server'
 
 import { query } from '@/db/connect';
-
-type StatusTask = {
-  id: number;
-  status: string;
-  statusEng?: string;
-  stepOrder: number;
-};
+import { StatusTask } from '@/app/projects/actions/statusActions';
 
 /**
  * Получить статусы для конкретного проекта или статусы по умолчанию
@@ -20,7 +14,7 @@ export async function getTaskStatuses(projectId?: number): Promise<StatusTask[]>
     if (projectId !== undefined) {
       // Получаем статусы для конкретного проекта
       result = await query(`
-        SELECT id, status, statusEng, stepOrder
+        SELECT id, projectId, status, statusEng, stepOrder
         FROM StatusTask
         WHERE projectId = @projectId
         ORDER BY stepOrder
@@ -28,7 +22,7 @@ export async function getTaskStatuses(projectId?: number): Promise<StatusTask[]>
     } else {
       // Получаем статусы по умолчанию (где projectId IS NULL)
       result = await query(`
-        SELECT id, status, statusEng, stepOrder
+        SELECT id, projectId, status, statusEng, stepOrder
         FROM StatusTask
         WHERE projectId IS NULL
         ORDER BY stepOrder
