@@ -11,3 +11,4 @@ At the begining of server actions file alwais add 'use server'
 
 to query database use function query(...) from src/db/connect.ts
 do not call getPool() this is an internal function.
+
