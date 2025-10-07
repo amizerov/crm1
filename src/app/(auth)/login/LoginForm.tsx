@@ -83,9 +83,9 @@ export default function LoginForm({ returnTo }: LoginFormProps) {
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Логин
           </label>
           <input 
@@ -96,23 +96,16 @@ export default function LoginForm({ returnTo }: LoginFormProps) {
             placeholder="Введите логин"
             value={savedLogin}
             onChange={(e) => setSavedLogin(e.target.value)}
-            className={`
-              w-full px-3 py-3 
-              border border-gray-300 dark:border-gray-600 
-              rounded 
-              text-base 
-              bg-white dark:bg-gray-800 
-              text-gray-900 dark:text-gray-100
-              placeholder-gray-400 dark:placeholder-gray-500
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-              transition-all duration-200
-              ${isPending ? 'opacity-60 cursor-not-allowed bg-gray-50 dark:bg-gray-700' : ''}
-            `}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
+                     bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                     placeholder-gray-500 dark:placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                     disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
 
         <div>
-          <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-300 text-sm">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Пароль
           </label>
           <input 
@@ -121,38 +114,22 @@ export default function LoginForm({ returnTo }: LoginFormProps) {
             required
             disabled={isPending}
             placeholder="Введите пароль"
-            className={`
-              w-full px-3 py-3 
-              border border-gray-300 dark:border-gray-600 
-              rounded 
-              text-base 
-              bg-white dark:bg-gray-800 
-              text-gray-900 dark:text-gray-100
-              placeholder-gray-400 dark:placeholder-gray-500
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-              transition-all duration-200
-              ${isPending ? 'opacity-60 cursor-not-allowed bg-gray-50 dark:bg-gray-700' : ''}
-            `}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
+                     bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                     placeholder-gray-500 dark:placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                     disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
 
         <button 
           type="submit" 
           disabled={isPending}
-          className={`
-            w-full py-3.5 px-4
-            ${isPending 
-              ? 'bg-gray-500 dark:bg-gray-600 cursor-not-allowed' 
-              : 'bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 cursor-pointer'
-            }
-            text-white 
-            rounded 
-            text-base 
-            font-semibold 
-            transition-all duration-200
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900
-            flex items-center justify-center gap-2
-          `}
+          className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400
+                   text-white rounded-md font-medium cursor-pointer
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                   disabled:cursor-not-allowed transition-colors
+                   flex items-center justify-center gap-2"
         >
           {isPending && (
             <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -169,7 +146,7 @@ export default function LoginForm({ returnTo }: LoginFormProps) {
           Нет аккаунта?{' '}
           <a
             href="/register"
-            className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium cursor-pointer"
           >
             Зарегистрироваться
           </a>

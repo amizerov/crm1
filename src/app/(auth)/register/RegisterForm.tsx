@@ -61,193 +61,174 @@ export default function RegisterForm() {
   };
 
   return (
-    <div className="w-full max-w-md">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6">
-        {/* Заголовок */}
-        <div className="text-center mb-5">
-          <div className="w-12 h-12 mx-auto bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mb-3">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-            Создать аккаунт
-          </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Присоединяйтесь к Argo CRM
-          </p>
+    <>
+      {/* Уведомления */}
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md flex items-start gap-2">
+          <svg className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
         </div>
+      )}
 
-        {/* Уведомления */}
-        {error && (
-          <div className="mb-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-2">
-            <svg className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      {success && (
+        <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
+          <div className="flex items-start gap-2">
+            <svg className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p className="text-red-600 dark:text-red-400 text-xs">{error}</p>
-          </div>
-        )}
-
-        {success && (
-          <div className="mb-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-            <div className="flex items-start gap-2">
-              <svg className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div>
-                <p className="text-green-600 dark:text-green-400 text-xs font-medium">{success}</p>
-                <p className="text-green-600 dark:text-green-400 text-xs mt-0.5 opacity-75">
-                  Перенаправление на страницу входа...
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Форма */}
-        <form onSubmit={handleSubmit} className="space-y-3">
-          {/* Полное имя */}
-          <div>
-            <label
-              htmlFor="fullName"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
-              Полное имя <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="fullName"
-              name="fullName"
-              required
-              disabled={isPending || success !== ''}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 
-                       bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm
-                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                       disabled:opacity-50 disabled:bg-gray-100 dark:disabled:bg-gray-800
-                       transition-all duration-200"
-              placeholder="Иван Иванов"
-            />
-          </div>
-
-          {/* Email */}
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
-              Email <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              required
-              disabled={isPending || success !== ''}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 
-                       bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm
-                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                       disabled:opacity-50 disabled:bg-gray-100 dark:disabled:bg-gray-800
-                       transition-all duration-200"
-              placeholder="ivan@example.com"
-            />
-          </div>
-
-          {/* Пароли в одну строку */}
-          <div className="grid grid-cols-2 gap-3">
-            {/* Пароль */}
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Пароль <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                required
-                disabled={isPending || success !== ''}
-                minLength={6}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 
-                         bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm
-                         focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                         disabled:opacity-50 disabled:bg-gray-100 dark:disabled:bg-gray-800
-                         transition-all duration-200"
-                placeholder="Минимум 6"
-              />
-            </div>
-
-            {/* Подтверждение пароля */}
-            <div>
-              <label
-                htmlFor="confirmPassword"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Повторите <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                required
-                disabled={isPending || success !== ''}
-                minLength={6}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 
-                         bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm
-                         focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                         disabled:opacity-50 disabled:bg-gray-100 dark:disabled:bg-gray-800
-                         transition-all duration-200"
-                placeholder="Повторите"
-              />
+              <p className="text-green-600 dark:text-green-400 text-sm font-medium">{success}</p>
+              <p className="text-green-600 dark:text-green-400 text-xs mt-1 opacity-75">
+                Перенаправление на страницу входа...
+              </p>
             </div>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Используйте минимум 6 символов
-          </p>
+        </div>
+      )}
 
-          {/* Кнопка регистрации */}
-          <button
-            type="submit"
-            disabled={isPending || success !== ''}
-            className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white 
-                     py-2.5 px-4 rounded-lg font-medium text-sm
-                     hover:from-blue-600 hover:to-indigo-700
-                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                     disabled:opacity-50 disabled:cursor-not-allowed
-                     transition-all duration-200 flex items-center justify-center gap-2"
+      {/* Форма */}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Полное имя */}
+        <div>
+          <label
+            htmlFor="fullName"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
-            {isPending ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Регистрация...</span>
-              </>
-            ) : success ? (
-              <>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Успешно!</span>
-              </>
-            ) : (
-              <span>Зарегистрироваться</span>
-            )}
-          </button>
-        </form>
-
-        {/* Ссылка на вход */}
-        <div className="mt-4 text-center">
-          <p className="text-gray-600 dark:text-gray-400 text-xs">
-            Уже есть аккаунт?{' '}
-            <Link
-              href="/login"
-              className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
-            >
-              Войти
-            </Link>
-          </p>
+            Полное имя <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="fullName"
+            name="fullName"
+            required
+            disabled={isPending || success !== ''}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
+                     bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                     placeholder-gray-500 dark:placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                     disabled:opacity-50 disabled:bg-gray-100 dark:disabled:bg-gray-800"
+            placeholder="Иван Иванов"
+          />
         </div>
+
+        {/* Email */}
+        <div>
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
+            Email <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            required
+            disabled={isPending || success !== ''}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
+                     bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                     placeholder-gray-500 dark:placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                     disabled:opacity-50 disabled:bg-gray-100 dark:disabled:bg-gray-800"
+            placeholder="ivan@example.com"
+          />
+        </div>
+
+        {/* Пароли в две колонки */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* Пароль */}
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
+              Пароль <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              required
+              disabled={isPending || success !== ''}
+              minLength={6}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
+                       bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                       placeholder-gray-500 dark:placeholder-gray-400
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                       disabled:opacity-50 disabled:bg-gray-100 dark:disabled:bg-gray-800"
+              placeholder="Минимум 6"
+            />
+          </div>
+
+          {/* Подтверждение пароля */}
+          <div>
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
+              Повторите <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              required
+              disabled={isPending || success !== ''}
+              minLength={6}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
+                       bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                       placeholder-gray-500 dark:placeholder-gray-400
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                       disabled:opacity-50 disabled:bg-gray-100 dark:disabled:bg-gray-800"
+              placeholder="Повторите"
+            />
+          </div>
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Используйте минимум 6 символов
+        </p>
+
+        {/* Кнопка регистрации */}
+        <button
+          type="submit"
+          disabled={isPending || success !== ''}
+          className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400
+                   text-white rounded-md font-medium cursor-pointer
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                   disabled:cursor-not-allowed transition-colors
+                   flex items-center justify-center gap-2"
+        >
+          {isPending ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <span>Регистрация...</span>
+            </>
+          ) : success ? (
+            <>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Успешно!</span>
+            </>
+          ) : (
+            <span>Зарегистрироваться</span>
+          )}
+        </button>
+      </form>
+
+      <div className="mt-6 text-center">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Уже есть аккаунт?{' '}
+          <a
+            href="/login"
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium cursor-pointer"
+          >
+            Войти
+          </a>
+        </p>
       </div>
-    </div>
+    </>
   );
 }

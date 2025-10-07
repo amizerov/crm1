@@ -25,19 +25,17 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     const returnTo = params.returnTo;
 
     return (
-        <div className="w-full max-w-md">
-            <div className="bg-white dark:bg-gray-800 p-10 rounded-xl shadow-xl w-full">
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-                        Argo CRM
-                    </h1>
-                    <p className="text-base text-gray-600 dark:text-gray-400">
-                        Войдите в систему
-                    </p>
-                </div>
-
-                <LoginForm returnTo={returnTo} />
+        <>
+            <div className="text-center mb-6">
+                <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                    Вход в систему
+                </h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Войдите в Argo CRM
+                </p>
             </div>
-        </div>
+
+            <LoginForm returnTo={returnTo} />
+        </>
     );
 }
