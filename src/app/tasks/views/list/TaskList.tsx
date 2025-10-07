@@ -34,6 +34,7 @@ interface TaskListProps {
   projectId?: number;
   onTaskCreated?: () => void;
   selectedTaskId?: number;
+  onTaskDeleted?: (taskId: number) => void;
 }
 
 export default function TaskList({ 
@@ -44,7 +45,8 @@ export default function TaskList({
   companyId,
   projectId,
   onTaskCreated,
-  selectedTaskId
+  selectedTaskId,
+  onTaskDeleted
 }: TaskListProps) {
   // Группируем задачи по статусам
   const tasksByStatus = tasks.reduce((acc, task) => {

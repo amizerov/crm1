@@ -3,28 +3,32 @@ import { getCurrentUser } from '@/db/loginUser';
 import { getTasks } from '../actions/getTasks';
 import { getUserCompanies } from '../actions/getUserCompanies';
 import { getTaskStatuses } from '../actions/getTaskStatuses';
-import TasksViewLayout from './common/TasksViewLayout';
+import TaskViewLayout from './TaskViewLayout';
 
-export default async function TasksViewsPage() {
-  // Проверяем авторизацию
+export const metadata = {
+  title: 'Задачи - Argo CRM',
+  description: 'Управление задачами',
+};
+
+export default async function TasksPage() {
   const currentUser = await getCurrentUser();
   if (!currentUser) {
     redirect('/login');
   }
 
-  const [tasks, userCompanies, statuses] = await Promise.all([
+  // Загружаем только начальные данные
+  const [initialTasks, userCompanies, statuses] = await Promise.all([
     getTasks(),
     getUserCompanies(),
     getTaskStatuses()
   ]);
 
   return (
-    <TasksViewLayout 
-      initialTasks={tasks}
+    <TaskViewLayout
+      initialTasks={initialTasks}
       userCompanies={userCompanies}
       statuses={statuses}
       currentUserId={currentUser.id}
-      initialView="desk" // По умолчанию канбан
     />
   );
 }
