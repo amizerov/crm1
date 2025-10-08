@@ -9,9 +9,10 @@ import Header from './components/Header';
 import TaskDetails from './components/TaskDetails';
 import TaskList from './list/TaskList';
 import KanbanBoard from './desk/KanbanBoard';
+import TaskGanttDiagram from './gantt/TaskGanttDiagram';
 import { StatusTask } from '@/app/projects/actions/statusActions';
 
-type ViewMode = 'list' | 'desk';
+type ViewMode = 'list' | 'desk' | 'gantt';
 
 interface Task {
   id: number;
@@ -248,6 +249,8 @@ export default function TaskViewLayout({
         return <TaskList {...commonProps} />;
       case 'desk':
         return <KanbanBoard {...commonProps} />;
+      case 'gantt':
+        return <TaskGanttDiagram {...commonProps} />;
       default:
         return <TaskList {...commonProps} />;
     }

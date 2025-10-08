@@ -6,8 +6,8 @@ interface NavigationHeaderProps {
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
   title?: string;
-  currentView?: 'list' | 'desk';
-  onViewChange?: (view: 'list' | 'desk') => void;
+  currentView?: 'list' | 'desk' | 'gantt';
+  onViewChange?: (view: 'list' | 'desk' | 'gantt') => void;
 }
 
 export default function Header({
@@ -21,6 +21,7 @@ export default function Header({
 }: NavigationHeaderProps) {
   const isListView = currentView === 'list';
   const isDeskView = currentView === 'desk';
+  const isGanttView = currentView === 'gantt';
 
   return (
     <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between gap-3">
@@ -99,6 +100,29 @@ export default function Header({
                 <path d="M21,2h-4h-2H9H7H3C1.3,2,0,3.3,0,5v10c0,1.7,1.3,3,3,3h4v1c0,1.7,1.3,3,3,3h4c1.7,0,3-1.3,3-3v-3h4c1.7,0,3-1.3,3-3V5  C24,3.3,22.7,2,21,2z M3,16c-0.6,0-1-0.4-1-1V5c0-0.6,0.4-1,1-1h4v12H3z M15,19c0,0.6-0.4,1-1,1h-4c-0.6,0-1-0.4-1-1v-0.9V4h6v12.2  V19z M22,13c0,0.6-0.4,1-1,1h-4V4h4c0.6,0,1,0.4,1,1V13z" fill="currentColor"></path>
               </svg>
               <span className="hidden sm:inline">Канбан</span>
+            </button>
+            
+            <button
+              onClick={() => onViewChange('gantt')}
+              className={`
+                px-3 py-1.5
+                rounded
+                text-xs font-medium
+                inline-flex items-center gap-1
+                transition-colors
+                whitespace-nowrap
+                cursor-pointer
+                ${isGanttView 
+                  ? 'bg-gray-400 text-white dark:bg-gray-500' 
+                  : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100'
+                }
+              `}
+              title="Хронология"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M10 7.999v2H3c-1.654 0-3-1.346-3-3v-2c0-1.654 1.346-3 3-3h7v2H3c-.552 0-1 .449-1 1v2c0 .55.448 1 1 1h7Zm-3 12c-.552 0-1-.45-1-1v-2c0-.551.448-1 1-1h3v-2H7c-1.654 0-3 1.346-3 3v2c0 1.654 1.346 3 3 3h3v-2H7Zm17-3v2c0 1.654-1.346 3-3 3h-7v1a1 1 0 1 1-2 0v-22a1 1 0 1 1 2 0v1h3c1.654 0 3 1.346 3 3v2c0 1.654-1.346 3-3 3h-3v4h7c1.654 0 3 1.346 3 3Zm-10-9h3c.552 0 1-.45 1-1v-2c0-.551-.448-1-1-1h-3v4Zm8 9c0-.551-.448-1-1-1h-7v4h7c.552 0 1-.45 1-1v-2Z" fill="currentColor"></path>
+              </svg>
+              <span className="hidden sm:inline">Gantt</span>
             </button>
           </div>
         )}
