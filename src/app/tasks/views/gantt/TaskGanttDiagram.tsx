@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useTransition } from 'react';
 import dynamic from 'next/dynamic';
 import { StatusTask } from '@/app/projects/actions/statusActions';
 import { Task as GanttTask, ViewMode } from './types/public-types';
+import { updateTaskDates, updateTaskProgress, deleteTask } from './actions';
 
 // Динамический импорт Gantt компонента
 const GanttChart = dynamic(() => import('./GanttChart'), {
@@ -63,14 +64,35 @@ export default function TaskGanttDiagram({
   onTaskDeleted,
   currentUserId
 }: TaskGanttDiagramProps) {
+  const [isUpdating, startTransition] = useTransition();
+
   // Преобразуем Task[] в формат GanttTask[]
   const ganttTasks = useMemo<GanttTask[]>(() => {
     // Фильтруем задачи с датами
     const tasksWithDates = tasks.filter(task => task.startDate && task.dedline);
     
+    // Сортируем задачи (можно выбрать один из вариантов):
+    const sortedTasks = tasksWithDates.sort((a, b) => {
+      // Вариант 1: По дате начала (раньше начинается = выше в списке)
+      return new Date(a.startDate!).getTime() - new Date(b.startDate!).getTime();
+      
+      // Вариант 2: По ID (меньший ID = выше)
+      // return a.id - b.id;
+      
+      // Вариант 3: По названию (алфавитный порядок)
+      // return a.taskName.localeCompare(b.taskName, 'ru');
+      
+      // Вариант 4: По статусу (stepOrder)
+      // return (statuses.find(s => s.id === a.statusId)?.stepOrder || 999) - 
+      //        (statuses.find(s => s.id === b.statusId)?.stepOrder || 999);
+      
+      // Вариант 5: По приоритету (если есть)
+      // return (a.priorityId || 999) - (b.priorityId || 999);
+    });
+    
     console.log('📊 Gantt Tasks Debug:', {
       totalTasks: tasks.length,
-      tasksWithDates: tasksWithDates.length,
+      tasksWithDates: sortedTasks.length,
       sampleTask: tasks[0] ? {
         id: tasks[0].id,
         name: tasks[0].taskName,
@@ -79,7 +101,7 @@ export default function TaskGanttDiagram({
       } : null,
     });
     
-    return tasksWithDates.map(task => {
+    return sortedTasks.map(task => {
       const start = new Date(task.startDate!);
       const end = new Date(task.dedline!);
       
@@ -96,6 +118,7 @@ export default function TaskGanttDiagram({
         type: 'task' as const,
         progress,
         isDisabled: false,
+        displayOrder: task.orderInStatus || task.id, // Порядок отображения
         styles: {
           backgroundColor: getStatusColor(task.statusId, statuses),
           backgroundSelectedColor: getStatusColor(task.statusId, statuses, 0.8),
@@ -220,22 +243,65 @@ export default function TaskGanttDiagram({
               onTaskClick(originalTask);
             }
           }}
-          onDateChange={(task, children) => {
-            console.log('📅 Date changed:', { 
-              task: task.name, 
-              start: task.start, 
-              end: task.end,
-              children: children.length 
+          onDateChange={async (task, children) => {
+            const taskId = parseInt(task.id);
+            const startDate = task.start.toISOString().split('T')[0];
+            const dedline = task.end.toISOString().split('T')[0];
+            
+            console.log('📅 Date changed:', { taskId, startDate, dedline });
+            
+            startTransition(async () => {
+              const result = await updateTaskDates(taskId, startDate, dedline);
+              
+              if (result.success) {
+                console.log('✅ Dates saved successfully');
+              } else {
+                console.error('❌ Failed to save dates:', result.error);
+                alert('Ошибка сохранения дат: ' + result.error);
+              }
             });
-            // TODO: Вызвать server action для обновления дат задачи
           }}
-          onProgressChange={(task, children) => {
-            console.log('📊 Progress changed:', { 
-              task: task.name, 
-              progress: task.progress,
-              children: children.length 
+          onProgressChange={async (task, children) => {
+            const taskId = parseInt(task.id);
+            const progress = task.progress;
+            
+            console.log('📊 Progress changed:', { taskId, progress });
+            
+            startTransition(async () => {
+              const result = await updateTaskProgress(taskId, progress, statuses);
+              
+              if (result.success) {
+                console.log('✅ Progress saved successfully, new status:', result.newStatusId);
+              } else {
+                console.error('❌ Failed to save progress:', result.error);
+                alert('Ошибка сохранения прогресса: ' + result.error);
+              }
             });
-            // TODO: Обновить прогресс через server action
+          }}
+          onDelete={async (task) => {
+            const taskId = parseInt(task.id);
+            const confirmed = confirm(`Удалить задачу "${task.name}"?`);
+            
+            if (!confirmed) return false;
+            
+            console.log('🗑️ Deleting task:', taskId);
+            
+            startTransition(async () => {
+              const result = await deleteTask(taskId);
+              
+              if (result.success) {
+                console.log('✅ Task deleted successfully');
+                if (onTaskDeleted) {
+                  onTaskDeleted(taskId);
+                }
+              } else {
+                console.error('❌ Failed to delete task:', result.error);
+                alert('Ошибка удаления задачи: ' + result.error);
+              }
+            });
+            
+            // Возвращаем true для подтверждения удаления в UI
+            return true;
           }}
           onClick={(task) => {
             const originalTask = tasks.find(t => String(t.id) === task.id);
