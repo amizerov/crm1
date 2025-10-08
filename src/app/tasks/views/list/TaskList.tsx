@@ -357,6 +357,41 @@ export default function TaskList({
       default: return 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
     }
   };
+
+  // Обработчик клика по заголовку столбца для сортировки
+  const handleColumnSort = (columnKey: string) => {
+    if (sortBy === columnKey) {
+      // Если уже сортируем по этому столбцу — меняем направление
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Новый столбец — сортируем по возрастанию
+      setSortBy(columnKey);
+      setSortOrder('asc');
+    }
+  };
+
+  // Рендер иконки сортировки
+  const renderSortIcon = (columnKey: string) => {
+    if (sortBy !== columnKey) {
+      // Неактивная сортировка — серая двойная стрелка
+      return (
+        <svg className="w-3 h-3 text-gray-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+        </svg>
+      );
+    }
+    
+    // Активная сортировка — показываем направление
+    return sortOrder === 'asc' ? (
+      <svg className="w-3 h-3 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7"/>
+      </svg>
+    ) : (
+      <svg className="w-3 h-3 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/>
+      </svg>
+    );
+  };
   
   return (
     <div className="h-full flex flex-col bg-white dark:bg-gray-900">
@@ -419,16 +454,106 @@ export default function TaskList({
             <div className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
               <div className="flex gap-4 px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 <div className="w-8 flex-shrink-0"></div> {/* Чекбокс */}
-                {visibleColumns.taskName && <div className="flex-1 min-w-[200px]">Название</div>}
-                {visibleColumns.description && <div className="flex-1 min-w-[200px]">Описание</div>}
-                {visibleColumns.statusName && <div className="w-32 flex-shrink-0">Этап</div>}
-                {visibleColumns.executorName && <div className="w-40 flex-shrink-0">Исполнитель</div>}
-                {visibleColumns.priorityName && <div className="w-32 flex-shrink-0">Приоритет</div>}
-                {visibleColumns.orderInStatus && <div className="w-24 flex-shrink-0">Важность</div>}
-                {visibleColumns.startDate && <div className="w-32 flex-shrink-0">Дата начала</div>}
-                {visibleColumns.dedline && <div className="w-32 flex-shrink-0">Срок</div>}
-                {visibleColumns.dtc && <div className="w-32 flex-shrink-0">Создано</div>}
-                {visibleColumns.dtu && <div className="w-32 flex-shrink-0">Обновлено</div>}
+                
+                {visibleColumns.taskName && (
+                  <button 
+                    onClick={() => handleColumnSort('taskName')}
+                    className="flex-1 min-w-[200px] flex items-center gap-1.5 hover:text-gray-700 dark:hover:text-gray-200 transition-colors group"
+                  >
+                    <span>Название</span>
+                    {renderSortIcon('taskName')}
+                  </button>
+                )}
+                
+                {visibleColumns.description && (
+                  <button 
+                    onClick={() => handleColumnSort('description')}
+                    className="flex-1 min-w-[200px] flex items-center gap-1.5 hover:text-gray-700 dark:hover:text-gray-200 transition-colors group"
+                  >
+                    <span>Описание</span>
+                    {renderSortIcon('description')}
+                  </button>
+                )}
+                
+                {visibleColumns.statusName && (
+                  <button 
+                    onClick={() => handleColumnSort('statusName')}
+                    className="w-32 flex-shrink-0 flex items-center gap-1.5 hover:text-gray-700 dark:hover:text-gray-200 transition-colors group"
+                  >
+                    <span>Этап</span>
+                    {renderSortIcon('statusName')}
+                  </button>
+                )}
+                
+                {visibleColumns.executorName && (
+                  <button 
+                    onClick={() => handleColumnSort('executorName')}
+                    className="w-40 flex-shrink-0 flex items-center gap-1.5 hover:text-gray-700 dark:hover:text-gray-200 transition-colors group"
+                  >
+                    <span>Исполнитель</span>
+                    {renderSortIcon('executorName')}
+                  </button>
+                )}
+                
+                {visibleColumns.priorityName && (
+                  <button 
+                    onClick={() => handleColumnSort('priorityName')}
+                    className="w-32 flex-shrink-0 flex items-center gap-1.5 hover:text-gray-700 dark:hover:text-gray-200 transition-colors group"
+                  >
+                    <span>Приоритет</span>
+                    {renderSortIcon('priorityName')}
+                  </button>
+                )}
+                
+                {visibleColumns.orderInStatus && (
+                  <button 
+                    onClick={() => handleColumnSort('orderInStatus')}
+                    className="w-24 flex-shrink-0 flex items-center gap-1.5 hover:text-gray-700 dark:hover:text-gray-200 transition-colors group"
+                  >
+                    <span>Важность</span>
+                    {renderSortIcon('orderInStatus')}
+                  </button>
+                )}
+                
+                {visibleColumns.startDate && (
+                  <button 
+                    onClick={() => handleColumnSort('startDate')}
+                    className="w-32 flex-shrink-0 flex items-center gap-1.5 hover:text-gray-700 dark:hover:text-gray-200 transition-colors group"
+                  >
+                    <span>Дата начала</span>
+                    {renderSortIcon('startDate')}
+                  </button>
+                )}
+                
+                {visibleColumns.dedline && (
+                  <button 
+                    onClick={() => handleColumnSort('dedline')}
+                    className="w-32 flex-shrink-0 flex items-center gap-1.5 hover:text-gray-700 dark:hover:text-gray-200 transition-colors group"
+                  >
+                    <span>Срок</span>
+                    {renderSortIcon('dedline')}
+                  </button>
+                )}
+                
+                {visibleColumns.dtc && (
+                  <button 
+                    onClick={() => handleColumnSort('dtc')}
+                    className="w-32 flex-shrink-0 flex items-center gap-1.5 hover:text-gray-700 dark:hover:text-gray-200 transition-colors group"
+                  >
+                    <span>Создано</span>
+                    {renderSortIcon('dtc')}
+                  </button>
+                )}
+                
+                {visibleColumns.dtu && (
+                  <button 
+                    onClick={() => handleColumnSort('dtu')}
+                    className="w-32 flex-shrink-0 flex items-center gap-1.5 hover:text-gray-700 dark:hover:text-gray-200 transition-colors group"
+                  >
+                    <span>Обновлено</span>
+                    {renderSortIcon('dtu')}
+                  </button>
+                )}
               </div>
             </div>
 

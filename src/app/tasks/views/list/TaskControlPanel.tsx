@@ -89,12 +89,10 @@ export default function TaskControlPanel({
   onVisibleColumnsChange,
 }: TaskControlPanelProps) {
   const [isGroupMenuOpen, setIsGroupMenuOpen] = useState(false);
-  const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [isColumnMenuOpen, setIsColumnMenuOpen] = useState(false);
   
   const groupMenuRef = useRef<HTMLDivElement>(null);
-  const sortMenuRef = useRef<HTMLDivElement>(null);
   const filterMenuRef = useRef<HTMLDivElement>(null);
   const columnMenuRef = useRef<HTMLDivElement>(null);
 
@@ -103,9 +101,6 @@ export default function TaskControlPanel({
     const handleClickOutside = (event: MouseEvent) => {
       if (groupMenuRef.current && !groupMenuRef.current.contains(event.target as Node)) {
         setIsGroupMenuOpen(false);
-      }
-      if (sortMenuRef.current && !sortMenuRef.current.contains(event.target as Node)) {
-        setIsSortMenuOpen(false);
       }
       if (filterMenuRef.current && !filterMenuRef.current.contains(event.target as Node)) {
         setIsFilterMenuOpen(false);
@@ -131,20 +126,11 @@ export default function TaskControlPanel({
     }
   };
 
-  const getSortLabel = () => {
-    const column = Object.values(TASK_COLUMNS).find(col => col.key === sortBy);
-    return column ? column.label : 'Сортировка';
-  };
-
   const getActiveFiltersCount = () => {
     return Object.values(filters).filter(Boolean).length;
   };
 
   const hasActiveFilters = getActiveFiltersCount() > 0;
-
-  const getSortableColumns = () => {
-    return Object.entries(TASK_COLUMNS).filter(([_, config]) => config.sortable);
-  };
 
   const getGroupableColumns = () => {
     return Object.entries(TASK_COLUMNS).filter(([_, config]) => config.groupable);
@@ -281,91 +267,6 @@ export default function TaskControlPanel({
                     </button>
                   </div>
                 )}
-              </div>
-            )}
-          </div>
-
-          {/* Сортировка */}
-          <div className="relative" ref={sortMenuRef}>
-            <button
-              onClick={() => setIsSortMenuOpen(!isSortMenuOpen)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors cursor-pointer"
-              title="Сортировка"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>
-              </svg>
-              <span>{getSortLabel()}</span>
-              <svg className={`w-3 h-3 transition-transform ${isSortMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/>
-              </svg>
-            </button>
-
-            {/* Выпадающее меню сортировки */}
-            {isSortMenuOpen && (
-              <div className="absolute right-0 mt-1 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
-                {/* Направление сортировки */}
-                <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => onSortOrderChange('asc')}
-                      className={`flex-1 px-3 py-1.5 text-xs rounded-md transition-colors ${
-                        sortOrder === 'asc'
-                          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      По возрастанию
-                    </button>
-                    <button
-                      onClick={() => onSortOrderChange('desc')}
-                      className={`flex-1 px-3 py-1.5 text-xs rounded-md transition-colors ${
-                        sortOrder === 'desc'
-                          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      По убыванию
-                    </button>
-                  </div>
-                </div>
-
-                {/* Без сортировки */}
-                <button
-                  onClick={() => {
-                    onSortByChange('none');
-                    setIsSortMenuOpen(false);
-                  }}
-                  className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 ${
-                    sortBy === 'none' ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
-                  }`}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/>
-                  </svg>
-                  <span>Без сортировки</span>
-                </button>
-
-                <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
-
-                {/* Динамический список сортируемых колонок */}
-                {getSortableColumns().map(([key, config]) => (
-                  <button
-                    key={key}
-                    onClick={() => {
-                      onSortByChange(key);
-                      setIsSortMenuOpen(false);
-                    }}
-                    className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 ${
-                      sortBy === key ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
-                    }`}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21l5-5 5 5M7 3l5 5 5-5"/>
-                    </svg>
-                    <span>{config.label}</span>
-                  </button>
-                ))}
               </div>
             )}
           </div>
