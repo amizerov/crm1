@@ -276,7 +276,6 @@ export default function TaskViewLayout({
         onToggleLeftPanel={toggleLeftPanel}
         isFullscreen={isFullscreen}
         onToggleFullscreen={toggleFullscreen}
-        title={currentView === 'list' ? 'Список задач' : 'Канбан доска'}
         currentView={currentView}
         onViewChange={handleViewChange}
       />

@@ -5,7 +5,6 @@ interface NavigationHeaderProps {
   onToggleLeftPanel: () => void;
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
-  title?: string;
   currentView?: 'list' | 'desk' | 'gantt';
   onViewChange?: (view: 'list' | 'desk' | 'gantt') => void;
 }
@@ -15,13 +14,26 @@ export default function Header({
   onToggleLeftPanel,
   isFullscreen,
   onToggleFullscreen,
-  title = "Канбан доска",
   currentView = 'desk',
   onViewChange
 }: NavigationHeaderProps) {
   const isListView = currentView === 'list';
   const isDeskView = currentView === 'desk';
   const isGanttView = currentView === 'gantt';
+
+  // Определяем заголовок на основе текущего вида
+  const getTitle = () => {
+    switch (currentView) {
+      case 'list':
+        return 'Список задач';
+      case 'desk':
+        return 'Канбан доска';
+      case 'gantt':
+        return 'Диаграмма Ганта';
+      default:
+        return 'Задачи';
+    }
+  };
 
   return (
     <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between gap-3">
@@ -51,20 +63,22 @@ export default function Header({
           )}
         </button>
         
-        <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100 whitespace-nowrap">
-          {title}
+        {/* Заголовок с фиксированной шириной */}
+        <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100 whitespace-nowrap w-[200px]">
+          {getTitle()}
         </h1>
         
-        {/* Кнопки переключения вида */}
+        {/* Кнопки переключения вида с одинаковой шириной */}
         {onViewChange && (
           <div className="flex items-center gap-1 ml-4">
             <button
               onClick={() => onViewChange('list')}
               className={`
+                w-[110px]
                 px-3 py-1.5
                 rounded
                 text-xs font-medium
-                inline-flex items-center gap-1
+                inline-flex items-center justify-center gap-1
                 transition-colors
                 whitespace-nowrap
                 cursor-pointer
@@ -83,10 +97,11 @@ export default function Header({
             <button
               onClick={() => onViewChange('desk')}
               className={`
+                w-[110px]
                 px-3 py-1.5
                 rounded
                 text-xs font-medium
-                inline-flex items-center gap-1
+                inline-flex items-center justify-center gap-1
                 transition-colors
                 whitespace-nowrap
                 cursor-pointer
@@ -105,10 +120,11 @@ export default function Header({
             <button
               onClick={() => onViewChange('gantt')}
               className={`
+                w-[110px]
                 px-3 py-1.5
                 rounded
                 text-xs font-medium
-                inline-flex items-center gap-1
+                inline-flex items-center justify-center gap-1
                 transition-colors
                 whitespace-nowrap
                 cursor-pointer
@@ -117,7 +133,6 @@ export default function Header({
                   : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100'
                 }
               `}
-              title="Хронология"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path d="M10 7.999v2H3c-1.654 0-3-1.346-3-3v-2c0-1.654 1.346-3 3-3h7v2H3c-.552 0-1 .449-1 1v2c0 .55.448 1 1 1h7Zm-3 12c-.552 0-1-.45-1-1v-2c0-.551.448-1 1-1h3v-2H7c-1.654 0-3 1.346-3 3v2c0 1.654 1.346 3 3 3h3v-2H7Zm17-3v2c0 1.654-1.346 3-3 3h-7v1a1 1 0 1 1-2 0v-22a1 1 0 1 1 2 0v1h3c1.654 0 3 1.346 3 3v2c0 1.654-1.346 3-3 3h-3v4h7c1.654 0 3 1.346 3 3Zm-10-9h3c.552 0 1-.45 1-1v-2c0-.551-.448-1-1-1h-3v4Zm8 9c0-.551-.448-1-1-1h-7v4h7c.552 0 1-.45 1-1v-2Z" fill="currentColor"></path>
