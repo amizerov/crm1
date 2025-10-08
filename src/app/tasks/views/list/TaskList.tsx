@@ -283,6 +283,7 @@ export default function TaskList({
   };
 
   // Функция группировки задач
+  // Pipeline: поиск → фильтрация → сортировка → группировка
   const groupTasks = () => {
     const searchedTasks = searchTasks(tasks);
     const filteredTasksList = filterTasks(searchedTasks);
@@ -296,9 +297,12 @@ export default function TaskList({
       let key: string;
       
       switch (groupBy) {
-        case 'status':
-          key = task.statusName || 'Без статуса';
+        case 'status': {
+          // Используем statusId для получения актуального названия из справочника
+          const status = statuses.find(s => s.id === task.statusId);
+          key = status?.status || 'Без статуса';
           break;
+        }
         case 'executor':
           key = task.executorName || 'Без исполнителя';
           break;
@@ -324,7 +328,18 @@ export default function TaskList({
   };
 
   const groupedTasks = groupTasks();
-  const groupKeys = Object.keys(groupedTasks).sort();
+  
+  // Сортируем группы: для статусов — по stepOrder, для остальных — по алфавиту
+  const groupKeys = Object.keys(groupedTasks).sort((a, b) => {
+    if (groupBy === 'status') {
+      // Сортируем статусы по stepOrder из справочника
+      const statusA = statuses.find(s => s.status === a);
+      const statusB = statuses.find(s => s.status === b);
+      return (statusA?.stepOrder || 999) - (statusB?.stepOrder || 999);
+    }
+    // Для остальных группировок — по алфавиту
+    return a.localeCompare(b);
+  });
 
   const toggleSection = (key: string) => {
     setCollapsedSections(prev => ({
