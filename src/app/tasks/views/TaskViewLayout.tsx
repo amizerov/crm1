@@ -239,7 +239,8 @@ export default function TaskViewLayout({
       projectId: selectedProjectId || undefined,
       onTaskCreated: handleRefreshTasks,
       selectedTaskId: selectedTask?.id,
-      onTaskDeleted: handleTaskDeleted
+      onTaskDeleted: handleTaskDeleted,
+      currentUserId
     };
 
     switch (currentView) {
