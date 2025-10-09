@@ -34,6 +34,7 @@ export default function ButtonCard({
   onShowTooltip
 }: ButtonCardProps) {
   const router = useRouter();
+  const [tooltipMessage, setTooltipMessage] = useState<string | null>(null);
 
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -45,11 +46,14 @@ export default function ButtonCard({
       if (result.available) {
         router.push(href);
       } else {
-        onShowTooltip(result.message || 'Недоступно');
-        onHighlight(result.highlightCard || null);
+        const message = result.message || 'Недоступно';
+        setTooltipMessage(message);
+        onShowTooltip(message);
+        onHighlight(result.highlightCard || cardId);
         
         // Убираем подсказку через 3 секунды
         setTimeout(() => {
+          setTooltipMessage(null);
           onShowTooltip(null);
           onHighlight(null);
         }, 3000);
@@ -86,37 +90,44 @@ export default function ButtonCard({
   } : baseStyle;
 
   return (
-    <div 
-      onClick={handleClick}
-      style={cardStyle}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = isHighlighted ? 'scale(1.05)' : 'translateY(-4px)';
-        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-      }}
-      onMouseLeave={(e) => {
-        if (!isHighlighted) {
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = 'none';
-        }
-      }}
-    >
-      <div style={{ fontSize: '40px', marginBottom: '12px' }}>{icon}</div>
-      <h3 style={{ 
-        margin: '0 0 8px 0', 
-        fontSize: '18px', 
-        color,
-        fontWeight: '600'
-      }}>
-        {title}
-      </h3>
-      <p style={{ 
-        margin: 0, 
-        color: '#6c757d', 
-        fontSize: '13px',
-        lineHeight: '1.4'
-      }}>
-        {description}
-      </p>
+    <div style={{ position: 'relative' }}>
+      <div 
+        onClick={handleClick}
+        style={cardStyle}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = isHighlighted ? 'scale(1.05)' : 'translateY(-4px)';
+          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+        }}
+        onMouseLeave={(e) => {
+          if (!isHighlighted) {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = 'none';
+          }
+        }}
+      >
+        <div style={{ fontSize: '40px', marginBottom: '12px' }}>{icon}</div>
+        <h3 style={{ 
+          margin: '0 0 8px 0', 
+          fontSize: '18px', 
+          color,
+          fontWeight: '600'
+        }}>
+          {title}
+        </h3>
+        <p style={{ 
+          margin: 0, 
+          color: '#6c757d', 
+          fontSize: '13px',
+          lineHeight: '1.4'
+        }}>
+          {description}
+        </p>
+      </div>
+      
+      {/* Тултип */}
+      {tooltipMessage && (
+        <Tooltip message={tooltipMessage} position="top" />
+      )}
     </div>
   );
 }

@@ -92,12 +92,13 @@ export default function Tooltip({ message, position = 'top' }: TooltipProps) {
       borderRadius: '8px',
       padding: '8px 12px',
       boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-      zIndex: 1000,
+      zIndex: 9999,
       whiteSpace: 'nowrap',
       fontSize: '14px',
       fontWeight: '500',
       color: '#856404',
       animation: 'fadeIn 0.3s ease',
+      pointerEvents: 'none',
       ...styles.tooltip
     }}>
       {message}
