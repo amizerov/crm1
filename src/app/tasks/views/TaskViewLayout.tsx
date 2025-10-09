@@ -68,9 +68,9 @@ export default function TaskViewLayout({
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
   
   // Состояние UI
-  const [currentView, setCurrentView] = useState<ViewMode>('list');
+  const [currentView, setCurrentView] = useState<ViewMode>('desk'); // ✅ Канбан по умолчанию
   const [isLeftPanelVisible, setIsLeftPanelVisible] = useState<boolean>(true);
-  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(true); // ✅ Полный экран по умолчанию
 
   // Инициализация из localStorage (только один раз)
   useEffect(() => {
@@ -80,7 +80,7 @@ export default function TaskViewLayout({
       const savedLeftPanelVisible = localStorage.getItem('leftPanelVisible');
       const savedFullscreen = localStorage.getItem('taskFullscreen');
       
-      if (savedView && ['list', 'desk'].includes(savedView)) {
+      if (savedView && ['list', 'desk', 'gantt'].includes(savedView)) {
         setCurrentView(savedView);
       }
       if (savedLeftPanelVisible !== null) {

@@ -6,7 +6,11 @@ export default async function ProfilePage() {
 
   // Получаем текущего пользователя
   const currentUser = await getCurrentUser();
-  
+  // Если пользователь не авторизован - возвращаем ошибку
+  if (!currentUser) {
+    return { success: false, error: 'Требуется авторизация' };
+  }
+
   // Загружаем компании пользователя
   const companies = await getUserCompanies(currentUser.id);
 

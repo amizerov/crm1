@@ -8,7 +8,11 @@ export async function updateUserProfile(formData: FormData) {
   try {
     // Проверяем авторизацию
     const currentUser = await getCurrentUser();
-
+    // Если пользователь не авторизован - возвращаем ошибку
+    if (!currentUser) {
+      return { success: false, error: 'Требуется авторизация' };
+    }
+    
     const userId = parseInt(formData.get('userId') as string);
     const nicName = formData.get('nicName') as string;
     const fullName = formData.get('fullName') as string;
