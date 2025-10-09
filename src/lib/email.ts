@@ -1,0 +1,153 @@
+'use server';
+
+import nodemailer from 'nodemailer';
+
+// Настройка транспорта для отправки email
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.SMTP_PORT || '587'),
+  secure: false, // true для 465, false для других портов
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASSWORD?.replace(/^["']|["']$/g, ''), // Убираем кавычки если есть
+  },
+});
+
+/**
+ * Отправка письма с подтверждением регистрации
+ */
+export async function sendVerificationEmail(email: string, token: string) {
+  const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify?token=${token}`;
+
+  const mailOptions = {
+    from: `"Argo CRM" <${process.env.SMTP_USER}>`,
+    to: email,
+    subject: 'Подтверждение регистрации в Argo CRM',
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              line-height: 1.6; 
+              color: #333; 
+              margin: 0;
+              padding: 0;
+            }
+            .container { 
+              max-width: 600px; 
+              margin: 0 auto; 
+              padding: 20px; 
+            }
+            .header { 
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+              color: white; 
+              padding: 30px; 
+              text-align: center; 
+              border-radius: 10px 10px 0 0; 
+            }
+            .header h1 {
+              margin: 0;
+              font-size: 28px;
+            }
+            .content { 
+              background: #f9f9f9; 
+              padding: 30px; 
+              border-radius: 0 0 10px 10px; 
+            }
+            .button { 
+              display: inline-block; 
+              padding: 15px 30px; 
+              background: #667eea; 
+              color: white !important; 
+              text-decoration: none; 
+              border-radius: 5px; 
+              margin: 20px 0;
+              font-weight: bold;
+            }
+            .button:hover {
+              background: #5568d3;
+            }
+            .link-box {
+              word-break: break-all; 
+              background: #fff; 
+              padding: 10px; 
+              border-left: 4px solid #667eea;
+              margin: 15px 0;
+            }
+            .footer { 
+              text-align: center; 
+              margin-top: 20px; 
+              color: #666; 
+              font-size: 12px; 
+            }
+            .warning {
+              background: #fff3cd;
+              border-left: 4px solid #ffc107;
+              padding: 10px;
+              margin: 15px 0;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>🎉 Добро пожаловать в Argo CRM!</h1>
+            </div>
+            <div class="content">
+              <p>Здравствуйте!</p>
+              <p>Спасибо за регистрацию в <strong>Argo CRM</strong>. Для завершения регистрации необходимо подтвердить ваш email адрес.</p>
+              
+              <p style="text-align: center;">
+                <a href="${verificationUrl}" class="button">Подтвердить Email</a>
+              </p>
+              
+              <p>Или скопируйте эту ссылку в браузер:</p>
+              <div class="link-box">
+                ${verificationUrl}
+              </div>
+              
+              <div class="warning">
+                <strong>⏰ Важно:</strong> Ссылка действительна 24 часа.
+              </div>
+              
+              <p>Если вы не регистрировались в Argo CRM, просто проигнорируйте это письмо.</p>
+              
+              <p>С уважением,<br>Команда Argo CRM</p>
+            </div>
+            <div class="footer">
+              <p>© 2025 Argo CRM. Все права защищены.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+    text: `
+Добро пожаловать в Argo CRM!
+
+Для подтверждения регистрации перейдите по ссылке:
+${verificationUrl}
+
+Ссылка действительна 24 часа.
+
+Если вы не регистрировались в Argo CRM, просто проигнорируйте это письмо.
+
+С уважением,
+Команда Argo CRM
+    `.trim(),
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log('✅ Verification email sent to:', email);
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Error sending email:', error);
+    if (error instanceof Error) {
+      console.error('❌ Error details:', error.message);
+    }
+    return { error: 'Не удалось отправить email' };
+  }
+}
