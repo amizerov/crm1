@@ -62,9 +62,9 @@ export default function TaskViewLayout({
   const [currentStatuses, setCurrentStatuses] = useState<StatusTask[]>(statuses);
   
   // Инициализация с первой компанией, если она есть
-  const [selectedCompanyId, setSelectedCompanyId] = useState<number>(
-    userCompanies.length > 0 ? userCompanies[0].id : 0
-  );
+  const initialCompanyId = userCompanies.length > 0 ? userCompanies[0].id : 0;
+  
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number>(initialCompanyId);
   const [selectedProjectId, setSelectedProjectId] = useState<number>(0);
 
   const [projects, setProjects] = useState<{ id: number; projectName: string }[]>([]);
@@ -95,22 +95,37 @@ export default function TaskViewLayout({
         setIsFullscreen(savedFullscreen === 'true');
       }
 
-      // Восстанавливаем фильтры
+      // Восстанавливаем фильтры или используем первую компанию
       const savedCompanyId = localStorage.getItem('selectedCompanyId');
       const savedProjectId = localStorage.getItem('selectedProjectId');
       
+      // По умолчанию используем первую компанию
+      let companyIdToLoad = initialCompanyId;
+      
       if (savedCompanyId) {
         const companyId = parseInt(savedCompanyId);
-        if (companyId === 0 || userCompanies.some(c => c.id === companyId)) {
-          setSelectedCompanyId(companyId);
-          
-          // Загружаем данные для сохраненной компании
-          await loadDataForCompany(companyId, savedProjectId);
+        // Используем сохранённую компанию только если она существует
+        // (игнорируем 0 = "Все компании", так как при первой загрузке нужна конкретная компания)
+        if (companyId > 0 && userCompanies.some(c => c.id === companyId)) {
+          companyIdToLoad = companyId;
         }
       }
       
-      if (savedProjectId) {
-        setSelectedProjectId(parseInt(savedProjectId));
+      // Устанавливаем компанию в state если она изменилась
+      if (companyIdToLoad !== selectedCompanyId) {
+        setSelectedCompanyId(companyIdToLoad);
+      }
+      
+      // Загружаем данные для компании (первой или сохранённой)
+      if (companyIdToLoad !== 0) {
+        await loadDataForCompany(companyIdToLoad, savedProjectId);
+      } else {
+        // Если "Все компании" - загружаем все задачи
+        const newTasks = await getTasks();
+        setAllTasks(newTasks);
+        setTasks(newTasks);
+        const defaultStatuses = await getTaskStatuses();
+        setCurrentStatuses(defaultStatuses);
       }
       
       setIsInitialLoading(false);
@@ -127,15 +142,27 @@ export default function TaskViewLayout({
       const companyProjects = await getProjectsByCompanyForFilter(companyId);
       setProjects(companyProjects);
       
-      // Восстанавливаем проект
+      let projectIdToLoad = 0;
+      
+      // Восстанавливаем проект из localStorage
       if (savedProjectId) {
         const projectId = parseInt(savedProjectId);
         if (projectId === 0 || companyProjects.some(p => p.id === projectId)) {
-          setSelectedProjectId(projectId);
-          await loadDataForProject(projectId, newTasks);
-          return;
+          projectIdToLoad = projectId;
         }
       }
+      
+      // Если проект не восстановлен и есть проекты - выбираем первый
+      if (projectIdToLoad === 0 && companyProjects.length > 0) {
+        projectIdToLoad = companyProjects[0].id;
+      }
+      
+      // Устанавливаем выбранный проект
+      setSelectedProjectId(projectIdToLoad);
+      
+      // Загружаем данные для проекта
+      await loadDataForProject(projectIdToLoad, newTasks);
+      return;
     } else {
       setProjects([]);
     }
