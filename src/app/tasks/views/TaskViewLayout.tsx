@@ -60,8 +60,13 @@ export default function TaskViewLayout({
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [allTasks, setAllTasks] = useState<Task[]>(initialTasks);
   const [currentStatuses, setCurrentStatuses] = useState<StatusTask[]>(statuses);
-  const [selectedCompanyId, setSelectedCompanyId] = useState<number>(0);
+  
+  // Инициализация с первой компанией, если она есть
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number>(
+    userCompanies.length > 0 ? userCompanies[0].id : 0
+  );
   const [selectedProjectId, setSelectedProjectId] = useState<number>(0);
+
   const [projects, setProjects] = useState<{ id: number; projectName: string }[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -102,6 +107,10 @@ export default function TaskViewLayout({
           // Загружаем данные для сохраненной компании
           await loadDataForCompany(companyId, savedProjectId);
         }
+      }
+      
+      if (savedProjectId) {
+        setSelectedProjectId(parseInt(savedProjectId));
       }
       
       setIsInitialLoading(false);

@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import InteractiveCard from '@/components/InteractiveCard';
 import Tooltip from './Tooltip';
+import ButtonCard from './ButtonCard';
 import { checkTasksAvailability } from './actions/checkTasks';
+import { checkClientsAvailability } from './actions/checkClients';
+import { checkEmployeesAvailability } from './actions/checkEmploys';
+import { checkProjectsAvailability } from './actions/checkProjects';
 
 export default function DashboardPage() {
-  const router = useRouter();
   const [highlightedCard, setHighlightedCard] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>('');
@@ -20,55 +21,6 @@ export default function DashboardPage() {
       setUserName(decodeURIComponent(userNicNameCookie.split('=')[1]));
     }
   }, []);
-
-  const handleTasksClick = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    
-    const result = await checkTasksAvailability();
-
-    if (result.available) {
-      router.push('/tasks/views');
-    } else {
-      setTooltip(result.message || 'Недоступно');
-      setHighlightedCard(result.highlightCard || null);
-      
-      // Убираем подсказку через 3 секунды
-      setTimeout(() => {
-        setTooltip(null);
-        setHighlightedCard(null);
-      }, 3000);
-    }
-  };
-
-  const getCardStyle = (cardId: string) => {
-    const baseStyle = { 
-      padding: '20px',
-      backgroundColor: '#f8f9fa',
-      border: '1px solid #e9ecef',
-      borderRadius: '12px',
-      textAlign: 'center' as const,
-      cursor: 'pointer',
-      transition: 'all 0.3s ease',
-      minHeight: '160px',
-      display: 'flex',
-      flexDirection: 'column' as const,
-      justifyContent: 'center' as const,
-      alignItems: 'center' as const
-    };
-
-    // Подсветка нужной карточки
-    if (highlightedCard === cardId) {
-      return {
-        ...baseStyle,
-        border: '3px solid #ffc107',
-        backgroundColor: '#fff8e1',
-        boxShadow: '0 0 20px rgba(255, 193, 7, 0.4)',
-        transform: 'scale(1.05)'
-      };
-    }
-
-    return baseStyle;
-  };
 
   return (
     <div style={{ 
@@ -112,163 +64,103 @@ export default function DashboardPage() {
         minHeight: 0,
         alignContent: 'start'
       }}>
-        <InteractiveCard 
-          href="/clients"
-          style={getCardStyle('clients')}
-        >
-          <div style={{ fontSize: '40px', marginBottom: '12px' }}>👥</div>
-          <h3 style={{ 
-            margin: '0 0 8px 0', 
-            fontSize: '18px', 
-            color: '#007bff',
-            fontWeight: '600'
-          }}>
-            Клиенты
-          </h3>
-          <p style={{ 
-            margin: 0, 
-            color: '#6c757d', 
-            fontSize: '13px',
-            lineHeight: '1.4'
-          }}>
-            Управление базой клиентов
-          </p>
-        </InteractiveCard>
-
-        {/* Карточка задач с проверками */}
+        {/* Клиенты - с проверкой */}
         <div style={{ position: 'relative' }}>
-          <div 
-            onClick={handleTasksClick}
-            style={{
-              ...getCardStyle('tasks'),
-              cursor: 'pointer',
-              userSelect: 'none'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-4px)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-            }}
-            onMouseLeave={(e) => {
-              if (highlightedCard !== 'tasks') {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }
-            }}
-          >
-            <div style={{ fontSize: '40px', marginBottom: '12px' }}>📋</div>
-            <h3 style={{ 
-              margin: '0 0 8px 0', 
-              fontSize: '18px', 
-              color: '#28a745',
-              fontWeight: '600'
-            }}>
-              Задачи
-            </h3>
-            <p style={{ 
-              margin: 0, 
-              color: '#6c757d', 
-              fontSize: '13px',
-              lineHeight: '1.4'
-            }}>
-              Отслеживание задач
-            </p>
-          </div>
-
-          {/* Тултип-облачко */}
-          {tooltip && <Tooltip message={tooltip} position="top" />}
+          <ButtonCard
+            icon="👥"
+            title="Клиенты"
+            description="Управление базой клиентов"
+            href="/clients"
+            color="#007bff"
+            cardId="clients"
+            checkAvailability={checkClientsAvailability}
+            isHighlighted={highlightedCard === 'clients'}
+            onHighlight={setHighlightedCard}
+            onShowTooltip={setTooltip}
+          />
+          {tooltip && highlightedCard === 'clients' && <Tooltip message={tooltip} position="top" />}
         </div>
 
-        <InteractiveCard 
-          href="/companies"
-          style={getCardStyle('companies')}
-        >
-          <div style={{ fontSize: '40px', marginBottom: '12px' }}>🏢</div>
-          <h3 style={{ 
-            margin: '0 0 8px 0', 
-            fontSize: '18px', 
-            color: '#6f42c1',
-            fontWeight: '600'
-          }}>
-            Мои компании
-          </h3>
-          <p style={{ 
-            margin: 0, 
-            color: '#6c757d', 
-            fontSize: '13px',
-            lineHeight: '1.4'
-          }}>
-            Управление компаниями
-          </p>
-        </InteractiveCard>
+        {/* Задачи - с проверкой */}
+        <div style={{ position: 'relative' }}>
+          <ButtonCard
+            icon="📋"
+            title="Задачи"
+            description="Отслеживание задач"
+            href="/tasks/views"
+            color="#28a745"
+            cardId="tasks"
+            checkAvailability={checkTasksAvailability}
+            isHighlighted={highlightedCard === 'tasks'}
+            onHighlight={setHighlightedCard}
+            onShowTooltip={setTooltip}
+          />
+          {tooltip && highlightedCard === 'tasks' && <Tooltip message={tooltip} position="top" />}
+        </div>
 
-        <InteractiveCard 
-          href="/employees"
-          style={getCardStyle('employees')}
-        >
-          <div style={{ fontSize: '40px', marginBottom: '12px' }}>👨‍💼</div>
-          <h3 style={{ 
-            margin: '0 0 8px 0', 
-            fontSize: '18px', 
-            color: '#fd7e14',
-            fontWeight: '600'
-          }}>
-            Сотрудники
-          </h3>
-          <p style={{ 
-            margin: 0, 
-            color: '#6c757d', 
-            fontSize: '13px',
-            lineHeight: '1.4'
-          }}>
-            Список сотрудников
-          </p>
-        </InteractiveCard>
+        {/* Компании - без проверки */}
+        <div style={{ position: 'relative' }}>
+          <ButtonCard
+            icon="🏢"
+            title="Мои компании"
+            description="Управление компаниями"
+            href="/companies"
+            color="#6f42c1"
+            cardId="companies"
+            isHighlighted={highlightedCard === 'companies'}
+            onHighlight={setHighlightedCard}
+            onShowTooltip={setTooltip}
+          />
+        </div>
 
-        <InteractiveCard 
-          href="/projects"
-          style={getCardStyle('projects')}
-        >
-          <div style={{ fontSize: '40px', marginBottom: '12px' }}>📁</div>
-          <h3 style={{ 
-            margin: '0 0 8px 0', 
-            fontSize: '18px', 
-            color: '#17a2b8',
-            fontWeight: '600'
-          }}>
-            Проекты
-          </h3>
-          <p style={{ 
-            margin: 0, 
-            color: '#6c757d', 
-            fontSize: '13px',
-            lineHeight: '1.4'
-          }}>
-            Управление проектами
-          </p>
-        </InteractiveCard>
+        {/* Сотрудники - с проверкой */}
+        <div style={{ position: 'relative' }}>
+          <ButtonCard
+            icon="👨‍💼"
+            title="Сотрудники"
+            description="Список сотрудников"
+            href="/employees"
+            color="#fd7e14"
+            cardId="employees"
+            checkAvailability={checkEmployeesAvailability}
+            isHighlighted={highlightedCard === 'employees'}
+            onHighlight={setHighlightedCard}
+            onShowTooltip={setTooltip}
+          />
+          {tooltip && highlightedCard === 'employees' && <Tooltip message={tooltip} position="top" />}
+        </div>
 
-        <InteractiveCard 
-          href="/templates"
-          style={getCardStyle('templates')}
-        >
-          <div style={{ fontSize: '40px', marginBottom: '12px' }}>📝</div>
-          <h3 style={{ 
-            margin: '0 0 8px 0', 
-            fontSize: '18px', 
-            color: '#20c997',
-            fontWeight: '600'
-          }}>
-            Шаблоны процессов
-          </h3>
-          <p style={{ 
-            margin: 0, 
-            color: '#6c757d', 
-            fontSize: '13px',
-            lineHeight: '1.4'
-          }}>
-            Управление шаблонами
-          </p>
-        </InteractiveCard>
+        {/* Проекты - с проверкой */}
+        <div style={{ position: 'relative' }}>
+          <ButtonCard
+            icon="📁"
+            title="Проекты"
+            description="Управление проектами"
+            href="/projects"
+            color="#17a2b8"
+            cardId="projects"
+            checkAvailability={checkProjectsAvailability}
+            isHighlighted={highlightedCard === 'projects'}
+            onHighlight={setHighlightedCard}
+            onShowTooltip={setTooltip}
+          />
+          {tooltip && highlightedCard === 'projects' && <Tooltip message={tooltip} position="top" />}
+        </div>
+
+        {/* Шаблоны - без проверки */}
+        <div style={{ position: 'relative' }}>
+          <ButtonCard
+            icon="📝"
+            title="Шаблоны процессов"
+            description="Управление шаблонами"
+            href="/templates"
+            color="#20c997"
+            cardId="templates"
+            isHighlighted={highlightedCard === 'templates'}
+            onHighlight={setHighlightedCard}
+            onShowTooltip={setTooltip}
+          />
+        </div>
       </div>
 
       <style jsx global>{`

@@ -86,7 +86,7 @@ export default function LeftPanel({
               disabled:opacity-50 disabled:cursor-not-allowed
             "
           >
-            <option value={0}>Все компании</option>
+            {/*<option value={0}>Все компании</option>*/}
             {userCompanies.map((company) => (
               <option key={company.id} value={company.id}>
                 {company.companyName} {company.isOwner ? '👑' : '👤'}
