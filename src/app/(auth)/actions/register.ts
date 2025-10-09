@@ -1,7 +1,7 @@
 'use server';
 
 import { query } from '@/db/connect';
-import { hashPassword } from '@/db/loginUser';
+import { hashPassword } from './login';
 import { sendVerificationEmail } from '@/lib/email';
 import crypto from 'crypto';
 

@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import DeleteButton from './DelBtn';
 import FormField from '@/components/FormField';
-import { getCurrentUser } from '@/db/loginUser';
+import { getCurrentUser } from '@/app/(auth)/actions/login';
 
 type Client = {
   id: number;

@@ -1,4 +1,4 @@
-import { getCurrentUser } from '@/db/loginUser';
+import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { redirect } from 'next/navigation';
 import { addProject, getCompanies } from '../actions';
 import { getTemplates } from '@/app/templates/actions/getTemplates';

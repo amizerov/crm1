@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import FormField from '@/components/FormField';
-import { getCurrentUser } from '@/db/loginUser';
+import { getCurrentUser } from '@/app/(auth)/actions/login';
 
 export default async function AddClientPage() {
   const currentUser = await getCurrentUser();

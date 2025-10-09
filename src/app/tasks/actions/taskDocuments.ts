@@ -4,7 +4,7 @@ import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { query } from '@/db/connect';
 import { revalidatePath } from 'next/cache';
-import { getCurrentUser } from '@/db/loginUser';
+import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { logTaskHistory } from './taskHistory';
 
 export async function uploadTaskDocument(taskId: number, formData: FormData) {

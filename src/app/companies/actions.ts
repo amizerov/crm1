@@ -1,7 +1,7 @@
 'use server';
 
 import { query } from '@/db/connect';
-import { getCurrentUser } from '@/db/loginUser';
+import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 

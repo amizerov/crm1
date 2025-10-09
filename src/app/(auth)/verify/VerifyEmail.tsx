@@ -15,7 +15,10 @@ export default function VerifyEmail() {
   const hasVerifiedRef = useRef(false); // Используем ref вместо state
 
   useEffect(() => {
+    console.log('🔍 VerifyEmail mounted, token:', token ? token.substring(0, 10) + '...' : 'NO TOKEN');
+    
     if (!token) {
+      console.log('❌ No token in URL');
       setStatus('error');
       setMessage('Токен подтверждения не найден в ссылке');
       return;
@@ -32,21 +35,27 @@ export default function VerifyEmail() {
 
     const verify = async () => {
       try {
+        console.log('📡 Calling verifyEmail server action...');
         const result = await verifyEmail(token);
+        console.log('📡 Server action result:', result);
 
         if (result.success) {
+          console.log('✅ Verification successful');
           setStatus('success');
           setMessage(result.message || 'Email успешно подтвержден!');
           
           // Перенаправляем на login через 3 секунды
           setTimeout(() => {
+            console.log('🔄 Redirecting to login...');
             router.push('/login');
           }, 3000);
         } else {
+          console.log('❌ Verification failed:', result.error);
           setStatus('error');
           setMessage(result.error || 'Ошибка подтверждения');
         }
       } catch (error) {
+        console.error('❌ Exception during verification:', error);
         setStatus('error');
         setMessage('Произошла ошибка при подтверждении');
       }

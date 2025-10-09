@@ -1,4 +1,4 @@
-import { getCurrentUser } from '@/db/loginUser';
+import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { redirect } from 'next/navigation';
 import InteractiveButton from '@/components/InteractiveButton';
 

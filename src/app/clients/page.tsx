@@ -1,5 +1,5 @@
 import { getTotalSum, getUserCompanies, getClientsByCompany, getStatuses } from './actions';
-import { getCurrentUser } from '@/db/loginUser';
+import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { redirect } from 'next/navigation';
 import ClientsTable from './ClientsTable';
 

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import TaskManager from './TaskManager';
 import { getTasks } from './actions/getTasks';
 import { getUserCompanies } from './actions/getUserCompanies';
-import { getCurrentUser } from '@/db/loginUser';
+import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { redirect } from 'next/navigation';
 
 export default async function TasksPage() {

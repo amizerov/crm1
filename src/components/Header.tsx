@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getCurrentUser, logoutUser } from '@/db/loginUser';
+import { getCurrentUser, logoutAction } from '@/app/(auth)/actions/login';
 
 export default async function Header() {
   const currentUser = await getCurrentUser();
@@ -34,7 +34,12 @@ export default async function Header() {
               >
                 Привет, {currentUser.nicName}!
               </Link>
-              <form action={logoutUser} className="m-0">
+              <form action={async () => {
+                'use server';
+                await logoutAction();
+                const { redirect } = await import('next/navigation');
+                redirect('/login');
+              }} className="m-0">
                 <button 
                   type="submit" 
                   className="bg-transparent border border-gray-500 dark:border-gray-400 text-gray-500 dark:text-gray-400 px-3 py-1.5 rounded text-sm cursor-pointer hover:bg-gray-500 hover:text-white dark:hover:bg-gray-400 transition-colors"

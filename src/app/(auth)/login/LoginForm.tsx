@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition, useEffect } from 'react';
-import { loginUser } from '@/db/loginUser';
+import { loginAction } from '../actions/login';
 import { useRouter } from 'next/navigation';
 import Notification from '@/components/Notification';
 
@@ -60,11 +60,18 @@ export default function LoginForm({ returnTo }: LoginFormProps) {
     
     startTransition(async () => {
       try {
-        const result = await loginUser(formData);
+        const result = await loginAction(formData);
         
-        if (result.success) {
+        if (result.success && result.redirectTo) {
           // Сразу перенаправляем без показа сообщения
           router.push(result.redirectTo);
+        } else {
+          // Показываем ошибку из result
+          setNotification({
+            message: result.error || 'Произошла ошибка при входе',
+            type: 'error',
+            isVisible: true
+          });
         }
       } catch (error) {
         // Показываем ошибку только если это действительно ошибка

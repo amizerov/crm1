@@ -4,7 +4,9 @@ import { query } from '@/db/connect';
 
 export async function verifyEmail(token: string) {
   try {
+    console.log('=== ВЕРИФИКАЦИЯ EMAIL НАЧАТА ===');
     console.log('🔍 Verifying token:', token.substring(0, 10) + '...', 'length:', token.length);
+    console.log('🔍 Full token:', token);
 
     // Проверим, есть ли вообще токены в базе
     const allTokens = await query(`SELECT COUNT(*) as count FROM VerificationToken`);
@@ -43,19 +45,22 @@ export async function verifyEmail(token: string) {
     }
 
     // 4. Активируем пользователя
-    await query(
+    console.log('🔄 Updating user isVerified to 1 for userId:', userId);
+    const updateResult = await query(
       `UPDATE [User] SET isVerified = 1 WHERE id = @userId`,
       { userId }
     );
-    console.log('✅ User verified:', userId);
+    console.log('✅ User verified:', userId, 'Update result:', updateResult);
 
     // 5. Удаляем использованный токен
-    await query(
+    console.log('🗑️ Deleting token...');
+    const deleteResult = await query(
       `DELETE FROM VerificationToken WHERE token = @token`,
       { token }
     );
-    console.log('🗑️ Token deleted');
+    console.log('🗑️ Token deleted, Delete result:', deleteResult);
 
+    console.log('=== ВЕРИФИКАЦИЯ EMAIL ЗАВЕРШЕНА УСПЕШНО ===');
     return { success: true, message: 'Email успешно подтвержден! Теперь вы можете войти в систему.' };
 
   } catch (error) {

@@ -1,4 +1,4 @@
-import { getCurrentUser } from '@/db/loginUser';
+import { getCurrentUser } from '../actions/login';
 import { redirect } from 'next/navigation';
 import LoginForm from './LoginForm';
 

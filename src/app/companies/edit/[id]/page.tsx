@@ -1,4 +1,4 @@
-import { getCurrentUser } from '@/db/loginUser';
+import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { getCompanyById } from './actions';
 import { redirect } from 'next/navigation';
 import CompanyForm from './CompanyForm';

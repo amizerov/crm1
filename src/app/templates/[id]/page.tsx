@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/db/loginUser';
+import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { getTemplateById } from '../actions/getTemplateById';
 import TemplateEditor from '../components/TemplateEditor';
 import Link from 'next/link';

@@ -1,6 +1,6 @@
 'use server';
 
-import { getCurrentUser } from '@/db/loginUser';
+import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { query } from '@/db/connect';
 import { logTaskHistory } from './taskHistory';
 

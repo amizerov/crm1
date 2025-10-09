@@ -1,7 +1,7 @@
 'use server';
 
 import { query } from '@/db/connect';
-import { getCurrentUser } from '@/db/loginUser';
+import { getCurrentUser } from '@/app/(auth)/actions/login';
 
 export async function getClientsByUserCompany() {
   const currentUser = await getCurrentUser();
