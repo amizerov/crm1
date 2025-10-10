@@ -39,10 +39,9 @@ export default async function EditEmployeePage({ params }: EditEmployeePageProps
               borderRadius: 4, 
               cursor: 'pointer' 
             }}>
-              ← Назад к списку
+              ← Назад
             </button>
           </Link>
-          <h1 style={{ margin: 0 }}>Редактировать сотрудника</h1>
         </div>
         <p style={{ color: '#666', margin: 0 }}>ID: {employee.id} | Имя: {employee.Name}</p>
       </div>
@@ -144,14 +143,16 @@ export default async function EditEmployeePage({ params }: EditEmployeePageProps
           </select>
         </div>
 
-        <div style={{ display: 'flex', gap: 16, justifyContent: 'flex-end' }}>
-          <Link href="/employees">
-            <button type="button" style={{ 
-              padding: '12px 24px', 
-              backgroundColor: '#6c757d', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: 4, 
+        <div style={{ display: 'flex', gap: 16, justifyContent: 'space-between' }}>
+          <DelBtn employeeId={employee.id} employeeName={employee.Name} />
+          <div style={{ display: 'flex', gap: 16 }}>
+            <Link href="/employees">
+              <button type="button" style={{ 
+                padding: '12px 24px', 
+                backgroundColor: '#6c757d', 
+                color: 'white', 
+                border: 'none', 
+                borderRadius: 4, 
               cursor: 'pointer' 
             }}>
               Отмена
@@ -165,14 +166,11 @@ export default async function EditEmployeePage({ params }: EditEmployeePageProps
             borderRadius: 4, 
             cursor: 'pointer' 
           }}>
-            Сохранить изменения
+            Сохранить
           </button>
+          </div>
         </div>
       </form>
-
-      <div style={{ textAlign: 'center', padding: 20, backgroundColor: '#fff3cd', borderRadius: 8, border: '1px solid #ffeaa7' }}>
-        <DelBtn employeeId={employee.id} employeeName={employee.Name} />
-      </div>
     </div>
   );
 }

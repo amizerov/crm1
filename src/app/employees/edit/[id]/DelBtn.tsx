@@ -44,7 +44,7 @@ export default function DelBtn({ employeeId, employeeName }: DelBtnProps) {
           cursor: 'pointer'
         }}
       >
-        🗑 Удалить сотрудника
+        🗑 Удалить
       </button>
 
       {showModal && (
