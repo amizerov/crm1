@@ -3,13 +3,16 @@ import { query } from '@/db/connect';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import FormField from '@/components/FormField';
 import { getCurrentUser } from '@/app/(auth)/actions/login';
 import ButtonBack from '@/components/ButtonBack';
 import ButtonDelete from '@/components/ButtonDelete';
 import { handleDeleteClient } from './actions'
 import ButtonCancel from '@/components/ButtonCancel';
 import ButtonSave from '@/components/ButtonSave';
+import FormPageLayout from '@/components/FormPageLayout';
+import FormContainer from '@/components/FormContainer';
+import FormFieldStandard from '@/components/FormFieldStandard';
+import { StandardInput, StandardSelect, StandardTextarea } from '@/components/StandardInputs';
 
 type Client = {
   id: number;
@@ -86,127 +89,115 @@ export default async function EditClientPage({
   }
 
   return (
-    <main className="px-4 py-8 min-h-[50vh] bg-gray-50 dark:bg-gray-900">
-      
-      {/* Заголовок */}
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-200 m-0">
-          Редактировать клиента
-        </h1>
-        <ButtonBack />
-      </div>
-      
-      {/* Форма */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 mb-8">
-          <form action={handleUpdateClient}>
-            <input name="id" type="hidden" value={client.id} />
-            
-            {/* Grid для полей формы */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {/* Имя клиента */}
-              <FormField label="Имя клиента" htmlFor="clientName" required>
-                <input
-                  name="clientName" 
-                  defaultValue={client.clientName}
-                  required
-                />
-              </FormField>
-              
-              {/* Контакты */}
-              <FormField label="Контакты" htmlFor="contacts">
-                <input
-                  name="contacts" 
-                  defaultValue={client.contacts || ''}
-                />
-              </FormField>
-              
-              {/* Компания */}
-              <FormField label="Компания" htmlFor="companyId" required>
-                <select
-                  name="companyId" 
-                  defaultValue={client.companyId || ''}
-                  required
-                >
-                  <option value="">Выберите компанию</option>
-                  {companies.map(company => (
-                    <option key={company.id} value={company.id}>
-                      {company.companyName}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-              
-              {/* Статус */}
-              <FormField label="Статус" htmlFor="statusId" required>
-                <select
-                  name="statusId" 
-                  defaultValue={client.statusId}
-                  required
-                >
-                  <option value="">Выберите статус</option>
-                  {statuses.map(status => (
-                    <option key={status.id} value={status.id}>
-                      {status.status}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-              
-              {/* Сумма */}
-              <FormField label="Сумма" htmlFor="summa">
-                <input
-                  name="summa" 
-                  type="number" 
-                  step="0.01" 
-                  defaultValue={client.summa || ''}
-                />
-              </FormField>
-              
-              {/* Дата платежа */}
-              <FormField label="Дата платежа" htmlFor="payDate">
-                <input
-                  name="payDate" 
-                  defaultValue={client.payDate || ''}
-                />
-              </FormField>
-              
-              {/* Тип платежа */}
-              <FormField label="Тип платежа" htmlFor="payType">
-                <input
-                  name="payType" 
-                  defaultValue={client.payType || ''}
-                />
-              </FormField>
-            </div>
-            
-            {/* Описание на всю ширину */}
-            <div className="mb-8">
-              <FormField label="Описание" htmlFor="description">
-                <textarea
-                  name="description" 
-                  defaultValue={client.description || ''}
-                  rows={4}
-                />
-              </FormField>
-            </div>
-            
-            {/* Кнопки действий */}
-            <div className="flex flex-wrap justify-between items-center gap-4">
-              <div className="flex items-center gap-4 flex-wrap">
-                <ButtonSave />
-                <ButtonCancel href='/clients' />
-              </div>
-              
-              {/* Кнопка удаления справа */}
-              <ButtonDelete 
-                confirmTitle="Удаление клиента"
-                confirmMessage={`Точно хотите удалить этого клиента "${client.clientName}"?`}
-                deleteAction={handleDeleteClient.bind(null, client.id)}
-                redirectTo="/clients"
-              />
-            </div>
-          </form>
+    <FormPageLayout
+      title="Редактировать клиента"
+      subtitle={`Изменение данных клиента "${client.clientName}"`}
+      actionButton={<ButtonBack />}
+    >
+      <FormContainer action={handleUpdateClient}>
+        <input name="id" type="hidden" value={client.id} />
+        
+        {/* Первая строка - поля на полную ширину */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+          <FormFieldStandard label="Имя клиента" required>
+            <StandardInput
+              name="clientName"
+              type="text"
+              placeholder="Введите имя клиента"
+              defaultValue={client.clientName}
+              required
+            />
+          </FormFieldStandard>
+          
+          <FormFieldStandard label="Контакты">
+            <StandardInput
+              name="contacts"
+              type="text"
+              placeholder="Телефон, email или другие контакты"
+              defaultValue={client.contacts || ''}
+            />
+          </FormFieldStandard>
         </div>
-    </main>
+
+        {/* Остальные поля в 3 колонки */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+          <FormFieldStandard label="Компания" required>
+            <StandardSelect name="companyId" defaultValue={client.companyId || ''} required>
+              <option value="">Выберите компанию</option>
+              {companies.map(company => (
+                <option key={company.id} value={company.id}>
+                  {company.companyName}
+                </option>
+              ))}
+            </StandardSelect>
+          </FormFieldStandard>
+          
+          <FormFieldStandard label="Статус" required>
+            <StandardSelect name="statusId" defaultValue={client.statusId} required>
+              <option value="">Выберите статус</option>
+              {statuses.map(status => (
+                <option key={status.id} value={status.id}>
+                  {status.status}
+                </option>
+              ))}
+            </StandardSelect>
+          </FormFieldStandard>
+          
+          <FormFieldStandard label="Сумма">
+            <StandardInput
+              name="summa"
+              type="number"
+              step="0.01"
+              placeholder="0.00"
+              defaultValue={client.summa || ''}
+            />
+          </FormFieldStandard>
+          
+          <FormFieldStandard label="Дата платежа">
+            <StandardInput
+              name="payDate"
+              type="date"
+              defaultValue={client.payDate || ''}
+            />
+          </FormFieldStandard>
+          
+          <FormFieldStandard label="Тип платежа">
+            <StandardInput
+              name="payType"
+              type="text"
+              placeholder="Наличные, карта, перевод..."
+              defaultValue={client.payType || ''}
+            />
+          </FormFieldStandard>
+        </div>
+        
+        {/* Описание на полную ширину */}
+        <div className="mb-3">
+          <FormFieldStandard label="Описание">
+            <StandardTextarea
+              name="description"
+              rows={3}
+              placeholder="Дополнительная информация о клиенте..."
+              defaultValue={client.description || ''}
+            />
+          </FormFieldStandard>
+        </div>
+
+        {/* Кнопки действий */}
+        <div className="pt-3 flex justify-between items-center">
+          <div className="flex gap-3">
+            <ButtonCancel href="/clients" />
+            <ButtonSave />
+          </div>
+          
+          <ButtonDelete 
+            confirmTitle="Удаление клиента"
+            confirmMessage={`Точно хотите удалить этого клиента "${client.clientName}"?`}
+            deleteAction={handleDeleteClient.bind(null, client.id)}
+            redirectTo="/clients"
+          />
+        </div>
+      </FormContainer>
+    </FormPageLayout>
   );
 }

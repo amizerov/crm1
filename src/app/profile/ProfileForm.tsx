@@ -6,6 +6,7 @@ import Notification from '@/components/Notification';
 import { useRouter } from 'next/navigation';
 import FormField from '@/components/FormField';
 import Link from 'next/link';
+import ButtonCancel from '@/components/ButtonCancel';
 
 type User = {
   id: number;
@@ -200,22 +201,7 @@ export default function ProfileForm({ user, companies }: ProfileFormProps) {
             gap: '12px',
             justifyContent: 'flex-end'
           }}>
-            <button
-              type="button"
-              onClick={() => window.history.back()}
-              style={{
-                padding: '12px 24px',
-                border: '1px solid #6c757d',
-                backgroundColor: 'transparent',
-                color: '#6c757d',
-                borderRadius: '6px',
-                fontSize: '16px',
-                cursor: 'pointer',
-                fontWeight: '500'
-              }}
-            >
-              Отмена
-            </button>
+            <ButtonCancel />
             
             <button
               type="submit"

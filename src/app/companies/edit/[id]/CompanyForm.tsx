@@ -2,11 +2,13 @@
 
 import { useState } from 'react';
 import { deleteCompany, updateCompany } from './actions';
-import FormField from '@/components/FormField';
 import { CompanyFormProps} from "../../types";
 import ButtonSave from '@/components/ButtonSave';
 import ButtonCancel from '@/components/ButtonCancel';
 import ButtonDelete from '@/components/ButtonDelete';
+import FormField from '@/components/FormField';
+import FormFieldStandard from '@/components/FormFieldStandard';
+import { StandardInput, StandardTextarea } from '@/components/StandardInputs';
 
 export default function CompanyForm({ company }: CompanyFormProps) {
   const [activeTab, setActiveTab] = useState(0);
@@ -63,52 +65,49 @@ export default function CompanyForm({ company }: CompanyFormProps) {
             {/* ИНН и Название компании */}
             <div className="flex gap-4 mb-6">
               <div className="flex-1">
-                <FormField label="ИНН" htmlFor="inn">
-                  <input
-                    type="text"
-                    id="inn"
+                <FormFieldStandard label="ИНН">
+                  <StandardInput
                     name="inn"
+                    type="text"
                     defaultValue={company.inn || ''}
                     placeholder="1234567890"
+                    style={{ fontFamily: 'monospace' }}
                   />
-                </FormField>
+                </FormFieldStandard>
               </div>
               <div className="flex-[2]">
-                <FormField label="Название компании" htmlFor="companyName" required>
-                  <input
-                    type="text"
-                    id="companyName"
+                <FormFieldStandard label="Название компании" required>
+                  <StandardInput
                     name="companyName"
+                    type="text"
                     defaultValue={company.companyName}
                     required
                   />
-                </FormField>
+                </FormFieldStandard>
               </div>
             </div>
 
             {/* КПП и ОГРН */}
             <div className="flex gap-4 mb-6">
               <div className="flex-1">
-                <FormField label="КПП" htmlFor="kpp">
-                  <input
-                    type="text"
-                    id="kpp"
+                <FormFieldStandard label="КПП">
+                  <StandardInput
                     name="kpp"
+                    type="text"
                     defaultValue={company.kpp || ''}
                     placeholder="123456789"
                   />
-                </FormField>
+                </FormFieldStandard>
               </div>
               <div className="flex-1">
-                <FormField label="ОГРН" htmlFor="ogrn">
-                  <input
-                    type="text"
-                    id="ogrn"
+                <FormFieldStandard label="ОГРН">
+                  <StandardInput
                     name="ogrn"
+                    type="text"
                     defaultValue={company.ogrn || ''}
                     placeholder="1234567890123"
                   />
-                </FormField>
+                </FormFieldStandard>
               </div>
             </div>
 

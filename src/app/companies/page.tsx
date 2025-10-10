@@ -3,6 +3,7 @@ import { getUserCompanies } from '@/db/getUsers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { switchCompany } from './actions';
+import ButtonBack from '@/components/ButtonBack';
 
 type Company = {
   id: number;
@@ -49,8 +50,9 @@ export default async function CompaniesPage() {
             transition: 'background-color 0.2s'
           }}
         >
-          + Создать компанию
+          + Новая
         </Link>
+        <ButtonBack />
       </div>
 
       {companies.length === 0 ? (

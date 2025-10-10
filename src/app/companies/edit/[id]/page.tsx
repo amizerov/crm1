@@ -3,6 +3,7 @@ import { getCompanyById } from './actions';
 import { redirect } from 'next/navigation';
 import CompanyForm from './CompanyForm';
 import ButtonBack from '@/components/ButtonBack';
+import FormPageLayout from '@/components/FormPageLayout';
 
 type PageProps = {
   params: Promise<{
@@ -113,15 +114,12 @@ export default async function CompanyEditPage({ params }: PageProps) {
   }
 
   return (
-    <div style={{ padding: '20px 0', maxWidth: '600px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ margin: '0 0 12px 0', fontSize: '28px', color: '#333' }}>
-          Редактирование компании
-        </h1>
-        <ButtonBack />
-      </div>
-
+    <FormPageLayout
+      title="Редактирование компании"
+      subtitle={`Изменение данных компании "${company.companyName || company.inn}"`}
+      actionButton={<ButtonBack />}
+    >
       <CompanyForm company={company} />
-    </div>
+    </FormPageLayout>
   );
 }

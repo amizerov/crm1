@@ -14,7 +14,7 @@ export default async function TemplatesPage() {
   const templates = await getTemplates();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+    <div className="p-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <div>
