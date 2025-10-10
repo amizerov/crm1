@@ -130,7 +130,11 @@ export async function deleteCompany(companyId: number) {
     const companyName = companyOwnerCheck[0].companyName;
 
     // Удаляем компанию
-    await query('DELETE FROM Company WHERE id = @companyId', { companyId });
+    await query(`
+      delete User_Company WHERE companyId = @companyId;
+      UPDATE [User] SET companyId = NULL WHERE companyId = @companyId;
+      DELETE FROM Company WHERE id = @companyId`
+    , { companyId });
 
     console.log(`Компания "${companyName}" (ID: ${companyId}) удалена пользователем ${currentUser.id}`);
 
@@ -143,6 +147,9 @@ export async function deleteCompany(companyId: number) {
     console.error('Ошибка при удалении компании:', error);
     throw error;
   }
+  
+  // redirect вызываем ВНЕ try-catch блока для правильной работы
+  redirect('/companies');
 }
 
 export async function getCompanyById(companyId: number) {

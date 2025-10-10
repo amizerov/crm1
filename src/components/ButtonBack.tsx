@@ -8,7 +8,7 @@ interface BackButtonProps {
   children?: React.ReactNode;
 }
 
-export default function BackButton({ className, style, children }: BackButtonProps) {
+export default function ButtonBack({ className, style, children }: BackButtonProps) {
   const router = useRouter();
 
   const handleBack = () => {
@@ -24,7 +24,7 @@ export default function BackButton({ className, style, children }: BackButtonPro
         border: 'none',
         cursor: 'pointer',
         textDecoration: 'none',
-        color: '#007bff',
+        color: '#6c757d',
         fontSize: 14,
         padding: 0,
         ...style

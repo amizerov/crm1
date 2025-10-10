@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { addProject, getCompanies } from '../actions';
 import { getTemplates } from '@/app/templates/actions/getTemplates';
 import Link from 'next/link';
+import BackButton from '@/components/ButtonBack';
 
 export default async function AddProjectPage() {
   const currentUser = await getCurrentUser();
@@ -17,22 +18,9 @@ export default async function AddProjectPage() {
 
   return (
     <div style={{ padding: '20px 0', maxWidth: '600px', margin: '0 auto' }}>
-      <div style={{ marginBottom: 32 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
-          <Link href="/projects">
-            <button style={{ 
-              padding: '8px 16px', 
-              backgroundColor: '#6c757d', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: 4, 
-              cursor: 'pointer' 
-            }}>
-              ← Назад к списку
-            </button>
-          </Link>
-          <h1 style={{ margin: 0 }}>Добавить проект</h1>
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <h1>Добавить проект</h1>
+        <BackButton />
       </div>
 
       <form action={addProject} style={{ 
@@ -133,7 +121,7 @@ export default async function AddProjectPage() {
             fontWeight: 'bold',
             color: '#333'
           }}>
-            Шаги процесса (статусы задач) *
+            Шаблон шагов процесса (статусы задач) *
           </label>
           <select
             id="statusSource"
@@ -161,7 +149,7 @@ export default async function AddProjectPage() {
             color: '#6c757d', 
             marginTop: '8px' 
           }}>
-            Выберите шаги процесса для этого проекта. Их можно будет изменить после создания проекта.
+            Выберите шаблон шагов процесса для этого проекта. Их можно будет изменить после создания проекта.
           </div>
         </div>
 

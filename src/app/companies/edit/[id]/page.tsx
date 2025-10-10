@@ -2,6 +2,7 @@ import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { getCompanyById } from './actions';
 import { redirect } from 'next/navigation';
 import CompanyForm from './CompanyForm';
+import ButtonBack from '@/components/ButtonBack';
 
 type PageProps = {
   params: Promise<{
@@ -113,10 +114,11 @@ export default async function CompanyEditPage({ params }: PageProps) {
 
   return (
     <div style={{ padding: '20px 0', maxWidth: '600px', margin: '0 auto' }}>
-      <div style={{ marginBottom: 32 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 style={{ margin: '0 0 12px 0', fontSize: '28px', color: '#333' }}>
           Редактирование компании
         </h1>
+        <ButtonBack />
       </div>
 
       <CompanyForm company={company} />

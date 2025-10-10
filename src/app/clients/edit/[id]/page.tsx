@@ -3,9 +3,13 @@ import { query } from '@/db/connect';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import DeleteButton from './DelBtn';
 import FormField from '@/components/FormField';
 import { getCurrentUser } from '@/app/(auth)/actions/login';
+import ButtonBack from '@/components/ButtonBack';
+import ButtonDelete from '@/components/ButtonDelete';
+import { handleDeleteClient } from './actions'
+import ButtonCancel from '@/components/ButtonCancel';
+import ButtonSave from '@/components/ButtonSave';
 
 type Client = {
   id: number;
@@ -85,10 +89,11 @@ export default async function EditClientPage({
     <main className="px-4 py-8 min-h-[50vh] bg-gray-50 dark:bg-gray-900">
       
       {/* Заголовок */}
-      <div className="mb-8">
+      <div className="mb-8 flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-200 m-0">
           Редактировать клиента
         </h1>
+        <ButtonBack />
       </div>
       
       {/* Форма */}
@@ -188,24 +193,17 @@ export default async function EditClientPage({
             {/* Кнопки действий */}
             <div className="flex flex-wrap justify-between items-center gap-4">
               <div className="flex items-center gap-4 flex-wrap">
-                <button 
-                  type="submit" 
-                  className="btn-success py-3.5 px-7 text-white rounded-lg cursor-pointer text-base font-semibold min-w-40"
-                >
-                  💾 Сохранить изменения
-                </button>
-                <Link href="/clients">
-                  <button 
-                    type="button" 
-                    className="btn-secondary py-3.5 px-7 text-white rounded-lg cursor-pointer text-base font-semibold min-w-30"
-                  >
-                    ↩️ Отмена
-                  </button>
-                </Link>
+                <ButtonSave />
+                <ButtonCancel href='/clients' />
               </div>
               
               {/* Кнопка удаления справа */}
-              <DeleteButton clientName={client.clientName} clientId={client.id} />
+              <ButtonDelete 
+                confirmTitle="Удаление клиента"
+                confirmMessage={`Точно хотите удалить этого клиента "${client.clientName}"?`}
+                deleteAction={handleDeleteClient.bind(null, client.id)}
+                redirectTo="/clients"
+              />
             </div>
           </form>
         </div>

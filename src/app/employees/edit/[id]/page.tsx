@@ -2,8 +2,11 @@ import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { redirect } from 'next/navigation';
 import { getEmployeeById, getUsers, getCompanies } from '../../actions';
 import { updateEmployeeAction } from './actions';
-import DelBtn from './DelBtn';
-import Link from 'next/link';
+import BackButton from '@/components/ButtonBack';
+import ButtonCancel from '@/components/ButtonCancel';
+import ButtonDelete from '@/components/ButtonDelete';
+import { deleteEmployee } from './actions';
+import ButtonSave from '@/components/ButtonSave';
 
 interface EditEmployeePageProps {
   params: Promise<{ id: string }>;
@@ -22,6 +25,9 @@ export default async function EditEmployeePage({ params }: EditEmployeePageProps
     getCompanies()
   ]);
 
+  const employeeId = +id;
+  if (!employeeId) redirect('/employees');
+
   if (!employee) {
     redirect('/employees');
   }
@@ -29,21 +35,10 @@ export default async function EditEmployeePage({ params }: EditEmployeePageProps
   return (
     <div style={{ padding: '20px 0', maxWidth: '600px', margin: '0 auto' }}>
       <div style={{ marginBottom: 32 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
-          <Link href="/employees">
-            <button style={{ 
-              padding: '8px 16px', 
-              backgroundColor: '#6c757d', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: 4, 
-              cursor: 'pointer' 
-            }}>
-              ← Назад
-            </button>
-          </Link>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <p style={{ color: '#666', margin: 0 }}>ID: {employee.id} | Имя: {employee.Name}</p>
+          <BackButton />
         </div>
-        <p style={{ color: '#666', margin: 0 }}>ID: {employee.id} | Имя: {employee.Name}</p>
       </div>
 
       <form action={updateEmployeeAction} style={{ 
@@ -144,30 +139,14 @@ export default async function EditEmployeePage({ params }: EditEmployeePageProps
         </div>
 
         <div style={{ display: 'flex', gap: 16, justifyContent: 'space-between' }}>
-          <DelBtn employeeId={employee.id} employeeName={employee.Name} />
+          <ButtonDelete
+            confirmTitle="Удаление сотрудника"
+            confirmMessage={`Вы уверены, что хотите удалить сотрудника "${employee.Name}"? Это действие нельзя отменить.`}
+            deleteAction={deleteEmployee.bind(null, employeeId)}
+          />
           <div style={{ display: 'flex', gap: 16 }}>
-            <Link href="/employees">
-              <button type="button" style={{ 
-                padding: '12px 24px', 
-                backgroundColor: '#6c757d', 
-                color: 'white', 
-                border: 'none', 
-                borderRadius: 4, 
-              cursor: 'pointer' 
-            }}>
-              Отмена
-            </button>
-          </Link>
-          <button type="submit" style={{ 
-            padding: '12px 24px', 
-            backgroundColor: '#007bff', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: 4, 
-            cursor: 'pointer' 
-          }}>
-            Сохранить
-          </button>
+            <ButtonCancel href="/employees" />
+            <ButtonSave />
           </div>
         </div>
       </form>

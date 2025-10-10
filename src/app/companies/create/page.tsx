@@ -2,6 +2,8 @@ import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { redirect } from 'next/navigation';
 import { query } from '@/db/connect';
 import { revalidatePath } from 'next/cache';
+import ButtonSave from '@/components/ButtonSave';
+import ButtonCancel from '@/components/ButtonCancel';
 
 async function createCompany(formData: FormData) {
   'use server';
@@ -242,38 +244,8 @@ export default async function CreateCompanyPage() {
             gap: '12px',
             justifyContent: 'flex-end'
           }}>
-            <a
-              href="/companies"
-              style={{
-                display: 'inline-block',
-                padding: '12px 24px',
-                border: '1px solid #6c757d',
-                borderRadius: '6px',
-                backgroundColor: 'white',
-                color: '#6c757d',
-                textDecoration: 'none',
-                fontSize: '16px',
-                fontWeight: '500',
-                textAlign: 'center'
-              }}
-            >
-              Отмена
-            </a>
-            <button
-              type="submit"
-              style={{
-                padding: '12px 24px',
-                border: 'none',
-                borderRadius: '6px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                fontSize: '16px',
-                fontWeight: '500',
-                cursor: 'pointer'
-              }}
-            >
-              Создать компанию
-            </button>
+            <ButtonCancel href='/companies' />
+            <ButtonSave />
           </div>
         </form>
       </div>

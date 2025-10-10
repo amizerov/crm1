@@ -2,6 +2,9 @@ import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { redirect } from 'next/navigation';
 import { addEmployee, getUsers, getCompanies } from '../actions';
 import Link from 'next/link';
+import ButtonSave from '@/components/ButtonSave';
+import ButtonCancel from '@/components/ButtonCancel';
+import ButtonBack from '@/components/ButtonBack';
 
 export default async function AddEmployeePage() {
   const currentUser = await getCurrentUser();
@@ -17,20 +20,9 @@ export default async function AddEmployeePage() {
   return (
     <div style={{ padding: '20px 0', maxWidth: '600px', margin: '0 auto' }}>
       <div style={{ marginBottom: 32 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
-          <Link href="/employees">
-            <button style={{ 
-              padding: '8px 16px', 
-              backgroundColor: '#6c757d', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: 4, 
-              cursor: 'pointer' 
-            }}>
-              ← Назад к списку
-            </button>
-          </Link>
-          <h1 style={{ margin: 0 }}>Добавить сотрудника</h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h1 style={{ margin: 0, fontWeight: 'bold' }}>Добавить сотрудника</h1>
+          <ButtonBack />
         </div>
       </div>
 
@@ -127,28 +119,8 @@ export default async function AddEmployeePage() {
         </div>
 
         <div style={{ display: 'flex', gap: 16, justifyContent: 'flex-end' }}>
-          <Link href="/employees">
-            <button type="button" style={{ 
-              padding: '12px 24px', 
-              backgroundColor: '#6c757d', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: 4, 
-              cursor: 'pointer' 
-            }}>
-              Отмена
-            </button>
-          </Link>
-          <button type="submit" style={{ 
-            padding: '12px 24px', 
-            backgroundColor: '#28a745', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: 4, 
-            cursor: 'pointer' 
-          }}>
-            Добавить сотрудника
-          </button>
+          <ButtonCancel href='/employees' />
+          <ButtonSave />
         </div>
       </form>
     </div>

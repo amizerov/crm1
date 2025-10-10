@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { updateCompany } from './actions';
+import { deleteCompany, updateCompany } from './actions';
 import FormField from '@/components/FormField';
 import { CompanyFormProps} from "../../types";
-import DeleteButton from './DelBtn';
-import { ButtonSave } from '@/components/Buttons';
+import ButtonSave from '@/components/ButtonSave';
+import ButtonCancel from '@/components/ButtonCancel';
+import ButtonDelete from '@/components/ButtonDelete';
 
 export default function CompanyForm({ company }: CompanyFormProps) {
   const [activeTab, setActiveTab] = useState(0);
@@ -234,38 +235,18 @@ export default function CompanyForm({ company }: CompanyFormProps) {
         </div>
 
         {/* Кнопки */}
-        <div className="
-          flex gap-3 justify-between 
-          pt-6 
-          border-t border-gray-200 dark:border-gray-700
-        ">
+        <div className="flex gap-3 justify-between pt-6">
           <div>
-            <DeleteButton 
-              companyName={company.companyName}
-              companyId={company.id}
+            <ButtonDelete
+              confirmTitle='Удалить компанию'
+              confirmMessage={`Вы хотите удалить компанию ${company.companyName}?`}
+              deleteAction={deleteCompany.bind(null, company.id)}
             />
           </div>
           
           <div className="flex gap-3">
-            <a
-              href="/companies"
-              className="
-                inline-block
-                px-6 py-3
-                border border-gray-300 dark:border-gray-600
-                rounded-md
-                bg-white dark:bg-gray-700
-                text-gray-700 dark:text-gray-300
-                text-base
-                no-underline
-                text-center
-                hover:bg-gray-50 dark:hover:bg-gray-600
-                transition-colors duration-200
-              "
-            >
-              Отмена
-            </a>
-            <ButtonSave type="submit" />
+            <ButtonCancel href='/companies' />
+            <ButtonSave />
           </div>
         </div>
       </form>

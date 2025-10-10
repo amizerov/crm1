@@ -337,43 +337,6 @@ export async function updateEmployee(params: UpdateEmployeeParams) {
   redirect('/employees');
 }
 
-// Удаление сотрудника
-export async function deleteEmployee(id: number) {
-  try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      throw new Error('Пользователь не авторизован');
-    }
-
-    // Проверим, что сотрудник принадлежит к компании пользователя
-    const employeeCheck = await query(`
-      SELECT e.id 
-      FROM Employee e
-      WHERE e.id = @id AND e.companyId IN (
-        SELECT DISTINCT companyId 
-        FROM Employee 
-        WHERE userId = @userId
-        UNION
-        SELECT DISTINCT id 
-        FROM Company 
-        WHERE ownerId = @userId
-      )
-    `, { id, userId: currentUser.id });
-
-    if (employeeCheck.length === 0) {
-      throw new Error('У вас нет доступа к этому сотруднику');
-    }
-
-    await query('DELETE FROM Employee WHERE id = @id', { id });
-  } catch (error) {
-    console.error('Ошибка в deleteEmployee:', error);
-    throw new Error('Не удалось удалить сотрудника');
-  }
-  
-  // redirect вызываем ВНЕ try-catch блока
-  redirect('/employees');
-}
-
 // Получение списка пользователей для связи
 export async function getUsers(): Promise<{id: number, login: string, nicName: string}[]> {
   try {

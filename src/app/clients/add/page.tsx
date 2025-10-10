@@ -5,6 +5,9 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import FormField from '@/components/FormField';
 import { getCurrentUser } from '@/app/(auth)/actions/login';
+import ButtonCancel from '@/components/ButtonCancel';
+import ButtonSave from '@/components/ButtonSave';
+import ButtonBack from '@/components/ButtonBack';
 
 export default async function AddClientPage() {
   const currentUser = await getCurrentUser();
@@ -58,10 +61,11 @@ export default async function AddClientPage() {
     <main className="px-4 py-8 min-h-[50vh] bg-gray-50 dark:bg-gray-900">
       
       {/* Заголовок */}
-      <div className="mb-8">
+      <div className="mb-8 flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-200 m-0">
           Добавить нового клиента
         </h1>
+        <ButtonBack />
       </div>
       
       {/* Форма */}
@@ -151,20 +155,8 @@ export default async function AddClientPage() {
           
           {/* Кнопки действий */}
           <div className="flex flex-wrap justify-start items-center gap-4">
-            <button 
-              type="submit" 
-              className="btn-success py-3.5 px-7 text-white rounded-lg cursor-pointer text-base font-semibold min-w-40"
-            >
-              💾 Добавить клиента
-            </button>
-            <Link href="/clients">
-              <button 
-                type="button" 
-                className="btn-secondary py-3.5 px-7 text-white rounded-lg cursor-pointer text-base font-semibold min-w-30"
-              >
-                ↩️ Отмена
-              </button>
-            </Link>
+            <ButtonSave />
+            <ButtonCancel href='/clients' />
           </div>
         </form>
       </div>
