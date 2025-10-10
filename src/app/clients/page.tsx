@@ -1,7 +1,7 @@
 import { getTotalSum, getUserCompanies, getClientsByCompany, getStatuses } from './actions';
 import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { redirect } from 'next/navigation';
-import ClientsTable from './ClientsTable';
+import ClientsPageWrapper from './ClientsPageWrapper';
 
 interface ClientsPageProps {
   searchParams: Promise<{ companyId?: string }>;
@@ -28,7 +28,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
 
   return (
     <div style={{ padding: '20px 0' }}>
-      <ClientsTable 
+      <ClientsPageWrapper 
         initialClients={initialClients}
         companies={userCompanies}
         statuses={statuses}

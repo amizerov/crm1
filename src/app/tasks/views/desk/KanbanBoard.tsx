@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect, useRef } from 'react';
 import { quickAddTask } from '../../actions/quickAddTask';
 import { updateTaskStatus } from '../../actions/updateTaskStatus';
 import { updateTaskOrder } from '../../actions/updateTaskOrder';
+import TaskCard from './components/TaskCard';
 
 interface Task {
   id: number;
@@ -310,22 +311,6 @@ export default function KanbanBoard({
       .filter(task => task.statusId === status.id && task.level === 0) // Только корневые задачи
       .sort((a, b) => (a.orderInStatus || 0) - (b.orderInStatus || 0)) // Сортировка по порядку
   }));
-
-  const getPriorityColor = (priorityName?: string) => {
-    switch(priorityName) {
-      case 'Низкий': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'Средний': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-      case 'Высокий': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
-      case 'Срочный': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
-    }
-  };
-
-  const formatDate = (dateStr?: string) => {
-    if (!dateStr) return null;
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
-  };
 
   const handleAddTask = (statusId: number) => {
     if (!newTaskName.trim() || !companyId) return;
@@ -718,74 +703,15 @@ export default function KanbanBoard({
                           <div className="h-1 bg-blue-500 rounded mb-3 animate-pulse" />
                         )}
                         
-                        <div
-                          data-task-card="true"
-                          onMouseDown={(e) => handleMouseDown(e, task)}
+                        <TaskCard
+                          task={task}
+                          isDragging={isDragging}
+                          draggedTask={draggedTask}
+                          selectedTaskId={selectedTaskId}
+                          isUpdating={isUpdating}
+                          onMouseDown={handleMouseDown}
                           onClick={() => !isDragging && onTaskClick(task)}
-                          className={`
-                      bg-white dark:bg-gray-700 
-                      p-4 rounded-lg shadow-sm
-                      border-2
-                      hover:shadow-md
-                      cursor-pointer
-                      transition-all duration-200
-                      select-none
-                      relative
-                      ${
-                        draggedTask?.id === task.id && isDragging
-                          ? 'opacity-30'
-                          : selectedTaskId === task.id
-                            ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-200 dark:ring-blue-800 bg-blue-50 dark:bg-blue-900/20'
-                            : isUpdating
-                              ? 'border-green-500 dark:border-green-400 ring-2 ring-green-200 dark:ring-green-800'
-                              : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500'
-                      }
-                    `}
-                  >
-                    {/* Индикатор обновления */}
-                    {isUpdating && (
-                      <div className="absolute top-2 right-2">
-                        <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
-                      </div>
-                    )}
-                    
-                    {/* Название задачи */}
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2 line-clamp-2 pr-6">
-                      {task.taskName}
-                    </h4>
-
-                    {/* Приоритет */}
-                    {task.priorityName && (
-                      <div className="mb-2">
-                        <span className={`text-xs px-2 py-1 rounded ${getPriorityColor(task.priorityName)}`}>
-                          {task.priorityName}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Дедлайн и исполнитель */}
-                    <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
-                      {task.dedline && (
-                        <div className="flex items-center gap-1">
-                          <span>📅</span>
-                          <span>{formatDate(task.dedline)}</span>
-                        </div>
-                      )}
-                      {task.executorName && (
-                        <div className="flex items-center gap-1">
-                          <span>👤</span>
-                          <span className="truncate max-w-[100px]">{task.executorName}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Подзадачи */}
-                    {task.hasChildren && (
-                      <div className="mt-2 text-xs text-blue-600 dark:text-blue-400">
-                        📋 Есть подзадачи
-                      </div>
-                    )}
-                        </div>
+                        />
                       </div>
                     );
                   })}
@@ -831,7 +757,7 @@ export default function KanbanBoard({
                         bg-blue-600 hover:bg-blue-700
                         disabled:bg-gray-400 disabled:cursor-not-allowed
                         rounded
-                        transition-colors
+                        transition-colors cursor-pointer
                       "
                     >
                       {isSubmitting ? 'Создание...' : 'Добавить задачу'}
@@ -865,7 +791,7 @@ export default function KanbanBoard({
                     disabled:opacity-50 disabled:cursor-not-allowed
                     rounded
                     transition-colors
-                    flex items-center gap-2
+                    flex items-center gap-2 cursor-pointer
                   "
                   title={!companyId ? 'Выберите компанию для добавления задачи' : ''}
                 >
@@ -891,36 +817,17 @@ export default function KanbanBoard({
             transform: 'rotate(3deg)',
             transition: 'none'
           }}
-          className="bg-white dark:bg-gray-700 p-4 rounded-lg shadow-2xl border-2 border-blue-500"
         >
-          {/* Название задачи */}
-          <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">
-            {draggedTask.taskName}
-          </h4>
-
-          {/* Приоритет */}
-          {draggedTask.priorityName && (
-            <div className="mb-2">
-              <span className={`text-xs px-2 py-1 rounded ${getPriorityColor(draggedTask.priorityName)}`}>
-                {draggedTask.priorityName}
-              </span>
-            </div>
-          )}
-
-          {/* Дедлайн и исполнитель */}
-          <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
-            {draggedTask.dedline && (
-              <div className="flex items-center gap-1">
-                <span>📅</span>
-                <span>{formatDate(draggedTask.dedline)}</span>
-              </div>
-            )}
-            {draggedTask.executorName && (
-              <div className="flex items-center gap-1">
-                <span>👤</span>
-                <span className="truncate max-w-[100px]">{draggedTask.executorName}</span>
-              </div>
-            )}
+          <div className="shadow-2xl border-2 border-blue-500 rounded-lg">
+            <TaskCard
+              task={draggedTask}
+              isDragging={false}
+              draggedTask={null}
+              selectedTaskId={undefined}
+              isUpdating={false}
+              onMouseDown={() => {}}
+              onClick={() => {}}
+            />
           </div>
         </div>
       )}
