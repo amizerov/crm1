@@ -2,7 +2,6 @@
 
 import { query } from '@/db/connect'
 import { getCurrentUser } from '@/app/(auth)/actions/login'
-import { logTaskHistory } from './taskHistory'
 
 export interface AddTaskData {
   parentId?: number
@@ -88,15 +87,9 @@ export async function addTask(formData: FormData) {
       userId: taskData.userId,
       companyId: taskData.companyId,
       projectId: taskData.projectId || null
-    })
+    }); // userId теперь получается автоматически из сессии
 
-    // Логируем создание задачи
-    const newTaskId = result[0]?.id;
-    if (newTaskId) {
-      await logTaskHistory(newTaskId, {
-        actionType: 'created'
-      });
-    }
+    // Логирование истории происходит автоматически в query()
   } catch (error) {
     console.error('Error adding task:', error)
     console.error('Task data that failed:', taskData)

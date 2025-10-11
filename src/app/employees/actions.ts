@@ -113,7 +113,8 @@ export async function getEmployeesByCompany(companyId?: number) {
         CASE 
           WHEN e.userId IS NOT NULL THEN e.Name + ' (' + COALESCE(u.nicName, u.fullName, 'Пользователь') + ')'
           ELSE e.Name + ' (только сотрудник)'
-        END as displayName
+        END as displayName,
+        e.dtc
       FROM Employee e
       LEFT JOIN Company c ON e.companyId = c.id
       LEFT JOIN [User] u ON e.userId = u.id
@@ -130,7 +131,8 @@ export async function getEmployeesByCompany(companyId?: number) {
         c.companyName,
         u.nicName as userNicName,
         u.fullName as userFullName,
-        COALESCE(u.nicName, u.fullName, u.login) as displayName
+        COALESCE(u.nicName, u.fullName, u.login) as displayName,
+        u.dtc
       FROM User_Company uc
       INNER JOIN [User] u ON uc.userId = u.id
       INNER JOIN Company c ON uc.companyId = c.id

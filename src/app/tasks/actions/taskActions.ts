@@ -2,6 +2,7 @@
 
 import { query } from '@/db/connect';
 import { revalidatePath } from 'next/cache';
+import { logTaskHistory } from './taskHistory';
 
 export interface TaskAction {
   id: number;
@@ -46,6 +47,13 @@ export async function addTaskAction(taskId: number, description: string, userId:
       VALUES (@taskId, @description, @userId)
     `, { taskId, description, userId });
     
+    // Логируем добавление комментария в историю задач
+    await logTaskHistory(taskId, {
+      actionType: 'comment_added',
+      newValue: description.substring(0, 500), // Ограничиваем длину
+      description: `Добавлен комментарий: ${description.substring(0, 100)}${description.length > 100 ? '...' : ''}`
+    });
+    
     // Перезагружаем страницу редактирования задачи
     revalidatePath(`/tasks/edit/${taskId}`);
   } catch (error) {
@@ -57,11 +65,27 @@ export async function addTaskAction(taskId: number, description: string, userId:
 // Обновить действие по задаче
 export async function updateTaskAction(actionId: number, description: string): Promise<void> {
   try {
+    // Получаем информацию о действии и задаче для логирования
+    const actionInfo = await query(`
+      SELECT taskId, description as oldDescription FROM TaskAtions WHERE id = @actionId
+    `, { actionId });
+
     await query(`
       UPDATE TaskAtions 
       SET description = @description, dtu = GETDATE()
       WHERE id = @actionId
     `, { actionId, description });
+
+    // Логируем редактирование комментария в историю задач
+    if (actionInfo.length > 0) {
+      const { taskId, oldDescription } = actionInfo[0];
+      await logTaskHistory(taskId, {
+        actionType: 'comment_edited',
+        oldValue: oldDescription?.substring(0, 500),
+        newValue: description.substring(0, 500),
+        description: `Отредактирован комментарий`
+      });
+    }
   } catch (error) {
     console.error('Ошибка при обновлении действия:', error);
     throw new Error('Не удалось обновить действие');
@@ -71,10 +95,25 @@ export async function updateTaskAction(actionId: number, description: string): P
 // Удалить действие по задаче
 export async function deleteTaskAction(actionId: number): Promise<void> {
   try {
+    // Получаем информацию о действии и задаче для логирования
+    const actionInfo = await query(`
+      SELECT taskId, description FROM TaskAtions WHERE id = @actionId
+    `, { actionId });
+
     await query(`
       DELETE FROM TaskAtions 
       WHERE id = @actionId
     `, { actionId });
+
+    // Логируем удаление комментария в историю задач
+    if (actionInfo.length > 0) {
+      const { taskId, description } = actionInfo[0];
+      await logTaskHistory(taskId, {
+        actionType: 'comment_deleted',
+        oldValue: description?.substring(0, 500),
+        description: `Удален комментарий: ${description?.substring(0, 100)}${(description?.length || 0) > 100 ? '...' : ''}`
+      });
+    }
   } catch (error) {
     console.error('Ошибка при удалении действия:', error);
     throw new Error('Не удалось удалить действие');

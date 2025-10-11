@@ -128,6 +128,7 @@ export async function query(queryText: string, params: any = {}): Promise<any[]>
     });
     
     const result = await request.query(queryText);
+    
     return result.recordset || [];
     
   } catch (error: any) {
