@@ -77,13 +77,13 @@ export default function ClientsPageWrapper({
           <a href="/clients/add">
             <button style={{ 
               padding: '12px 24px', 
-              backgroundColor: '#007bff', 
+              backgroundColor: '#28a745', 
               color: 'white', 
               border: 'none', 
               borderRadius: 4, 
               cursor: 'pointer' 
             }}>
-              + Новый
+              + Добавить клиента
             </button>
           </a>
         </div>

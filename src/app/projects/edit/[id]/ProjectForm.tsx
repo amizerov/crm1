@@ -21,7 +21,7 @@ export default function ProjectForm({ project, companies }: ProjectFormProps) {
   return (
     <FormPageLayout
       title="Редактирование проекта"
-      subtitle={project.projectName}
+      subtitle={`Изменение данных проекта "${project.projectName}" (ID: ${project.id})`}
       actionButton={<ButtonBack />}
     >
       <FormContainer

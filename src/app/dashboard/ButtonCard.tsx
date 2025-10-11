@@ -118,7 +118,8 @@ export default function ButtonCard({
           margin: 0, 
           color: '#6c757d', 
           fontSize: '13px',
-          lineHeight: '1.4'
+          lineHeight: '1.4',
+          whiteSpace: 'pre-line'
         }}>
           {description}
         </p>

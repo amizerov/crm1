@@ -2,11 +2,15 @@ import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { redirect } from 'next/navigation';
 import { getEmployeeById, getUsers, getCompanies } from '../../actions';
 import { updateEmployeeAction } from './actions';
-import BackButton from '@/components/ButtonBack';
+import ButtonBack from '@/components/ButtonBack';
 import ButtonCancel from '@/components/ButtonCancel';
 import ButtonDelete from '@/components/ButtonDelete';
 import { deleteEmployee } from './actions';
 import ButtonSave from '@/components/ButtonSave';
+import FormPageLayout from '@/components/FormPageLayout';
+import FormContainer from '@/components/FormContainer';
+import FormFieldStandard from '@/components/FormFieldStandard';
+import { COMPONENT_STYLES } from '@/styles/constants';
 
 interface EditEmployeePageProps {
   params: Promise<{ id: string }>;
@@ -33,70 +37,50 @@ export default async function EditEmployeePage({ params }: EditEmployeePageProps
   }
 
   return (
-    <div style={{ padding: '20px 0', maxWidth: '600px', margin: '0 auto' }}>
-      <div style={{ marginBottom: 32 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <p style={{ color: '#666', margin: 0 }}>ID: {employee.id} | Имя: {employee.Name}</p>
-          <BackButton />
-        </div>
-      </div>
-
-      <form action={updateEmployeeAction} style={{ 
-        backgroundColor: '#f8f9fa', 
-        padding: 32, 
-        borderRadius: 8, 
-        border: '1px solid #dee2e6',
-        marginBottom: 20
-      }}>
+    <FormPageLayout
+      title="Редактировать сотрудника"
+      subtitle={`Изменение данных сотрудника "${employee.Name}" (ID: ${employee.id})`}
+      actionButton={<ButtonBack />}
+    >
+      <FormContainer 
+        action={updateEmployeeAction}
+        useGrid={true}
+        buttons={
+          <>
+            <ButtonDelete
+              confirmTitle="Удаление сотрудника"
+              confirmMessage={`Вы уверены, что хотите удалить сотрудника "${employee.Name}"? Это действие нельзя отменить.`}
+              deleteAction={deleteEmployee.bind(null, employeeId)}
+              redirectTo="/employees"
+            />
+            <div style={{ flex: 1 }} />
+            <ButtonCancel />
+            <ButtonSave />
+          </>
+        }
+      >
         <input type="hidden" name="id" value={employee.id} />
 
-        <div style={{ marginBottom: 20 }}>
-          <label htmlFor="Name" style={{ 
-            display: 'block', 
-            marginBottom: 8, 
-            fontWeight: 'bold',
-            color: '#333'
-          }}>
-            Имя сотрудника
-          </label>
+        {/* Имя сотрудника */}
+        <FormFieldStandard label="Имя сотрудника" required>
           <input
             type="text"
             id="Name"
             name="Name"
             defaultValue={employee.Name}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '1px solid #ddd',
-              borderRadius: 4,
-              fontSize: '16px',
-              boxSizing: 'border-box'
-            }}
+            required
+            style={COMPONENT_STYLES.input}
             placeholder="Имя сотрудника"
           />
-        </div>
+        </FormFieldStandard>
 
-        <div style={{ marginBottom: 32 }}>
-          <label htmlFor="userId" style={{ 
-            display: 'block', 
-            marginBottom: 8, 
-            fontWeight: 'bold',
-            color: '#333'
-          }}>
-            Связать с пользователем
-          </label>
+        {/* Связать с пользователем */}
+        <FormFieldStandard label="Связать с пользователем">
           <select
             id="userId"
             name="userId"
             defaultValue={employee.userId || ''}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '1px solid #ddd',
-              borderRadius: 4,
-              fontSize: '16px',
-              boxSizing: 'border-box'
-            }}
+            style={COMPONENT_STYLES.input}
           >
             <option value="">Не связан с пользователем</option>
             {users.map(user => (
@@ -105,51 +89,26 @@ export default async function EditEmployeePage({ params }: EditEmployeePageProps
               </option>
             ))}
           </select>
-        </div>
+        </FormFieldStandard>
 
-        <div style={{ marginBottom: 32 }}>
-          <label htmlFor="companyId" style={{ 
-            display: 'block', 
-            marginBottom: 8, 
-            fontWeight: 'bold',
-            color: '#333'
-          }}>
-            Компания
-          </label>
+        {/* Компания на полную ширину */}
+        <FormFieldStandard label="Компания" required style={{ gridColumn: '1 / -1' }}>
           <select
             id="companyId"
             name="companyId"
             defaultValue={employee.companyId || ''}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '1px solid #ddd',
-              borderRadius: 4,
-              fontSize: '16px',
-              boxSizing: 'border-box'
-            }}
+            required
+            style={COMPONENT_STYLES.input}
           >
-            <option value="">Не привязан к компании</option>
+            <option value="">Выберите компанию</option>
             {companies.map(company => (
               <option key={company.id} value={company.id}>
                 {company.companyName}
               </option>
             ))}
           </select>
-        </div>
-
-        <div style={{ display: 'flex', gap: 16, justifyContent: 'space-between' }}>
-          <ButtonDelete
-            confirmTitle="Удаление сотрудника"
-            confirmMessage={`Вы уверены, что хотите удалить сотрудника "${employee.Name}"? Это действие нельзя отменить.`}
-            deleteAction={deleteEmployee.bind(null, employeeId)}
-          />
-          <div style={{ display: 'flex', gap: 16 }}>
-            <ButtonCancel href="/employees" />
-            <ButtonSave />
-          </div>
-        </div>
-      </form>
-    </div>
+        </FormFieldStandard>
+      </FormContainer>
+    </FormPageLayout>
   );
 }

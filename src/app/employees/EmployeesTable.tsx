@@ -1,7 +1,5 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
-import { getEmployeesByCompany } from './actions';
 import EmployeeRow from './EmployeeRow';
 
 export type Employee = {
@@ -17,139 +15,14 @@ export type Employee = {
   dtu?: string;
 };
 
-type Company = {
-  id: number;
-  companyName: string;
-};
-
 interface EmployeesTableProps {
-  initialEmployees: Employee[];
-  companies: Company[];
-  defaultCompanyId?: number;
+  employees: Employee[];
+  isPending: boolean;
 }
 
-export default function EmployeesTable({ initialEmployees, companies, defaultCompanyId }: EmployeesTableProps) {
-  const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
-  const [selectedCompanyId, setSelectedCompanyId] = useState<number>(defaultCompanyId || 0);
-  const [isPending, startTransition] = useTransition();
-
-  // Восстанавливаем выбранную компанию из localStorage при монтировании компонента
-  useEffect(() => {
-    const savedCompanyId = localStorage.getItem('selectedCompanyId_employees');
-    if (savedCompanyId) {
-      const companyId = parseInt(savedCompanyId, 10);
-      // Проверяем, что компания существует в списке доступных компаний
-      if (companyId === 0 || companies.some(c => c.id === companyId)) {
-        setSelectedCompanyId(companyId);
-        
-        // Загружаем данные для сохраненной компании
-        startTransition(async () => {
-          const newEmployees = await getEmployeesByCompany(companyId === 0 ? undefined : companyId);
-          setEmployees(newEmployees);
-        });
-      }
-    }
-  }, [companies]);
-
-  const handleCompanyChange = (companyId: number) => {
-    setSelectedCompanyId(companyId);
-    // Сохраняем выбор в localStorage
-    localStorage.setItem('selectedCompanyId_employees', companyId.toString());
-    
-    startTransition(async () => {
-      const newEmployees = await getEmployeesByCompany(companyId === 0 ? undefined : companyId);
-      setEmployees(newEmployees);
-    });
-  };
-
+export default function EmployeesTable({ employees, isPending }: EmployeesTableProps) {
   return (
     <div>
-      {/* Селектор компании */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: 32, 
-        flexWrap: 'wrap', 
-        gap: 16 
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 32, flexWrap: 'wrap' }}>
-          <h1 style={{ margin: 0 }}>Сотрудники</h1>
-          
-          {/* Селектор компании */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <label htmlFor="company-select" style={{ fontSize: 14, fontWeight: 'bold', color: '#333' }}>
-              Компания:
-            </label>
-            <select
-              id="company-select"
-              value={selectedCompanyId}
-              onChange={(e) => handleCompanyChange(Number(e.target.value))}
-              disabled={isPending}
-              style={{
-                padding: '8px 12px',
-                border: '1px solid #ddd',
-                borderRadius: 4,
-                fontSize: 14,
-                backgroundColor: isPending ? '#f5f5f5' : 'white',
-                cursor: isPending ? 'not-allowed' : 'pointer',
-                minWidth: 180,
-                opacity: isPending ? 0.7 : 1
-              }}
-            >
-              <option value={0}>Все компании</option>
-              {companies.map((company) => (
-                <option key={company.id} value={company.id}>
-                  {company.companyName}
-                </option>
-              ))}
-            </select>
-            {isPending && (
-              <span style={{ fontSize: 12, color: '#666', fontStyle: 'italic' }}>
-                Загрузка...
-              </span>
-            )}
-          </div>
-          
-          <div style={{ 
-            backgroundColor: '#f8f9fa', 
-            padding: '8px 16px', 
-            borderRadius: 6, 
-            border: '1px solid #dee2e6' 
-          }}>
-            <span style={{ fontSize: 14, color: '#6c757d', fontWeight: 'bold' }}>
-              Всего сотрудников: {employees.length}
-            </span>
-          </div>
-          
-          <div style={{ 
-            backgroundColor: '#e7f3ff', 
-            padding: '6px 12px', 
-            borderRadius: 4, 
-            border: '1px solid #b3d9ff' 
-          }}>
-            <span style={{ fontSize: 12, color: '#0056b3', fontStyle: 'italic' }}>
-              💡 Нажмите на строку для редактирования
-            </span>
-          </div>
-        </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-          <a href="/employees/add">
-            <button style={{ 
-              padding: '12px 24px', 
-              backgroundColor: '#28a745', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: 4, 
-              cursor: 'pointer' 
-            }}>
-              + Добавить сотрудника
-            </button>
-          </a>
-        </div>
-      </div>
-
       {/* Таблица сотрудников */}
       <div style={{ position: 'relative' }}>
         {isPending && (
@@ -212,6 +85,40 @@ export default function EmployeesTable({ initialEmployees, companies, defaultCom
           </table>
         )}
       </div>
+
+      {/* Информация под таблицей */}
+      {employees.length > 0 && (
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginTop: 16, 
+          flexWrap: 'wrap', 
+          gap: 16 
+        }}>
+          <div style={{ 
+            backgroundColor: '#f8f9fa', 
+            padding: '8px 16px', 
+            borderRadius: 6, 
+            border: '1px solid #dee2e6' 
+          }}>
+            <span style={{ fontSize: 14, color: '#6c757d', fontWeight: 'bold' }}>
+              Всего сотрудников: {employees.length}
+            </span>
+          </div>
+          
+          <div style={{ 
+            backgroundColor: '#e7f3ff', 
+            padding: '6px 12px', 
+            borderRadius: 4, 
+            border: '1px solid #b3d9ff' 
+          }}>
+            <span style={{ fontSize: 12, color: '#0056b3', fontStyle: 'italic' }}>
+              💡 Нажмите на строку для редактирования
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

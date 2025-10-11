@@ -7,11 +7,15 @@ import { checkTasksAvailability } from './actions/checkTasks';
 import { checkClientsAvailability } from './actions/checkClients';
 import { checkEmployeesAvailability } from './actions/checkEmploys';
 import { checkProjectsAvailability } from './actions/checkProjects';
+import { getUserCompanies } from '@/app/projects/actions';
+import { getProjectsByCompany } from '@/app/projects/actions';
 
 export default function DashboardPage() {
   const [highlightedCard, setHighlightedCard] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>('');
+  const [selectedCompanyName, setSelectedCompanyName] = useState<string>('');
+  const [selectedProjectName, setSelectedProjectName] = useState<string>('');
 
   useEffect(() => {
     // Получаем имя пользователя из куки
@@ -20,6 +24,41 @@ export default function DashboardPage() {
     if (userNicNameCookie) {
       setUserName(decodeURIComponent(userNicNameCookie.split('=')[1]));
     }
+
+    // Получаем выбранную компанию и проект из localStorage
+    const loadSelectedData = async () => {
+      try {
+        const selectedCompanyId = localStorage.getItem('selectedCompanyId_tasks');
+        const selectedProjectId = localStorage.getItem('selectedProjectId_tasks');
+        
+        if (selectedCompanyId || selectedProjectId) {
+          const companies = await getUserCompanies();
+          
+          // Находим название компании
+          if (selectedCompanyId && selectedCompanyId !== '0') {
+            const company = companies.find((c: any) => c.id === parseInt(selectedCompanyId));
+            if (company) {
+              setSelectedCompanyName(company.companyName);
+              
+              // Получаем проекты для этой компании
+              if (selectedProjectId && selectedProjectId !== '0') {
+                const projects = await getProjectsByCompany(parseInt(selectedCompanyId));
+                const project = projects.find((p: any) => p.id === parseInt(selectedProjectId));
+                if (project) {
+                  setSelectedProjectName(project.projectName);
+                }
+              }
+            }
+          } else if (selectedCompanyId === '0') {
+            setSelectedCompanyName('Все компании');
+          }
+        }
+      } catch (error) {
+        console.error('Ошибка при загрузке данных:', error);
+      }
+    };
+
+    loadSelectedData();
   }, []);
 
   return (
@@ -86,7 +125,7 @@ export default function DashboardPage() {
           <ButtonCard
             icon="📋"
             title="Задачи"
-            description="Отслеживание задач"
+            description={`Отслеживание задач${selectedCompanyName ? `\n🏢 ${selectedCompanyName}` : ''}${selectedProjectName ? `\n📁 ${selectedProjectName}` : ''}`}
             href="/tasks/views"
             color="#28a745"
             cardId="tasks"
