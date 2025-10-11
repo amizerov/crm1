@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react';
 
-type Company = {
+export type Company = {
   id: number;
   companyName: string;
 };
 
 interface CompanySelectorProps {
   companies: Company[];
-  defaultCompanyId?: number;
+  selectedCompanyId?: number;
   onCompanyChange: (companyId: number) => void;
   isPending?: boolean;
   storageKey?: string;
@@ -17,33 +17,28 @@ interface CompanySelectorProps {
 
 export default function CompanySelector({ 
   companies, 
-  defaultCompanyId, 
+  selectedCompanyId = 0, 
   onCompanyChange, 
   isPending = false,
   storageKey = 'selectedCompanyId'
 }: CompanySelectorProps) {
-  const [selectedCompanyId, setSelectedCompanyId] = useState<number>(() => {
-    // Инициализируем из localStorage или defaultCompanyId
-    if (typeof window !== 'undefined') {
-      const savedCompanyId = localStorage.getItem(storageKey);
-      if (savedCompanyId) {
-        const companyId = parseInt(savedCompanyId, 10);
-        return companyId;
-      }
-    }
-    return defaultCompanyId || 0;
-  });
+  const [currentSelectedId, setCurrentSelectedId] = useState<number>(selectedCompanyId);
+
+  // Синхронизируем внутреннее состояние с переданным selectedCompanyId
+  useEffect(() => {
+    setCurrentSelectedId(selectedCompanyId);
+  }, [selectedCompanyId]);
 
   // Синхронизируем выбранную компанию при изменении списка компаний
   useEffect(() => {
     // Проверяем, что выбранная компания существует в списке
-    if (selectedCompanyId !== 0 && !companies.some(c => c.id === selectedCompanyId)) {
-      setSelectedCompanyId(defaultCompanyId || 0);
+    if (currentSelectedId !== 0 && !companies.some(c => c.id === currentSelectedId)) {
+      setCurrentSelectedId(selectedCompanyId || 0);
     }
-  }, [companies, defaultCompanyId, selectedCompanyId]);
+  }, [companies, selectedCompanyId, currentSelectedId]);
 
   const handleCompanyChange = (companyId: number) => {
-    setSelectedCompanyId(companyId);
+    setCurrentSelectedId(companyId);
     // Сохраняем выбор в localStorage
     localStorage.setItem(storageKey, companyId.toString());
     onCompanyChange(companyId);
@@ -60,7 +55,7 @@ export default function CompanySelector({
       </label>
       <select
         id="company-select"
-        value={selectedCompanyId}
+        value={currentSelectedId}
         onChange={(e) => handleCompanyChange(Number(e.target.value))}
         disabled={isPending}
         style={{

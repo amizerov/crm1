@@ -29,7 +29,7 @@ export default function AddProjectForm({ companies, templates, defaultCompanyId 
 
   // Восстанавливаем выбранную компанию из localStorage при монтировании компонента
   useEffect(() => {
-    const savedCompanyId = localStorage.getItem('selectedCompanyId_projects');
+    const savedCompanyId = localStorage.getItem('selectedCompanyId');
     if (savedCompanyId) {
       const companyId = parseInt(savedCompanyId, 10);
       // Проверяем, что компания существует в списке доступных компаний

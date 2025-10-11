@@ -1,18 +1,21 @@
 'use client';
 
-import { useState, useTransition, useEffect, useCallback } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { getProjectsByCompany, getUserCompanies } from './actions';
 import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { redirect } from 'next/navigation';
 import ProjectsTable from './ProjectsTable';
-import CompanySelector from './CompanySelector';
+import CompanySelector from '@/components/CompanySelector';
+import LoadingCEP from '@/components/LoadingCEP';
 import Link from 'next/link';
 
 export default function ProjectsPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [projects, setProjects] = useState<any[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number>(0);
   const [isPending, startTransition] = useTransition();
+  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const initPage = async () => {
@@ -31,7 +34,7 @@ export default function ProjectsPage() {
       let targetCompanyId = user.companyId;
       
       // Проверяем localStorage
-      const savedCompanyId = localStorage.getItem('selectedCompanyId_projects');
+      const savedCompanyId = localStorage.getItem('selectedCompanyId');
       if (savedCompanyId) {
         const companyId = parseInt(savedCompanyId, 10);
         if (companyId === 0 || userCompanies.some((c: any) => c.id === companyId)) {
@@ -39,23 +42,35 @@ export default function ProjectsPage() {
         }
       }
 
+      // Устанавливаем выбранную компанию в состояние
+      setSelectedCompanyId(targetCompanyId);
+
       // Загружаем проекты для выбранной компании
       const initialProjects = await getProjectsByCompany(targetCompanyId === 0 ? undefined : targetCompanyId);
       setProjects(initialProjects);
+      
+      // Завершаем начальную загрузку
+      console.log('Загрузка завершена');
+      await new Promise(r => setTimeout(r, 2300));
+      setIsInitialLoading(false);
     };
 
     initPage();
   }, []);
 
-  const handleCompanyChange = useCallback((companyId: number) => {
+  const handleCompanyChange = async (companyId: number) => {
+    setSelectedCompanyId(companyId);
+    // Сохраняем выбор в localStorage
+    localStorage.setItem('selectedCompanyId', companyId.toString());
+    
     startTransition(async () => {
       const newProjects = await getProjectsByCompany(companyId === 0 ? undefined : companyId);
       setProjects(newProjects);
     });
-  }, []);
+  };
 
-  if (!currentUser) {
-    return <div>Загрузка...</div>;
+  if (!currentUser || isInitialLoading) {
+    return <LoadingCEP message="Загрузка проектов..." />;
   }
 
   return (
@@ -74,10 +89,10 @@ export default function ProjectsPage() {
           
           <CompanySelector
             companies={companies}
-            defaultCompanyId={currentUser.companyId}
+            selectedCompanyId={selectedCompanyId}
             onCompanyChange={handleCompanyChange}
             isPending={isPending}
-            storageKey="selectedCompanyId_projects"
+            storageKey="selectedCompanyId"
           />
         </div>
         

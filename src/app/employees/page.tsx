@@ -5,14 +5,17 @@ import { getEmployeesByCompany, getUserCompanies } from './actions';
 import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { redirect } from 'next/navigation';
 import EmployeesTable from './EmployeesTable';
-import CompanySelector from './CompanySelector';
+import CompanySelector from '@/components/CompanySelector';
+import LoadingCEP from '@/components/LoadingCEP';
 import Link from 'next/link';
 
 export default function EmployeesPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [employees, setEmployees] = useState<any[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number>(0);
   const [isPending, startTransition] = useTransition();
+  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const initPage = async () => {
@@ -28,10 +31,10 @@ export default function EmployeesPage() {
       setCompanies(userCompanies);
 
       // Определяем какую компанию использовать для загрузки сотрудников
-      let targetCompanyId = user.companyId;
+      let targetCompanyId = user.companyId; // fallback значение
       
-      // Проверяем localStorage
-      const savedCompanyId = localStorage.getItem('selectedCompanyId_employees');
+      // Проверяем localStorage (приоритет)
+      const savedCompanyId = localStorage.getItem('selectedCompanyId');
       if (savedCompanyId) {
         const companyId = parseInt(savedCompanyId, 10);
         if (companyId === 0 || userCompanies.some((c: any) => c.id === companyId)) {
@@ -39,23 +42,33 @@ export default function EmployeesPage() {
         }
       }
 
+      // Устанавливаем выбранную компанию в состояние
+      setSelectedCompanyId(targetCompanyId);
+
       // Загружаем сотрудников для выбранной компании
       const initialEmployees = await getEmployeesByCompany(targetCompanyId === 0 ? undefined : targetCompanyId);
       setEmployees(initialEmployees);
+      
+      // Завершаем начальную загрузку
+      setIsInitialLoading(false);
     };
 
     initPage();
   }, []);
 
   const handleCompanyChange = useCallback((companyId: number) => {
+    setSelectedCompanyId(companyId);
+    // Сохраняем выбор в localStorage
+    localStorage.setItem('selectedCompanyId', companyId.toString());
+    
     startTransition(async () => {
       const newEmployees = await getEmployeesByCompany(companyId === 0 ? undefined : companyId);
       setEmployees(newEmployees);
     });
   }, []);
 
-  if (!currentUser) {
-    return <div>Загрузка...</div>;
+  if (!currentUser || isInitialLoading) {
+    return <LoadingCEP message="Загрузка сотрудников..." />;
   }
 
   return (
@@ -74,10 +87,10 @@ export default function EmployeesPage() {
           
           <CompanySelector
             companies={companies}
-            defaultCompanyId={currentUser.companyId}
+            selectedCompanyId={selectedCompanyId}
             onCompanyChange={handleCompanyChange}
             isPending={isPending}
-            storageKey="selectedCompanyId_employees"
+            storageKey="selectedCompanyId"
           />
         </div>
         

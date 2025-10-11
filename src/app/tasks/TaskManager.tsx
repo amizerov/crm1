@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useTransition } from 'react';
 import Link from 'next/link';
 import TaskTable from './TaskTable';
 import TaskFilters from './TaskFilters';
-import CompanySelector from './CompanySelector';
+import CompanySelector from '@/components/CompanySelector';
 import { taskUtils, type Task, type FilterType } from './taskUtils';
 import { getCompleted } from './actions/getCompleted';
 import { getTasks } from './actions/getTasks';
@@ -172,9 +172,10 @@ export default function TaskManager({ tasks: initialTasks, userId, executorId, e
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 m-0">Задачи</h1>
           
           <CompanySelector 
-            userCompanies={userCompanies} 
+            companies={userCompanies} 
             selectedCompanyId={selectedCompanyId}
             onCompanyChange={handleCompanyChange}
+            storageKey="selectedCompanyId"
           />
           
           {isPending && (

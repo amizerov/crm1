@@ -16,6 +16,7 @@ export default function DashboardPage() {
   const [userName, setUserName] = useState<string>('');
   const [selectedCompanyName, setSelectedCompanyName] = useState<string>('');
   const [selectedProjectName, setSelectedProjectName] = useState<string>('');
+  const [selectedProjectsCompanyName, setSelectedProjectsCompanyName] = useState<string>('');
 
   useEffect(() => {
     // Получаем имя пользователя из куки
@@ -28,17 +29,18 @@ export default function DashboardPage() {
     // Получаем выбранную компанию и проект из localStorage
     const loadSelectedData = async () => {
       try {
-        const selectedCompanyId = localStorage.getItem('selectedCompanyId_tasks');
-        const selectedProjectId = localStorage.getItem('selectedProjectId_tasks');
+        const selectedCompanyId = localStorage.getItem('selectedCompanyId');
+        const selectedProjectId = localStorage.getItem('selectedProjectId');
         
         if (selectedCompanyId || selectedProjectId) {
           const companies = await getUserCompanies();
           
-          // Находим название компании
+          // Для задач: находим название компании и проекта
           if (selectedCompanyId && selectedCompanyId !== '0') {
             const company = companies.find((c: any) => c.id === parseInt(selectedCompanyId));
             if (company) {
               setSelectedCompanyName(company.companyName);
+              setSelectedProjectsCompanyName(company.companyName); // Используем ту же компанию для проектов
               
               // Получаем проекты для этой компании
               if (selectedProjectId && selectedProjectId !== '0') {
@@ -51,6 +53,7 @@ export default function DashboardPage() {
             }
           } else if (selectedCompanyId === '0') {
             setSelectedCompanyName('Все компании');
+            setSelectedProjectsCompanyName('Все компании');
           }
         }
       } catch (error) {
@@ -108,7 +111,7 @@ export default function DashboardPage() {
           <ButtonCard
             icon="👥"
             title="Клиенты"
-            description="Управление базой клиентов"
+            description={`Управление базой клиентов${selectedCompanyName ? `\n🏢 ${selectedCompanyName}` : ''}`}
             href="/clients"
             color="#007bff"
             cardId="clients"
@@ -118,6 +121,21 @@ export default function DashboardPage() {
             onShowTooltip={setTooltip}
           />
           {tooltip && highlightedCard === 'clients' && <Tooltip message={tooltip} position="top" />}
+        </div>
+
+        {/* Компании - без проверки */}
+        <div style={{ position: 'relative' }}>
+          <ButtonCard
+            icon="🏢"
+            title="Мои компании / Рабочие области"
+            description="Управление компаниями"
+            href="/companies"
+            color="#6f42c1"
+            cardId="companies"
+            isHighlighted={highlightedCard === 'companies'}
+            onHighlight={setHighlightedCard}
+            onShowTooltip={setTooltip}
+          />
         </div>
 
         {/* Задачи - с проверкой */}
@@ -137,27 +155,12 @@ export default function DashboardPage() {
           {tooltip && highlightedCard === 'tasks' && <Tooltip message={tooltip} position="top" />}
         </div>
 
-        {/* Компании - без проверки */}
-        <div style={{ position: 'relative' }}>
-          <ButtonCard
-            icon="🏢"
-            title="Мои компании"
-            description="Управление компаниями"
-            href="/companies"
-            color="#6f42c1"
-            cardId="companies"
-            isHighlighted={highlightedCard === 'companies'}
-            onHighlight={setHighlightedCard}
-            onShowTooltip={setTooltip}
-          />
-        </div>
-
         {/* Сотрудники - с проверкой */}
         <div style={{ position: 'relative' }}>
           <ButtonCard
             icon="👨‍💼"
             title="Сотрудники"
-            description="Список сотрудников"
+            description={`Список сотрудников${selectedCompanyName ? `\n🏢 ${selectedCompanyName}` : ''}`}
             href="/employees"
             color="#fd7e14"
             cardId="employees"
@@ -174,7 +177,7 @@ export default function DashboardPage() {
           <ButtonCard
             icon="📁"
             title="Проекты"
-            description="Управление проектами"
+            description={`Управление проектами${selectedProjectsCompanyName ? `\n🏢 ${selectedProjectsCompanyName}` : ''}`}
             href="/projects"
             color="#17a2b8"
             cardId="projects"

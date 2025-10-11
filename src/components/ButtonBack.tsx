@@ -20,8 +20,10 @@ export default function ButtonBack({ className, style, children }: BackButtonPro
       onClick={handleBack}
       className={className}
       style={{
-        background: 'none',
-        border: 'none',
+        backgroundColor: 'transparent',
+        backgroundImage: 'none',
+        borderWidth: 0,
+        borderStyle: 'none',
         cursor: 'pointer',
         textDecoration: 'none',
         color: '#6c757d',
