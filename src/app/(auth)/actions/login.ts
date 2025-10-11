@@ -199,7 +199,7 @@ export async function getCurrentUser() {
       fullName: user.fullName,
       email: user.email,
       phone: user.phone,
-      companyId: user.employeeCompanyId || user.companyId // Приоритет Employee.companyId
+      companyId: user.companyId || user.employeeCompanyId // Приоритет Employee.companyId
     };
   } catch (error) {
     console.error('Ошибка при получении текущего пользователя:', error);

@@ -32,6 +32,8 @@ export async function deleteProject(id: number): Promise<{ success: boolean; err
 
     // Удаляем проект только если пользователь его создал
     await query(`
+      delete StatusTask where projectId = @id;
+      
       DELETE FROM Project
       WHERE id = @id
         AND userId = @userId

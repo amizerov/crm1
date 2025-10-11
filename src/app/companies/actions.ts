@@ -35,6 +35,7 @@ export async function switchCompany(formData: FormData) {
       throw new Error('Нет доступа к этой компании');
     }
 
+    console.log(`✅ Пользователь ${currentUser.nicName} переключился на компанию ID ${companyId}`);
     // Обновляем активную компанию пользователя
     await query(`
       UPDATE [User] SET companyId = @companyId WHERE id = @userId
@@ -48,7 +49,7 @@ export async function switchCompany(formData: FormData) {
     revalidatePath('/profile');
     revalidatePath('/dashboard');
     revalidatePath('/');
-
+    
   } catch (error) {
     console.error('Ошибка при переключении компании:', error);
     throw error;

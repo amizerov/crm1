@@ -2,8 +2,7 @@ import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { getUserCompanies } from '@/db/getUsers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { switchCompany } from './actions';
-import ButtonBack from '@/components/ButtonBack';
+import CompanySwitcher from '@/components/CompanySwitcher';
 
 type Company = {
   id: number;
@@ -16,7 +15,8 @@ type Company = {
 export default async function CompaniesPage() {
   // Проверяем авторизацию
   const currentUser = await getCurrentUser();
-  
+  console.log('Current User:', currentUser);
+
   if (!currentUser) {
     redirect('/login');
   }
@@ -50,9 +50,8 @@ export default async function CompaniesPage() {
             transition: 'background-color 0.2s'
           }}
         >
-          + Новая
+          + Создать компанию
         </Link>
-        <ButtonBack />
       </div>
 
       {companies.length === 0 ? (
@@ -174,9 +173,9 @@ export default async function CompaniesPage() {
                 )}
                 
                 {currentUser.companyId !== company.id && (
-                  <form 
-                    action={switchCompany}
-                    style={{ display: 'inline' }}
+                  <CompanySwitcher 
+                    companies={companies}
+                    currentCompanyId={currentUser.companyId}
                   >
                     <input type="hidden" name="companyId" value={company.id} />
                     <button
@@ -194,7 +193,7 @@ export default async function CompaniesPage() {
                     >
                       Сделать активной
                     </button>
-                  </form>
+                  </CompanySwitcher>
                 )}
               </div>
             </div>
