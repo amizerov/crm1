@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { getCurrentUser } from '@/app/(auth)/actions/login';
 import ButtonBack from '@/components/ButtonBack';
 import ButtonDelete from '@/components/ButtonDelete';
-import { handleDeleteClient } from './actions'
+import { handleDeleteClient } from './actions';
 import ButtonCancel from '@/components/ButtonCancel';
 import ButtonSave from '@/components/ButtonSave';
 import FormPageLayout from '@/components/FormPageLayout';
@@ -94,55 +94,70 @@ export default async function EditClientPage({
       subtitle={`Изменение данных клиента "${client.clientName}"`}
       actionButton={<ButtonBack />}
     >
-      <FormContainer action={handleUpdateClient}>
+      <FormContainer 
+        action={handleUpdateClient}
+        useGrid={true}
+        buttons={
+          <>
+            <ButtonDelete 
+              confirmTitle="Удаление клиента"
+              confirmMessage={`Точно хотите удалить клиента "${client.clientName}"?`}
+              deleteAction={handleDeleteClient.bind(null, client.id)}
+              redirectTo="/clients"
+            />
+            <div style={{ flex: 1 }} />
+            <ButtonCancel />
+            <ButtonSave />
+          </>
+        }
+      >
         <input name="id" type="hidden" value={client.id} />
         
-        {/* Первая строка - поля на полную ширину */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-          <FormFieldStandard label="Имя клиента" required>
-            <StandardInput
-              name="clientName"
-              type="text"
-              placeholder="Введите имя клиента"
-              defaultValue={client.clientName}
-              required
-            />
-          </FormFieldStandard>
-          
-          <FormFieldStandard label="Контакты">
-            <StandardInput
-              name="contacts"
-              type="text"
-              placeholder="Телефон, email или другие контакты"
-              defaultValue={client.contacts || ''}
-            />
-          </FormFieldStandard>
-        </div>
+        {/* Первая строка: Имя клиента | Контакты */}
+        <FormFieldStandard label="Имя клиента" required>
+          <StandardInput
+            name="clientName"
+            type="text"
+            placeholder="Введите имя клиента"
+            defaultValue={client.clientName}
+            required
+          />
+        </FormFieldStandard>
+        
+        <FormFieldStandard label="Контакты">
+          <StandardInput
+            name="contacts"
+            type="text"
+            placeholder="Телефон, email или другие контакты"
+            defaultValue={client.contacts || ''}
+          />
+        </FormFieldStandard>
 
-        {/* Остальные поля в 3 колонки */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
-          <FormFieldStandard label="Компания" required>
-            <StandardSelect name="companyId" defaultValue={client.companyId || ''} required>
-              <option value="">Выберите компанию</option>
-              {companies.map(company => (
-                <option key={company.id} value={company.id}>
-                  {company.companyName}
-                </option>
-              ))}
-            </StandardSelect>
-          </FormFieldStandard>
-          
-          <FormFieldStandard label="Статус" required>
-            <StandardSelect name="statusId" defaultValue={client.statusId} required>
-              <option value="">Выберите статус</option>
-              {statuses.map(status => (
-                <option key={status.id} value={status.id}>
-                  {status.status}
-                </option>
-              ))}
-            </StandardSelect>
-          </FormFieldStandard>
-          
+        {/* Вторая строка: Статус | Компания */}
+        <FormFieldStandard label="Статус" required>
+          <StandardSelect name="statusId" defaultValue={client.statusId} required>
+            <option value="">Выберите статус</option>
+            {statuses.map(status => (
+              <option key={status.id} value={status.id}>
+                {status.status}
+              </option>
+            ))}
+          </StandardSelect>
+        </FormFieldStandard>
+        
+        <FormFieldStandard label="Компания" required>
+          <StandardSelect name="companyId" defaultValue={client.companyId || ''} required>
+            <option value="">Выберите компанию</option>
+            {companies.map(company => (
+              <option key={company.id} value={company.id}>
+                {company.companyName}
+              </option>
+            ))}
+          </StandardSelect>
+        </FormFieldStandard>
+
+        {/* Третья строка: Сумма | Дата платежа | Тип платежа */}
+        <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
           <FormFieldStandard label="Сумма">
             <StandardInput
               name="summa"
@@ -170,33 +185,16 @@ export default async function EditClientPage({
             />
           </FormFieldStandard>
         </div>
-        
-        {/* Описание на полную ширину */}
-        <div className="mb-3">
-          <FormFieldStandard label="Описание">
-            <StandardTextarea
-              name="description"
-              rows={3}
-              placeholder="Дополнительная информация о клиенте..."
-              defaultValue={client.description || ''}
-            />
-          </FormFieldStandard>
-        </div>
 
-        {/* Кнопки действий */}
-        <div className="pt-3 flex justify-between items-center">
-          <div className="flex gap-3">
-            <ButtonCancel href="/clients" />
-            <ButtonSave />
-          </div>
-          
-          <ButtonDelete 
-            confirmTitle="Удаление клиента"
-            confirmMessage={`Точно хотите удалить этого клиента "${client.clientName}"?`}
-            deleteAction={handleDeleteClient.bind(null, client.id)}
-            redirectTo="/clients"
+        {/* Четвертая строка: Описание на полную ширину */}
+        <FormFieldStandard label="Описание" style={{ gridColumn: '1 / -1' }}>
+          <StandardTextarea
+            name="description"
+            rows={3}
+            placeholder="Дополнительная информация о клиенте..."
+            defaultValue={client.description || ''}
           />
-        </div>
+        </FormFieldStandard>
       </FormContainer>
     </FormPageLayout>
   );

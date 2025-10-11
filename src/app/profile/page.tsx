@@ -1,6 +1,8 @@
 import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { getUserCompanies } from '@/db/getUsers';
 import ProfileForm from './ProfileForm';
+import FormPageLayout from '@/components/FormPageLayout';
+import ButtonBack from '@/components/ButtonBack';
 
 export default async function ProfilePage() {
 
@@ -15,14 +17,12 @@ export default async function ProfilePage() {
   const companies = await getUserCompanies(currentUser.id);
 
   return (
-    <div style={{ padding: '20px 0', maxWidth: '600px', margin: '0 auto' }}>
-      <div style={{ marginBottom: 32 }}>
-        <h1 style={{ margin: '0 0 12px 0', fontSize: '28px', color: '#333' }}>
-          Редактирование профиля
-        </h1>
-      </div>
-
+    <FormPageLayout 
+      title="Редактирование профиля"
+      subtitle="Обновите информацию о вашем профиле"
+      actionButton={<ButtonBack />}
+    >
       <ProfileForm user={currentUser} companies={companies} />
-    </div>
+    </FormPageLayout>
   );
 }

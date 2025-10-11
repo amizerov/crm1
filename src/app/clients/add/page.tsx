@@ -65,51 +65,59 @@ export default async function AddClientPage() {
       subtitle="Заполните информацию о новом клиенте"
       actionButton={<ButtonBack />}
     >
-      <FormContainer action={handleAddClient}>
-        {/* Первая строка - поля на полную ширину */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-          <FormFieldStandard label="Имя клиента" required>
-            <StandardInput
-              name="clientName"
-              type="text"
-              placeholder="Введите имя клиента"
-              required
-            />
-          </FormFieldStandard>
-          
-          <FormFieldStandard label="Контакты">
-            <StandardInput
-              name="contacts"
-              type="text"
-              placeholder="Телефон, email или другие контакты"
-            />
-          </FormFieldStandard>
-        </div>
+      <FormContainer 
+        action={handleAddClient}
+        useGrid={true}
+        buttons={
+          <>
+            <ButtonCancel />
+            <ButtonSave />
+          </>
+        }
+      >
+        {/* Первая строка: Имя клиента | Контакты */}
+        <FormFieldStandard label="Имя клиента" required>
+          <StandardInput
+            name="clientName"
+            type="text"
+            placeholder="Введите имя клиента"
+            required
+          />
+        </FormFieldStandard>
+        
+        <FormFieldStandard label="Контакты">
+          <StandardInput
+            name="contacts"
+            type="text"
+            placeholder="Телефон, email или другие контакты"
+          />
+        </FormFieldStandard>
 
-        {/* Остальные поля в 3 колонки */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
-          <FormFieldStandard label="Компания" required>
-            <StandardSelect name="companyId" required>
-              <option value="">Выберите компанию</option>
-              {companies.map(company => (
-                <option key={company.id} value={company.id}>
-                  {company.companyName}
-                </option>
-              ))}
-            </StandardSelect>
-          </FormFieldStandard>
-          
-          <FormFieldStandard label="Статус" required>
-            <StandardSelect name="statusId" required>
-              <option value="">Выберите статус</option>
-              {statuses.map(status => (
-                <option key={status.id} value={status.id}>
-                  {status.status}
-                </option>
-              ))}
-            </StandardSelect>
-          </FormFieldStandard>
-          
+        {/* Вторая строка: Статус | Компания */}
+        <FormFieldStandard label="Статус" required>
+          <StandardSelect name="statusId" required>
+            <option value="">Выберите статус</option>
+            {statuses.map(status => (
+              <option key={status.id} value={status.id}>
+                {status.status}
+              </option>
+            ))}
+          </StandardSelect>
+        </FormFieldStandard>
+        
+        <FormFieldStandard label="Компания" required>
+          <StandardSelect name="companyId" required>
+            <option value="">Выберите компанию</option>
+            {companies.map(company => (
+              <option key={company.id} value={company.id}>
+                {company.companyName}
+              </option>
+            ))}
+          </StandardSelect>
+        </FormFieldStandard>
+
+        {/* Третья строка: нужно изменить grid на 3 колонки для этой части */}
+        <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
           <FormFieldStandard label="Сумма">
             <StandardInput
               name="summa"
@@ -134,22 +142,15 @@ export default async function AddClientPage() {
             />
           </FormFieldStandard>
         </div>
-        
-        {/* Описание на полную ширину */}
-        <div className="mb-3">
-          <FormFieldStandard label="Описание">
-            <StandardTextarea
-              name="description"
-              rows={3}
-              placeholder="Дополнительная информация о клиенте..."
-            />
-          </FormFieldStandard>
-        </div>
 
-        <div className="pt-3 flex justify-end gap-3">
-          <ButtonCancel href="/clients" />
-          <ButtonSave />
-        </div>
+        {/* Четвертая строка: Описание на полную ширину */}
+        <FormFieldStandard label="Описание" style={{ gridColumn: '1 / -1' }}>
+          <StandardTextarea
+            name="description"
+            rows={3}
+            placeholder="Дополнительная информация о клиенте..."
+          />
+        </FormFieldStandard>
       </FormContainer>
     </FormPageLayout>
   );

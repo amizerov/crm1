@@ -27,6 +27,7 @@ export default function ButtonBack({ className, style, children }: BackButtonPro
         color: '#6c757d',
         fontSize: 14,
         padding: 0,
+        whiteSpace: 'nowrap',
         ...style
       }}
     >

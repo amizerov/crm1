@@ -353,38 +353,3 @@ export async function updateProject(formData: FormData) {
     throw error;
   }
 }
-
-// Удаление проекта
-export async function deleteProject(id: number) {
-  try {
-    const currentUser = await getCurrentUser();
-    
-    if (!currentUser) {
-      return { success: false, error: 'Пользователь не авторизован' };
-    }
-
-    await query(`
-      DELETE FROM Project
-      WHERE id = @id
-        AND companyId IN (
-          SELECT DISTINCT companyId 
-          FROM Employee 
-          WHERE userId = @userId
-          
-          UNION
-          
-          SELECT id 
-          FROM Company 
-          WHERE ownerId = @userId
-        )
-    `, {
-      id,
-      userId: currentUser.id
-    });
-
-    return { success: true };
-  } catch (error) {
-    console.error('Ошибка при удалении проекта:', error);
-    return { success: false, error: 'Ошибка при удалении проекта' };
-  }
-}

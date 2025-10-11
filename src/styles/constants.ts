@@ -146,6 +146,18 @@ export const COMPONENT_STYLES = {
     marginBottom: SPACING.xl
   },
   
+  // Стили для контейнера формы с grid-layout (новые стандартные формы)
+  formContainerGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: SPACING.lg,
+    backgroundColor: COLORS.backgroundLight,
+    padding: SPACING.formPadding,
+    borderRadius: BORDERS.radius.medium,
+    border: `${BORDERS.width.thin} solid ${COLORS.borderLight}`,
+    marginBottom: SPACING.xl
+  },
+  
   // Стили для контейнера страницы
   pageContainer: {
     padding: `${SPACING.xl} 0`,
@@ -165,6 +177,7 @@ export const COMPONENT_STYLES = {
   
   // Стили для контейнера кнопок
   buttonContainer: {
+    gridColumn: '1 / -1',
     display: 'flex',
     gap: SPACING.lg,
     justifyContent: 'flex-end'

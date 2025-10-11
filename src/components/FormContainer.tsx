@@ -8,6 +8,8 @@ interface FormContainerProps {
   children: ReactNode;
   /** Кнопки формы */
   buttons?: ReactNode;
+  /** Использовать grid-layout для полей */
+  useGrid?: boolean;
   /** Дополнительные стили для формы */
   style?: React.CSSProperties;
 }
@@ -20,13 +22,18 @@ export default function FormContainer({
   action,
   children,
   buttons,
+  useGrid = false,
   style
 }: FormContainerProps) {
+  const containerStyle = useGrid 
+    ? COMPONENT_STYLES.formContainerGrid 
+    : COMPONENT_STYLES.formContainer;
+
   return (
     <form 
       action={action}
       style={{ 
-        ...COMPONENT_STYLES.formContainer,
+        ...containerStyle,
         ...style
       }}
     >

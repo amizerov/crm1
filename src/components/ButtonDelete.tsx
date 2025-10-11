@@ -11,7 +11,7 @@ interface ButtonDeleteProps {
   /** Текст подтверждения в модальном окне */
   confirmMessage: string;
   /** Server action для удаления */
-  deleteAction: () => Promise<void>;
+  deleteAction: () => Promise<{ success: boolean; error?: string } | void>;
   /** URL для перенаправления после удаления (переопределяет редирект из server action) */
   redirectTo?: string;
   /** Дополнительные стили для кнопки */
@@ -31,13 +31,17 @@ export default function ButtonDelete({
 }: ButtonDeleteProps) {
   const [showModal, setShowModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   return (
     <>
       <button
         type="button"
-        onClick={() => setShowModal(true)}
+        onClick={() => {
+          setShowModal(true);
+          setError(null);
+        }}
         disabled={disabled || isDeleting}
         style={{
           padding: '12px 24px',
@@ -95,6 +99,21 @@ export default function ButtonDelete({
             }}>
               {confirmMessage}
             </p>
+
+            {error && (
+              <div style={{
+                padding: '12px 16px',
+                backgroundColor: '#fee',
+                border: '1px solid #fcc',
+                borderRadius: 4,
+                marginBottom: 16,
+                color: '#c33',
+                fontSize: '0.9rem',
+                lineHeight: 1.4
+              }}>
+                {error}
+              </div>
+            )}
             
             <div style={{ 
               display: 'flex', 
@@ -102,7 +121,10 @@ export default function ButtonDelete({
               justifyContent: 'flex-end' 
             }}>
                 <button
-                    onClick={() => setShowModal(false)}
+                    onClick={() => {
+                      setShowModal(false);
+                      setError(null);
+                    }}
                     disabled={isDeleting}
                     style={{
                     padding: '8px 16px',
@@ -122,15 +144,28 @@ export default function ButtonDelete({
                   type="button"
                   onClick={async () => {
                     setIsDeleting(true);
+                    setError(null);
                     try {
-                      await deleteAction();
-                      // Если указан redirectTo, перенаправляем туда
+                      const result = await deleteAction();
+                      
+                      // Если result существует (не void), проверяем успех
+                      if (result) {
+                        if (!result.success) {
+                          // Показываем ошибку без выброса исключения
+                          setError(result.error || 'Произошла ошибка при удалении');
+                          setIsDeleting(false);
+                          return;
+                        }
+                      }
+                      
+                      // Если успешно и указан redirectTo, перенаправляем туда
                       if (redirectTo) {
                         router.push(redirectTo);
                       }
                       // Иначе server action сам должен сделать redirect
                     } catch (error) {
                       console.error('Ошибка при удалении:', error);
+                      setError(error instanceof Error ? error.message : 'Произошла ошибка при удалении');
                       setIsDeleting(false);
                     }
                   }}
