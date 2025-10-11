@@ -8,6 +8,7 @@ import { getTaskStatuses } from '../../actions/getTaskStatuses';
 import { getPriorities } from '../../actions/getPriorities';
 import { getEmployees, getEmployeesByCompany } from '@/app/employees/actions';
 import { getTaskActions, TaskAction } from '../../actions/taskActions';
+import { getTaskTypes } from '../actions/taskTypes';
 import TaskDetailsTab from './TaskDetailsTab';
 import TaskActionsTab from './TaskActionsTab';
 import TaskDocumentsTab from './TaskDocumentsTab';
@@ -34,6 +35,9 @@ interface Task {
   companyName?: string;
   projectId?: number;
   projectName?: string;
+  typeId?: number;
+  typeName?: string;
+  typeColor?: string;
   dtc: string;
   dtu?: string;
   level?: number;
@@ -123,6 +127,7 @@ export default function TaskDetailsPanel({ task: initialTask, currentUserId, onC
     statusId: task.statusId,
     priorityId: task.priorityId || 0,
     executorId: task.executorId || 0,
+    typeId: task.typeId || 0,
     startDate: formatDateForInput(task.startDate),
     dedline: formatDateForInput(task.dedline)
   });
@@ -135,6 +140,7 @@ export default function TaskDetailsPanel({ task: initialTask, currentUserId, onC
       statusId: task.statusId,
       priorityId: task.priorityId || 0,
       executorId: task.executorId || 0,
+      typeId: task.typeId || 0,
       startDate: formatDateForInput(task.startDate),
       dedline: formatDateForInput(task.dedline)
     });
@@ -142,6 +148,7 @@ export default function TaskDetailsPanel({ task: initialTask, currentUserId, onC
   const [statuses, setStatuses] = useState<Array<{id: number; status: string}>>([]);
   const [priorities, setPriorities] = useState<Array<{id: number; priority: string}>>([]);
   const [employees, setEmployees] = useState<Array<{id: number; Name: string; displayName?: string}>>([]);
+  const [taskTypes, setTaskTypes] = useState<Array<{id: number; projectId: number; typeName: string; typeOrder: number; typeColor: string | null}>>([]);
   const [actions, setActions] = useState<TaskAction[]>([]);
   const [isPending, startTransition] = useTransition();
   const [isSaving, setIsSaving] = useState(false);
@@ -149,14 +156,16 @@ export default function TaskDetailsPanel({ task: initialTask, currentUserId, onC
   // Загрузка справочников
   useEffect(() => {
     const loadData = async () => {
-      const [statusesData, prioritiesData, actionsData] = await Promise.all([
+      const [statusesData, prioritiesData, actionsData, taskTypesData] = await Promise.all([
         getTaskStatuses(task.projectId),
         getPriorities(),
-        getTaskActions(task.id)
+        getTaskActions(task.id),
+        task.projectId ? getTaskTypes(task.projectId) : Promise.resolve([])
       ]);
       setStatuses(statusesData);
       setPriorities(prioritiesData);
       setActions(actionsData);
+      setTaskTypes(taskTypesData);
       
       // Загружаем сотрудников в зависимости от компании задачи
       const employeesData = task.companyId 
@@ -275,6 +284,7 @@ export default function TaskDetailsPanel({ task: initialTask, currentUserId, onC
           statusId: formData.statusId,
           priorityId: formData.priorityId || undefined,
           executorId: formData.executorId || undefined,
+          typeId: formData.typeId || undefined,
           startDate: sd,
           dedline: dd
         });
@@ -283,13 +293,25 @@ export default function TaskDetailsPanel({ task: initialTask, currentUserId, onC
           // Обновляем локальное состояние задачи с новыми данными
           // Преобразуем строки дат обратно в объекты Date для корректного отображения
           setTask(prev => {
+            // Находим выбранные значения для получения названий
+            const selectedTaskType = taskTypes.find(t => t.id === formData.typeId);
+            const selectedStatus = statuses.find(s => s.id === formData.statusId);
+            const selectedPriority = priorities.find(p => p.id === formData.priorityId);
+            const selectedExecutor = employees.find(e => e.id === formData.executorId);
+            
             const updateData: any = {
               ...prev,
               taskName: formData.taskName,
               description: formData.description,
               statusId: formData.statusId,
+              statusName: selectedStatus?.status || prev.statusName,
               priorityId: formData.priorityId,
+              priorityName: selectedPriority?.priority || null,
               executorId: formData.executorId,
+              executorName: selectedExecutor?.displayName || selectedExecutor?.Name || null,
+              typeId: formData.typeId,
+              typeName: selectedTaskType?.typeName || null,
+              typeColor: selectedTaskType?.typeColor || null,
               updatedAt: new Date()
             };
             
@@ -335,6 +357,7 @@ export default function TaskDetailsPanel({ task: initialTask, currentUserId, onC
       statusId: task.statusId,
       priorityId: task.priorityId || 0,
       executorId: task.executorId || 0,
+      typeId: task.typeId || 0,
       startDate: formatDateForInput(task.startDate),
       dedline: formatDateForInput(task.dedline)
     });
@@ -627,6 +650,7 @@ export default function TaskDetailsPanel({ task: initialTask, currentUserId, onC
             statuses={statuses}
             priorities={priorities}
             employees={employees}
+            taskTypes={taskTypes}
             onFormDataChange={setFormData}
           />
         )}

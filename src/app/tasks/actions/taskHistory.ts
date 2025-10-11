@@ -9,7 +9,7 @@ export interface TaskHistoryEntry {
                'updated' | 'deleted' | 'document_added' | 'document_deleted' | 
                'comment_added' | 'comment_edited' | 'comment_deleted' | 
                'moved' | 'deadline_changed' | 'startdate_changed' | 'description_changed' |
-               'name_changed' | 'executor_changed' | 'order_changed';
+               'name_changed' | 'executor_changed' | 'order_changed' | 'type_changed';
   fieldName?: string;
   oldValue?: string | null;
   newValue?: string | null;

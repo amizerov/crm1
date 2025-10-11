@@ -71,10 +71,20 @@ export async function addTask(formData: FormData) {
   console.log('Task data being inserted:', taskData)
 
   try {
+    // Получаем максимальное значение orderInStatus для данного статуса
+    const maxOrderResult = await query(`
+      SELECT COALESCE(MAX(orderInStatus), 0) as maxOrder
+      FROM Task 
+      WHERE statusId = @statusId
+    `, { statusId: taskData.statusId });
+
+    const maxOrder = maxOrderResult[0]?.maxOrder || 0;
+    const newOrder = maxOrder + 1;
+
     const result = await query(`
-      INSERT INTO Task (parentId, taskName, description, startDate, dedline, statusId, priorityId, executorId, userId, companyId, projectId)
+      INSERT INTO Task (parentId, taskName, description, startDate, dedline, statusId, priorityId, executorId, userId, companyId, projectId, orderInStatus)
       OUTPUT INSERTED.id
-      VALUES (@parentId, @taskName, @description, @startDate, @dedline, @statusId, @priorityId, @executorId, @userId, @companyId, @projectId)
+      VALUES (@parentId, @taskName, @description, @startDate, @dedline, @statusId, @priorityId, @executorId, @userId, @companyId, @projectId, @orderInStatus)
     `, {
       parentId: taskData.parentId || null,
       taskName: taskData.taskName,
@@ -86,7 +96,8 @@ export async function addTask(formData: FormData) {
       executorId: taskData.executorId || null,
       userId: taskData.userId,
       companyId: taskData.companyId,
-      projectId: taskData.projectId || null
+      projectId: taskData.projectId || null,
+      orderInStatus: newOrder
     }); // userId теперь получается автоматически из сессии
 
     // Логирование истории происходит автоматически в query()

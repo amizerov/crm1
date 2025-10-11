@@ -20,6 +20,9 @@ interface Task {
   statusName: string;
   priorityName?: string;
   executorName?: string;
+  typeId?: number;
+  typeName?: string;
+  typeColor?: string;
   level?: number;
   hasChildren?: boolean;
   orderInStatus?: number;
@@ -44,28 +47,52 @@ export default function TaskCard({
   onMouseDown,
   onClick
 }: TaskCardProps) {
+  // Определяем стиль карточки на основе типа задачи
+  const getCardStyle = () => {
+    const baseStyle = {
+      borderRadius: '8px',
+      padding: '16px',
+      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+      border: '2px solid #e5e7eb', // Всегда серый бордер
+      cursor: 'pointer',
+      transition: 'all 0.2s',
+      position: 'relative' as const,
+      userSelect: 'none' as const
+    };
+
+    // Если есть тип задачи с цветом, используем его как фон
+    if (task.typeColor) {
+      const backgroundColor = task.typeColor + '20'; // Добавляем прозрачность
+      return {
+        ...baseStyle,
+        backgroundColor: backgroundColor,
+        color: 'inherit'
+      };
+    }
+
+    // Стандартные стили без типа задачи
+    return baseStyle;
+  };
+
+  const cardStyle = getCardStyle();
+
   return (
     <div
       data-task-card="true"
       onMouseDown={(e) => onMouseDown(e, task)}
       onClick={onClick}
+      style={cardStyle}
       className={`
-        bg-white dark:bg-gray-700 
-        p-4 rounded-lg shadow-sm
-        border-2
+        ${task.typeColor ? '' : 'bg-white dark:bg-gray-700'}
         hover:shadow-md
-        cursor-pointer
-        transition-all duration-200
-        select-none
-        relative
         ${
           draggedTask?.id === task.id && isDragging
             ? 'opacity-30'
             : selectedTaskId === task.id
-              ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-200 dark:ring-blue-800 bg-blue-50 dark:bg-blue-900/20'
+              ? '!border-blue-500 !border-4 ring-2 ring-blue-200 dark:ring-blue-800'
               : isUpdating
-                ? 'border-green-500 dark:border-green-400 ring-2 ring-green-200 dark:ring-green-800'
-                : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500'
+                ? '!border-green-500 !border-4 ring-2 ring-green-200 dark:ring-green-800'
+                : 'hover:border-gray-400 dark:hover:border-gray-500'
         }
       `}
     >

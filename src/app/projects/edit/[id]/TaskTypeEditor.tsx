@@ -336,13 +336,21 @@ export default function ProjectTaskTypeEditor({ projectId, initialTaskTypes }: P
                   />
                 </div>
               ) : (
-                <span style={{
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#1e293b'
-                }}>
-                  {taskType.typeName}
-                </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <span style={{
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    color: '#1e293b'
+                  }}>
+                    {taskType.typeName}
+                  </span>
+                  <span style={{
+                    fontSize: '12px',
+                    color: '#6b7280'
+                  }}>
+                    ID: {taskType.id}
+                  </span>
+                </div>
               )}
             </div>
 

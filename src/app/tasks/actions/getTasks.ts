@@ -10,6 +10,7 @@ type Task = {
   description?: string;
   statusId: number;
   priorityId?: number;
+  typeId?: number;
   startDate?: string;
   dedline?: string;
   executorId?: number;
@@ -26,6 +27,8 @@ type Task = {
   userName?: string;
   projectName?: string;
   companyName?: string;
+  typeName?: string;
+  typeColor?: string;
   // Иерархия
   level?: number;
   hasChildren?: boolean;
@@ -99,6 +102,7 @@ export async function getTasks(executorId?: number, companyId?: number): Promise
           t.description,
           t.statusId,
           t.priorityId,
+          t.typeId,
           t.startDate,
           t.dedline,
           t.executorId,
@@ -113,7 +117,9 @@ export async function getTasks(executorId?: number, companyId?: number): Promise
           e.Name as executorName,
           u.fullName as userName,
           pr.projectName,
-          c.companyName
+          c.companyName,
+          tt.typeName,
+          tt.typeColor
         FROM Task t
         LEFT JOIN StatusTask st ON t.statusId = st.id
         LEFT JOIN Priority p ON t.priorityId = p.id
@@ -121,6 +127,7 @@ export async function getTasks(executorId?: number, companyId?: number): Promise
         LEFT JOIN [User] u ON t.userId = u.id
         LEFT JOIN Project pr ON t.projectId = pr.id
         LEFT JOIN Company c ON t.companyId = c.id
+        LEFT JOIN TaskTypes tt ON t.typeId = tt.id
         ${companyWhereClause}
         ORDER BY COALESCE(t.orderInStatus, 999999), t.dtc DESC
       `, companyParams);
@@ -134,6 +141,7 @@ export async function getTasks(executorId?: number, companyId?: number): Promise
           t.description,
           t.statusId,
           t.priorityId,
+          t.typeId,
           t.startDate,
           t.dedline,
           t.executorId,
@@ -148,7 +156,9 @@ export async function getTasks(executorId?: number, companyId?: number): Promise
           e.Name as executorName,
           u.fullName as userName,
           pr.projectName,
-          c.companyName
+          c.companyName,
+          tt.typeName,
+          tt.typeColor
         FROM Task t
         LEFT JOIN StatusTask st ON t.statusId = st.id
         LEFT JOIN Priority p ON t.priorityId = p.id
@@ -156,6 +166,7 @@ export async function getTasks(executorId?: number, companyId?: number): Promise
         LEFT JOIN [User] u ON t.userId = u.id
         LEFT JOIN Project pr ON t.projectId = pr.id
         LEFT JOIN Company c ON t.companyId = c.id
+        LEFT JOIN TaskTypes tt ON t.typeId = tt.id
         ${whereClause}
         ORDER BY COALESCE(t.orderInStatus, 999999), t.dtc DESC
       `, params);

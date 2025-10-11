@@ -19,6 +19,9 @@ interface Task {
   companyName?: string;
   projectId?: number;
   projectName?: string;
+  typeId?: number;
+  typeName?: string;
+  typeColor?: string;
   dtc: string;
   dtu?: string;
   level?: number;
@@ -41,6 +44,14 @@ interface Employee {
   displayName?: string;
 }
 
+interface TaskType {
+  id: number;
+  projectId: number;
+  typeName: string;
+  typeOrder: number;
+  typeColor: string | null;
+}
+
 interface TaskDetailsTabProps {
   task: Task;
   isEditing: boolean;
@@ -50,12 +61,14 @@ interface TaskDetailsTabProps {
     statusId: number;
     priorityId: number;
     executorId: number;
+    typeId: number;
     startDate: string;
     dedline: string;
   };
   statuses: Status[];
   priorities: Priority[];
   employees: Employee[];
+  taskTypes: TaskType[];
   onFormDataChange: (formData: any) => void;
 }
 
@@ -66,6 +79,7 @@ export default function TaskDetailsTab({
   statuses,
   priorities,
   employees,
+  taskTypes,
   onFormDataChange
 }: TaskDetailsTabProps) {
   
@@ -212,6 +226,23 @@ export default function TaskDetailsTab({
               </select>
             </div>
 
+            {/* Тип задачи */}
+            <div className="flex items-center gap-3">
+              <label className="text-slate-500 dark:text-slate-400 w-28 flex-shrink-0">Тип задачи:</label>
+              <select
+                value={formData.typeId}
+                onChange={(e) => onFormDataChange({...formData, typeId: Number(e.target.value)})}
+                className="flex-1 px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-slate-100 text-sm"
+              >
+                <option value="0">Не выбрано</option>
+                {taskTypes.map(taskType => (
+                  <option key={taskType.id} value={taskType.id}>
+                    {taskType.typeName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Исполнитель */}
             <div className="flex items-center gap-3">
               <label className="text-slate-500 dark:text-slate-400 w-28 flex-shrink-0">Исполнитель:</label>
@@ -291,6 +322,21 @@ export default function TaskDetailsTab({
               <span className={`inline-block px-2.5 py-0.5 rounded text-xs font-medium ${task.priorityName ? getPriorityColor(task.priorityName) : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
                 {task.priorityName || 'Не указан'}
               </span>
+            </div>
+
+            {/* Тип задачи */}
+            <div className="flex items-center gap-3">
+              <span className="text-slate-500 dark:text-slate-400 w-28 flex-shrink-0">Тип задачи:</span>
+              {task.typeName ? (
+                <span 
+                  className="inline-block px-2.5 py-0.5 rounded text-xs font-medium text-white"
+                  style={{ backgroundColor: task.typeColor || '#6B7280' }}
+                >
+                  {task.typeName}
+                </span>
+              ) : (
+                <span className="text-slate-500 dark:text-slate-400">Не указан</span>
+              )}
             </div>
 
             {/* Исполнитель */}

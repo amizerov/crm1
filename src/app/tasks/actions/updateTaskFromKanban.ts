@@ -12,6 +12,7 @@ interface UpdateTaskFromKanbanInput {
   statusId: number;
   priorityId?: number;
   executorId?: number;
+  typeId?: number;
   startDate?: string;
   dedline?: string;
 }
@@ -31,15 +32,18 @@ export async function updateTaskFromKanban(data: UpdateTaskFromKanbanInput): Pro
         t.statusId,
         t.priorityId,
         t.executorId,
+        t.typeId,
         t.startDate,
         t.dedline,
         st.status as statusName,
         p.priority as priorityName,
-        e.Name as executorName
+        e.Name as executorName,
+        tt.typeName as typeName
       FROM Task t
       LEFT JOIN StatusTask st ON t.statusId = st.id
       LEFT JOIN Priority p ON t.priorityId = p.id
       LEFT JOIN Employee e ON t.executorId = e.id
+      LEFT JOIN TaskTypes tt ON t.typeId = tt.id
       WHERE t.id = @id
     `, { id: data.id });
 
@@ -85,6 +89,7 @@ export async function updateTaskFromKanban(data: UpdateTaskFromKanbanInput): Pro
       .input('statusId', sql.Int, data.statusId)
       .input('priorityId', sql.Int, data.priorityId || null)
       .input('executorId', sql.Int, data.executorId || null)
+      .input('typeId', sql.Int, data.typeId || null)
       .input('startDate', sql.DateTime, startDateParsed)
       .input('dedline', sql.DateTime, dedlineDate)
       .query(`
@@ -95,6 +100,7 @@ export async function updateTaskFromKanban(data: UpdateTaskFromKanbanInput): Pro
           statusId = @statusId,
           priorityId = @priorityId,
           executorId = @executorId,
+          typeId = @typeId,
           startDate = @startDate,
           dedline = @dedline,
           dtu = GETDATE()
@@ -109,15 +115,18 @@ export async function updateTaskFromKanban(data: UpdateTaskFromKanbanInput): Pro
         t.statusId,
         t.priorityId,
         t.executorId,
+        t.typeId,
         t.startDate,
         t.dedline,
         st.status as statusName,
         p.priority as priorityName,
-        e.Name as executorName
+        e.Name as executorName,
+        tt.typeName as typeName
       FROM Task t
       LEFT JOIN StatusTask st ON t.statusId = st.id
       LEFT JOIN Priority p ON t.priorityId = p.id
       LEFT JOIN Employee e ON t.executorId = e.id
+      LEFT JOIN TaskTypes tt ON t.typeId = tt.id
       WHERE t.id = @id
     `, { id: data.id });
 
@@ -170,6 +179,16 @@ export async function updateTaskFromKanban(data: UpdateTaskFromKanbanInput): Pro
           fieldName: 'executor',
           oldValue: oldTaskData.executorName || 'Не назначен',
           newValue: newTaskData.executorName || 'Не назначен'
+        });
+      }
+
+      // Изменение типа задачи
+      if (oldTaskData.typeId !== newTaskData.typeId) {
+        await logTaskHistory(data.id, {
+          actionType: 'type_changed',
+          fieldName: 'type',
+          oldValue: oldTaskData.typeName || 'Не указан',
+          newValue: newTaskData.typeName || 'Не указан'
         });
       }
 

@@ -24,6 +24,9 @@ interface Task {
   statusName: string;
   priorityName?: string;
   executorName?: string;
+  typeId?: number;
+  typeName?: string;
+  typeColor?: string;
   level?: number;
   hasChildren?: boolean;
   orderInStatus?: number;

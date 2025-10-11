@@ -37,16 +37,27 @@ export async function quickAddTask(payload: QuickAddTaskInput): Promise<QuickAdd
       return { success: false, error: 'Некорректный идентификатор пользователя' };
     }
 
+    // Получаем максимальное значение orderInStatus для данного статуса
+    const maxOrderResult = await query(`
+      SELECT COALESCE(MAX(orderInStatus), 0) as maxOrder
+      FROM Task 
+      WHERE statusId = @statusId
+    `, { statusId });
+
+    const maxOrder = maxOrderResult[0]?.maxOrder || 0;
+    const newOrder = maxOrder + 1;
+
     const result = await query(`
-        INSERT INTO Task (taskName, statusId, companyId, projectId, userId)
+        INSERT INTO Task (taskName, statusId, companyId, projectId, userId, orderInStatus)
         OUTPUT INSERTED.id
-        VALUES (@taskName, @statusId, @companyId, @projectId, @userId)
+        VALUES (@taskName, @statusId, @companyId, @projectId, @userId, @newOrder)
       `, {
         taskName: taskName.trim(),
         statusId,
         companyId,
         projectId,
-        userId
+        userId,
+        newOrder
       });
 
     const newTaskId = result[0]?.id;
