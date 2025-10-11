@@ -7,8 +7,8 @@ import { checkTasksAvailability } from './actions/checkTasks';
 import { checkClientsAvailability } from './actions/checkClients';
 import { checkEmployeesAvailability } from './actions/checkEmploys';
 import { checkProjectsAvailability } from './actions/checkProjects';
-import { getUserCompanies } from '@/app/projects/actions';
-import { getProjectsByCompany } from '@/app/projects/actions';
+import { getUserCompanies } from '@/app/projects/actions/actions';
+import { getProjectsByCompany } from '@/app/projects/actions/actions';
 
 export default function DashboardPage() {
   const [highlightedCard, setHighlightedCard] = useState<string | null>(null);

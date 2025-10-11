@@ -1,7 +1,7 @@
 'use client';
 
-import { updateProject } from '../../actions';
-import type { Project } from '../../actions';
+import { updateProject } from '../../actions/actions';
+import type { Project } from '../../actions/actions';
 import FormPageLayout from '@/components/FormPageLayout';
 import FormContainer from '@/components/FormContainer';
 import FormFieldStandard from '@/components/FormFieldStandard';

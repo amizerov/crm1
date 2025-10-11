@@ -287,11 +287,11 @@ export async function addProject(formData: FormData) {
     // Создаём статусы для проекта
     if (templateId) {
       // Из шаблона
-      const { createProjectStatusesFromTemplate } = await import('./actions/statusActions');
+      const { createProjectStatusesFromTemplate } = await import('./statusActions');
       await createProjectStatusesFromTemplate(nextId, templateId);
     } else {
       // По умолчанию
-      const { createProjectStatusesFromDefault } = await import('./actions/statusActions');
+      const { createProjectStatusesFromDefault } = await import('./statusActions');
       await createProjectStatusesFromDefault(nextId);
     }
 

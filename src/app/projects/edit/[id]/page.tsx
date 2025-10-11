@@ -1,6 +1,6 @@
 import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { redirect } from 'next/navigation';
-import { getProjectById, getCompanies } from '../../actions';
+import { getProjectById, getCompanies } from '../../actions/actions';
 import { getProjectStatuses } from '../../actions/statusActions';
 import { getTemplates } from '@/app/templates/actions/getTemplates';
 import ProjectForm from './ProjectForm';

@@ -7,7 +7,7 @@ import BackButton from '@/components/ButtonBack';
 export default async function EditTemplatePage({
   params
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
   const currentUser = await getCurrentUser();
   
@@ -15,7 +15,8 @@ export default async function EditTemplatePage({
     redirect('/login');
   }
 
-  const templateId = parseInt(params.id);
+  const resolvedParams = await params;
+  const templateId = parseInt(resolvedParams.id);
   
   if (isNaN(templateId)) {
     redirect('/templates');

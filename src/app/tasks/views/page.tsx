@@ -46,7 +46,7 @@ export default async function TasksPage() {
             Для работы с задачами необходимо создать хотя бы одну компанию.
           </p>
           <Link
-            href="/companies/create"
+            href="/companies/add"
             className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
           >
             Создать компанию

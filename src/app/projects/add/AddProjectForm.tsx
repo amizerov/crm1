@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { addProject } from '../actions';
+import { addProject } from '../actions/actions';
 import ButtonSave from '@/components/ButtonSave';
 import ButtonCancel from '@/components/ButtonCancel';
 import FormContainer from '@/components/FormContainer';

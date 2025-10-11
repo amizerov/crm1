@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition, useEffect } from 'react';
-import { getProjectsByCompany, getUserCompanies } from './actions';
+import { getProjectsByCompany, getUserCompanies } from './actions/actions';
 import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { redirect } from 'next/navigation';
 import ProjectsTable from './ProjectsTable';
@@ -50,8 +50,6 @@ export default function ProjectsPage() {
       setProjects(initialProjects);
       
       // Завершаем начальную загрузку
-      console.log('Загрузка завершена');
-      await new Promise(r => setTimeout(r, 2300));
       setIsInitialLoading(false);
     };
 

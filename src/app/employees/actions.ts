@@ -17,7 +17,7 @@ export interface Employee {
   dtu?: string; // дата обновления
 }
 
-// Получение сотрудников компаний текущего пользователя
+// Получение сотрудников всех компаний текущего пользователя
 export async function getEmployees() {
   try {
     const currentUser = await getCurrentUser();

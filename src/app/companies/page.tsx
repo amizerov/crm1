@@ -37,7 +37,7 @@ export default async function CompaniesPage() {
         </div>
         
         <Link 
-          href="/companies/create"
+          href="/companies/add"
           style={{
             display: 'inline-block',
             padding: '12px 24px',
@@ -70,7 +70,7 @@ export default async function CompaniesPage() {
             Создайте первую компанию или попросите коллег добавить вас в существующую
           </p>
           <Link 
-            href="/companies/create"
+            href="/companies/add"
             style={{
               display: 'inline-block',
               padding: '12px 24px',

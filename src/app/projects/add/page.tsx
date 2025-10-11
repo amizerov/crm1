@@ -1,6 +1,6 @@
 import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { redirect } from 'next/navigation';
-import { getCompanies } from '../actions';
+import { getCompanies } from '../actions/actions';
 import { getTemplates } from '@/app/templates/actions/getTemplates';
 import ButtonBack from '@/components/ButtonBack';
 import FormPageLayout from '@/components/FormPageLayout';

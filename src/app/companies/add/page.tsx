@@ -143,6 +143,18 @@ async function createCompany(formData: FormData) {
       companyId: newCompanyId
     });
 
+    // Добавляем текущего пользователя как сотрудника компании
+    await query(`
+      IF NOT EXISTS (SELECT 1 FROM Employee WHERE userId = @userId AND companyId = @companyId)
+      BEGIN
+        INSERT INTO Employee (userId, Name, companyId) VALUES (@userId, @Name, @companyId)
+      END
+    `, {
+      userId: currentUser.id,
+      Name: currentUser.fullName || currentUser.login,
+      companyId: newCompanyId
+    });
+
     // Обновляем кеш
     revalidatePath('/companies');
     revalidatePath('/profile');
