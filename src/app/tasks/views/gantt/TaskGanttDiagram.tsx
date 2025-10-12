@@ -68,16 +68,22 @@ export default function TaskGanttDiagram({
   const [isUpdating, startTransition] = useTransition();
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Day);
   const [availableHeight, setAvailableHeight] = useState(0);
+  const [showTaskList, setShowTaskList] = useState(true);
 
-  // Восстанавливаем сохранённый масштаб при загрузке
+  // Восстанавливаем сохранённый масштаб и состояние списка задач при загрузке
   useEffect(() => {
     try {
       const savedViewMode = localStorage.getItem('gantt_view_mode') as ViewMode;
       if (savedViewMode && Object.values(ViewMode).includes(savedViewMode)) {
         setViewMode(savedViewMode);
       }
+
+      const savedShowTaskList = localStorage.getItem('gantt_show_task_list');
+      if (savedShowTaskList !== null) {
+        setShowTaskList(savedShowTaskList === 'true');
+      }
     } catch (error) {
-      console.warn('Не удалось загрузить сохранённые настройки масштаба:', error);
+      console.warn('Не удалось загрузить сохранённые настройки:', error);
     }
   }, []);
 
@@ -119,6 +125,13 @@ export default function TaskGanttDiagram({
       clearTimeout(timeoutId);
     };
   }, []); // Убираем зависимости, так как они могут вызывать лишние пересчеты
+
+  // Функция для переключения отображения списка задач
+  const toggleTaskList = () => {
+    const newShowTaskList = !showTaskList;
+    setShowTaskList(newShowTaskList);
+    localStorage.setItem('gantt_show_task_list', newShowTaskList.toString());
+  };
 
   // Функция для определения оптимальной ширины колонки в зависимости от масштаба
   const getColumnWidth = (mode: ViewMode): number => {
@@ -292,17 +305,22 @@ export default function TaskGanttDiagram({
       {/* Панель управления */}
       <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-3">
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-4">
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              <span className="font-semibold text-gray-900 dark:text-gray-100">{ganttTasks.length}</span>
-              {' '}задач с датами из{' '}
-              <span className="font-semibold text-gray-900 dark:text-gray-100">{tasks.length}</span>
-            </div>
-            
+          
+          <button
+            onClick={toggleTaskList}
+            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors cursor-pointer
+                      bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border 
+                      border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'`}
+            title={showTaskList ? 'Скрыть список задач' : 'Показать список задач'}
+          >
+            {showTaskList ? 'Скрыть' : 'Показать'}
+          </button>
+
+          <div className="flex items-center gap-4">           
             {ganttTasks.length > 0 && (
               <div className="hidden sm:flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-                <span>📍 Проект: {projectId || 'Все'}</span>
-                <span>👥 Компания: {companyId || 'Все'}</span>
+                <span>👥 Компания ID: {companyId || 'Все'}</span>
+                <span>📍 Проект ID: {projectId || 'Все'}</span>
               </div>
             )}
           </div>
@@ -311,6 +329,8 @@ export default function TaskGanttDiagram({
             currentViewMode={viewMode}
             onViewModeChange={setViewMode}
           />
+          
+
         </div>
       </div>
 
@@ -322,6 +342,7 @@ export default function TaskGanttDiagram({
           locale="ru-RU"
           ganttHeight={availableHeight > 70 ? availableHeight - 70 : 0} // Вычитаем примерную высоту панели управления
           columnWidth={getColumnWidth(viewMode)}
+          listCellWidth={showTaskList ? "155px" : ""} // Управляем отображением списка задач
           rowHeight={50}
           barCornerRadius={4}
           fontFamily="var(--font-inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif)"
