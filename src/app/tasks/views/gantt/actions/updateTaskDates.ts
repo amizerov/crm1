@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getConnection, sql } from '@/db/connect';
+import { query } from '@/db/connect';
 
 interface UpdateTaskDatesResult {
   success: boolean;
@@ -42,22 +42,15 @@ export async function updateTaskDates(
       };
     }
 
-    const poolConnection = await getConnection();
-    
-    const result = await poolConnection.request()
-      .input('taskId', sql.Int, taskId)
-      .input('startDate', sql.Date, startDate)
-      .input('dedline', sql.Date, dedline)
-      .query(`
-        UPDATE Task 
-        SET 
-          startDate = @startDate, 
+    await query(`
+      UPDATE Task 
+      SET startDate = @startDate, 
           dedline = @dedline,
           dtu = GETDATE()
-        WHERE id = @taskId
-      `);
+      WHERE id = @taskId
+    `, { taskId, startDate, dedline });
 
-    console.log('✅ Task dates updated:', result.rowsAffected);
+    console.log('✅ Task dates updated:', taskId, startDate, dedline);
 
     // Инвалидируем кеш страницы задач
     revalidatePath('/tasks/views');

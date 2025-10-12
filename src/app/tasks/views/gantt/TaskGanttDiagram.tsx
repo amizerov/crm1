@@ -1,10 +1,11 @@
 'use client';
 
-import { useMemo, useTransition } from 'react';
+import { useMemo, useState, useTransition, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { StatusTask } from '@/app/projects/actions/statusActions';
 import { Task as GanttTask, ViewMode } from './types/public-types';
 import { updateTaskDates, updateTaskProgress, deleteTask } from './actions';
+import TimeScaleControls from './components/TimeScaleControls';
 
 // Динамический импорт Gantt компонента
 const GanttChart = dynamic(() => import('./GanttChart'), {
@@ -65,6 +66,43 @@ export default function TaskGanttDiagram({
   currentUserId
 }: TaskGanttDiagramProps) {
   const [isUpdating, startTransition] = useTransition();
+  const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Day);
+
+  // Восстанавливаем сохранённый масштаб при загрузке
+  useEffect(() => {
+    try {
+      const savedViewMode = localStorage.getItem('gantt_view_mode') as ViewMode;
+      if (savedViewMode && Object.values(ViewMode).includes(savedViewMode)) {
+        setViewMode(savedViewMode);
+      }
+    } catch (error) {
+      console.warn('Не удалось загрузить сохранённые настройки масштаба:', error);
+    }
+  }, []);
+
+  // Функция для определения оптимальной ширины колонки в зависимости от масштаба
+  const getColumnWidth = (mode: ViewMode): number => {
+    switch (mode) {
+      case ViewMode.Hour:
+        return 30;
+      case ViewMode.QuarterDay:
+        return 60;
+      case ViewMode.HalfDay:
+        return 80;
+      case ViewMode.Day:
+        return 65;
+      case ViewMode.Week:
+        return 100;
+      case ViewMode.Month:
+        return 120;
+      case ViewMode.QuarterYear:
+        return 160;
+      case ViewMode.Year:
+        return 200;
+      default:
+        return 65;
+    }
+  };
 
   // Преобразуем Task[] в формат GanttTask[]
   const ganttTasks = useMemo<GanttTask[]>(() => {
@@ -213,13 +251,26 @@ export default function TaskGanttDiagram({
     <div className="h-full flex flex-col bg-white dark:bg-gray-900">
       {/* Панель управления */}
       <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            <span className="font-semibold text-gray-900 dark:text-gray-100">{ganttTasks.length}</span>
-            {' '}задач с датами из{' '}
-            <span className="font-semibold text-gray-900 dark:text-gray-100">{tasks.length}</span>
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              <span className="font-semibold text-gray-900 dark:text-gray-100">{ganttTasks.length}</span>
+              {' '}задач с датами из{' '}
+              <span className="font-semibold text-gray-900 dark:text-gray-100">{tasks.length}</span>
+            </div>
+            
+            {ganttTasks.length > 0 && (
+              <div className="hidden sm:flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                <span>📍 Проект: {projectId || 'Все'}</span>
+                <span>👥 Компания: {companyId || 'Все'}</span>
+              </div>
+            )}
           </div>
-          {/* TODO: Добавить переключатель ViewMode (День/Неделя/Месяц) */}
+          
+          <TimeScaleControls
+            currentViewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
         </div>
       </div>
 
@@ -227,10 +278,10 @@ export default function TaskGanttDiagram({
       <div className="flex-1 overflow-hidden">
         <GanttChart
           tasks={ganttTasks}
-          viewMode={ViewMode.Day}
+          viewMode={viewMode}
           locale="ru-RU"
           ganttHeight={0} // 0 = автоматическая высота
-          columnWidth={65}
+          columnWidth={getColumnWidth(viewMode)}
           rowHeight={50}
           barCornerRadius={4}
           fontFamily="var(--font-inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif)"
