@@ -11,39 +11,29 @@ interface TimeScaleControlsProps {
 interface ViewModeOption {
   mode: ViewMode;
   label: string;
-  icon: string;
   shortLabel: string;
-  description: string;
 }
 
 const viewModeOptions: ViewModeOption[] = [
   {
     mode: ViewMode.Day,
     label: 'День',
-    icon: '📅',
-    shortLabel: 'День',
-    description: 'Детализация по дням'
+    shortLabel: 'День'
   },
   {
     mode: ViewMode.Week,
     label: 'Неделя',
-    icon: '📊',
-    shortLabel: 'Неделя',
-    description: 'Группировка по неделям'
+    shortLabel: 'Неделя'
   },
   {
     mode: ViewMode.Month,
     label: 'Месяц',
-    icon: '🗓️',
-    shortLabel: 'Месяц',
-    description: 'Обзор по месяцам'
+    shortLabel: 'Месяц'
   },
   {
     mode: ViewMode.QuarterYear,
     label: 'Квартал',
-    icon: '📈',
-    shortLabel: 'Квартал',
-    description: 'Квартальный обзор'
+    shortLabel: 'Квартал'
   }
 ];
 
@@ -64,37 +54,25 @@ export default function TimeScaleControls({
   };
 
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
-      <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">
-        Масштаб:
-      </span>
-      
-      <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1 shadow-sm">
+    <div className={`flex items-center gap-1 ${className}`}>
+      <div className="flex border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden">
         {viewModeOptions.map((option) => (
           <button
             key={option.mode}
             onClick={() => handleViewModeChange(option.mode)}
             className={`
-              flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200
-              min-w-[60px] justify-center
+              px-3 py-1.5 text-sm font-medium transition-colors duration-150 border-r border-gray-300 dark:border-gray-600 last:border-r-0
               ${currentViewMode === option.mode
-                ? 'bg-blue-500 text-white shadow-sm transform scale-105'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
               }
             `}
-            title={option.description}
-            aria-label={`Переключить на масштаб: ${option.label}`}
+            title={`Переключить на масштаб: ${option.label}`}
           >
-            <span className="text-sm">{option.icon}</span>
-            <span className="hidden md:inline whitespace-nowrap">{option.shortLabel}</span>
+            {option.shortLabel}
           </button>
         ))}
       </div>
-      
-      {/* Индикатор текущего масштаба для мобильных устройств */}
-      <span className="text-xs text-gray-500 dark:text-gray-400 md:hidden">
-        {viewModeOptions.find(opt => opt.mode === currentViewMode)?.shortLabel}
-      </span>
     </div>
   );
 }
