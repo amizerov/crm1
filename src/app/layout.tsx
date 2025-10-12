@@ -52,7 +52,7 @@ export default function RootLayout({
         <ThemeProvider>
           <Header />
           <ThemeToggle />
-          <main className="flex-1 w-[80%] mx-auto px-4 py-5">
+          <main className="flex-1 w-[80%] mx-auto px-4 py-5 min-h-0">
             {children}
           </main>
           <Footer />

@@ -83,7 +83,7 @@ export default function Header({
                 whitespace-nowrap
                 cursor-pointer
                 ${isDeskView 
-                  ? 'bg-gray-400 text-white dark:bg-gray-500' 
+                  ? 'bg-gray-500 text-white dark:bg-gray-500' 
                   : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100'
                 }
               `}
@@ -106,7 +106,7 @@ export default function Header({
                 whitespace-nowrap
                 cursor-pointer
                 ${isListView 
-                  ? 'bg-gray-400 text-white dark:bg-gray-500' 
+                  ? 'bg-gray-500 text-white dark:bg-gray-500' 
                   : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100'
                 }
               `}
@@ -129,7 +129,7 @@ export default function Header({
                 whitespace-nowrap
                 cursor-pointer
                 ${isGanttView 
-                  ? 'bg-gray-400 text-white dark:bg-gray-500' 
+                  ? 'bg-gray-500 text-white dark:bg-gray-500' 
                   : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100'
                 }
               `}

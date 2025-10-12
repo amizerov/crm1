@@ -67,6 +67,7 @@ export default function TaskGanttDiagram({
 }: TaskGanttDiagramProps) {
   const [isUpdating, startTransition] = useTransition();
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Day);
+  const [availableHeight, setAvailableHeight] = useState(0);
 
   // Восстанавливаем сохранённый масштаб при загрузке
   useEffect(() => {
@@ -79,6 +80,45 @@ export default function TaskGanttDiagram({
       console.warn('Не удалось загрузить сохранённые настройки масштаба:', error);
     }
   }, []);
+
+  // Рассчитываем доступную высоту для Gantt диаграммы
+  useEffect(() => {
+    const updateHeight = () => {
+      const container = document.getElementById('gantt-container');
+      if (container) {
+        const rect = container.getBoundingClientRect();
+        // В полноэкранном режиме используем всю доступную высоту контейнера
+        // В обычном режиме также используем доступную высоту (уже ограничена в TaskViewLayout)
+        setAvailableHeight(rect.height);
+      }
+    };
+
+    // Обновляем высоту сразу и при изменении размера окна
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+    
+    // ResizeObserver для отслеживания изменений размера контейнера
+    const container = document.getElementById('gantt-container');
+    let resizeObserver: ResizeObserver | null = null;
+    
+    if (container) {
+      resizeObserver = new ResizeObserver(() => {
+        updateHeight();
+      });
+      resizeObserver.observe(container);
+    }
+    
+    // Также обновляем при смене режима (небольшая задержка для завершения анимации)
+    const timeoutId = setTimeout(updateHeight, 150);
+    
+    return () => {
+      window.removeEventListener('resize', updateHeight);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+      clearTimeout(timeoutId);
+    };
+  }, []); // Убираем зависимости, так как они могут вызывать лишние пересчеты
 
   // Функция для определения оптимальной ширины колонки в зависимости от масштаба
   const getColumnWidth = (mode: ViewMode): number => {
@@ -275,12 +315,12 @@ export default function TaskGanttDiagram({
       </div>
 
       {/* Диаграмма Ганта */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden" id="gantt-container">
         <GanttChart
           tasks={ganttTasks}
           viewMode={viewMode}
           locale="ru-RU"
-          ganttHeight={0} // 0 = автоматическая высота
+          ganttHeight={availableHeight > 70 ? availableHeight - 70 : 0} // Вычитаем примерную высоту панели управления
           columnWidth={getColumnWidth(viewMode)}
           rowHeight={50}
           barCornerRadius={4}

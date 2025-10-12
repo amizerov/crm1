@@ -296,14 +296,15 @@ export default function TaskViewLayout({
     <div 
       className="flex flex-col bg-gray-50 dark:bg-gray-900"
       style={{
-        height: isFullscreen ? '100vh' : '100%',
+        height: isFullscreen ? '100vh' : 'calc(100vh - 180px)', // Учитываем header (~60px) + footer (~60px) + main padding (~60px)
         position: isFullscreen ? 'fixed' : 'relative',
         top: isFullscreen ? 0 : 'auto',
         left: isFullscreen ? 0 : 'auto',
         right: isFullscreen ? 0 : 'auto',
         zIndex: isFullscreen ? 9999 : 'auto',
         width: '100%',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        maxHeight: isFullscreen ? '100vh' : 'calc(100vh - 180px)'
       }}
     >
       {/* Header - НЕ перерисовывается при смене вида */}

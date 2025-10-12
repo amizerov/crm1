@@ -63,7 +63,7 @@ export default function TimeScaleControls({
             className={`
               px-3 py-1.5 text-sm font-medium transition-colors duration-150 border-r border-gray-300 dark:border-gray-600 last:border-r-0
               ${currentViewMode === option.mode
-                ? 'bg-blue-600 text-white'
+                ? 'bg-gray-500 text-white'
                 : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
               }
             `}
