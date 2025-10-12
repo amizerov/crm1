@@ -162,11 +162,28 @@ export default function TaskGanttDiagram({
     // Фильтруем задачи с датами
     const tasksWithDates = tasks.filter(task => task.startDate && task.dedline);
     
-    // Сортируем задачи (можно выбрать один из вариантов):
-    const sortedTasks = tasksWithDates.sort((a, b) => {
-      // Вариант 1: По дате начала (раньше начинается = выше в списке)
+    // Фильтруем незавершенные задачи (временно скрываем завершенные)
+    const incompleteTasks = tasksWithDates.filter(task => {
+      // Ищем статус задачи
+      const status = statuses.find(s => s.id === task.statusId);
+      if (!status) return true; // Если статус не найден, показываем задачу
+      
+      // Находим максимальный stepOrder среди всех статусов для этого проекта
+      const maxStepOrder = Math.max(...statuses.map(s => s.stepOrder), 1);
+      
+      // Задача считается завершенной, если её stepOrder равен максимальному
+      const isCompleted = status.stepOrder === maxStepOrder;
+      
+      // Показываем только незавершенные задачи
+      return !isCompleted;
+    });
+
+    // Сортируем задачи по дате начала работ:
+    const sortedTasks = incompleteTasks.sort((a, b) => {
+      // Сортировка по дате начала (раньше начинается = выше в списке)
       return new Date(a.startDate!).getTime() - new Date(b.startDate!).getTime();
       
+      // Альтернативные варианты сортировки:
       // Вариант 2: По ID (меньший ID = выше)
       // return a.id - b.id;
       
@@ -183,7 +200,31 @@ export default function TaskGanttDiagram({
     
     console.log('📊 Gantt Tasks Debug:', {
       totalTasks: tasks.length,
-      tasksWithDates: sortedTasks.length,
+      tasksWithDates: tasksWithDates.length,
+      incompleteTasks: incompleteTasks.length,
+      sortedTasks: sortedTasks.length,
+      filteredOutCompleted: tasksWithDates.length - incompleteTasks.length,
+      completedTasks: tasksWithDates.filter(task => {
+        const status = statuses.find(s => s.id === task.statusId);
+        if (!status) return false;
+        const maxStepOrder = Math.max(...statuses.map(s => s.stepOrder), 1);
+        return status.stepOrder === maxStepOrder;
+      }).map(t => ({ 
+        name: t.taskName, 
+        status: t.statusName,
+        statusId: t.statusId,
+        stepOrder: statuses.find(s => s.id === t.statusId)?.stepOrder,
+        isLastStep: true
+      })),
+      maxStepOrder: Math.max(...statuses.map(s => s.stepOrder), 1),
+      allStatuses: statuses.map(s => ({ id: s.id, status: s.status, stepOrder: s.stepOrder })),
+      sortedTasksOrder: sortedTasks.map(t => ({
+        id: t.id,
+        name: t.taskName,
+        statusName: t.statusName,
+        startDate: t.startDate,
+        startDateParsed: new Date(t.startDate!).toISOString()
+      })),
       sampleTask: tasks[0] ? {
         id: tasks[0].id,
         name: tasks[0].taskName,
@@ -192,7 +233,7 @@ export default function TaskGanttDiagram({
       } : null,
     });
     
-    return sortedTasks.map(task => {
+    return sortedTasks.map((task, index) => {
       const start = new Date(task.startDate!);
       const end = new Date(task.dedline!);
       
@@ -209,7 +250,7 @@ export default function TaskGanttDiagram({
         type: 'task' as const,
         progress,
         isDisabled: false,
-        displayOrder: task.orderInStatus || task.id, // Порядок отображения
+        displayOrder: index, // Используем индекс из отсортированного массива для правильного порядка
         styles: {
           backgroundColor: getStatusColor(task.statusId, statuses),
           backgroundSelectedColor: getStatusColor(task.statusId, statuses, 0.8),
@@ -239,6 +280,13 @@ export default function TaskGanttDiagram({
     // Подсчитываем задачи с частичными датами
     const tasksWithStartDate = tasks.filter(t => t.startDate).length;
     const tasksWithDeadline = tasks.filter(t => t.dedline).length;
+    const tasksWithBothDates = tasks.filter(t => t.startDate && t.dedline).length;
+    const completedTasksCount = tasks.filter(task => {
+      const status = statuses.find(s => s.id === task.statusId);
+      if (!status) return false;
+      const maxStepOrder = Math.max(...statuses.map(s => s.stepOrder), 1);
+      return status.stepOrder === maxStepOrder;
+    }).length;
     
     return (
       <div className="h-full flex items-center justify-center bg-white dark:bg-gray-900">
@@ -260,12 +308,12 @@ export default function TaskGanttDiagram({
           
           {/* Заголовок */}
           <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
-            Нет задач для отображения
+            Нет незавершенных задач для отображения
           </h3>
           
           {/* Описание */}
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-            Для отображения на диаграмме Ганта задачи должны иметь <strong>дату начала</strong> и <strong>дату окончания (дедлайн)</strong>
+            Для отображения на диаграмме Ганта задачи должны иметь <strong>дату начала</strong> и <strong>дату окончания (дедлайн)</strong> и не быть завершенными
           </p>
 
           {/* Детальная статистика */}
@@ -276,23 +324,23 @@ export default function TaskGanttDiagram({
                 <div className="text-xl font-semibold text-gray-900 dark:text-gray-100">{tasks.length}</div>
               </div>
               <div className="text-left">
+                <div className="text-gray-500 dark:text-gray-400 mb-1">Завершенных:</div>
+                <div className="text-xl font-semibold text-green-600 dark:text-green-400">{completedTasksCount}</div>
+              </div>
+              <div className="text-left">
                 <div className="text-gray-500 dark:text-gray-400 mb-1">С обеими датами:</div>
-                <div className="text-xl font-semibold text-green-600 dark:text-green-400">{ganttTasks.length}</div>
+                <div className="text-lg font-medium text-blue-600 dark:text-blue-400">{tasksWithBothDates}</div>
               </div>
               <div className="text-left">
-                <div className="text-gray-500 dark:text-gray-400 mb-1">С датой начала:</div>
-                <div className="text-lg font-medium text-blue-600 dark:text-blue-400">{tasksWithStartDate}</div>
-              </div>
-              <div className="text-left">
-                <div className="text-gray-500 dark:text-gray-400 mb-1">С дедлайном:</div>
-                <div className="text-lg font-medium text-amber-600 dark:text-amber-400">{tasksWithDeadline}</div>
+                <div className="text-gray-500 dark:text-gray-400 mb-1">Незавершенных показано:</div>
+                <div className="text-lg font-medium text-amber-600 dark:text-amber-400">{ganttTasks.length}</div>
               </div>
             </div>
           </div>
 
           {/* Подсказка */}
           <div className="text-xs text-gray-500 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded p-3">
-            💡 <strong>Подсказка:</strong> Откройте задачу в режиме редактирования и заполните поля "Дата начала" и "Дедлайн"
+            💡 <strong>Временно скрыты завершенные задачи</strong> (находящиеся в последней колонке канбана). Откройте задачу в режиме редактирования и заполните поля "Дата начала" и "Дедлайн" для незавершенных задач.
           </div>
         </div>
       </div>
