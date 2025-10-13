@@ -156,7 +156,7 @@ export async function registerWithInvitation(token: string, password: string, fu
     // 8. Обновляем статус приглашения
     await query(
       `UPDATE Invitation 
-       SET status = 'accepted', acceptedAt = GETDATE(), acceptedByUserId = @userId
+       SET status = 'accepted', acceptedAt = GETDATE(), acceptedByUserId = @userId, dtu = GETDATE()
        WHERE id = @invitationId`,
       { userId, invitationId: invitation.id }
     );
