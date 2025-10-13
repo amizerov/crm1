@@ -4,11 +4,11 @@ import { getCurrentUser } from '@/app/(auth)/actions/login';
 import AcceptInvitationForm from './AcceptInvitationForm';
 
 interface PageProps {
-  searchParams: { token?: string };
+  searchParams: Promise<{ token?: string }>;
 }
 
 export default async function AcceptInvitationPage({ searchParams }: PageProps) {
-  const token = searchParams.token;
+  const { token } = await searchParams;
 
   if (!token) {
     return (
@@ -64,9 +64,9 @@ export default async function AcceptInvitationPage({ searchParams }: PageProps) 
   const invitation = invitationResult.invitation!;
   const currentUser = await getCurrentUser();
 
-  // Если пользователь не авторизован - редирект на регистрацию с сохранением токена
+  // Если пользователь не авторизован - редирект на специальную регистрацию через приглашение
   if (!currentUser) {
-    redirect(`/register?invitation=${token}`);
+    redirect(`/register/invitation?token=${token}`);
   }
 
   // Проверяем, совпадает ли email текущего пользователя с приглашением

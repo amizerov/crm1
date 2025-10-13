@@ -26,7 +26,7 @@ export async function getTaskActions(taskId: number): Promise<TaskAction[]> {
         ta.dtc,
         ta.dtu,
         u.nicName as userName
-      FROM TaskAtions ta
+      FROM TaskActions ta
       LEFT JOIN [User] u ON ta.userId = u.id
       WHERE ta.taskId = @taskId
       ORDER BY ta.dtc DESC
@@ -43,7 +43,7 @@ export async function getTaskActions(taskId: number): Promise<TaskAction[]> {
 export async function addTaskAction(taskId: number, description: string, userId: number): Promise<void> {
   try {
     await query(`
-      INSERT INTO TaskAtions (taskId, description, userId)
+      INSERT INTO TaskActions (taskId, description, userId)
       VALUES (@taskId, @description, @userId)
     `, { taskId, description, userId });
     
@@ -67,11 +67,11 @@ export async function updateTaskAction(actionId: number, description: string): P
   try {
     // Получаем информацию о действии и задаче для логирования
     const actionInfo = await query(`
-      SELECT taskId, description as oldDescription FROM TaskAtions WHERE id = @actionId
+      SELECT taskId, description as oldDescription FROM TaskActions WHERE id = @actionId
     `, { actionId });
 
     await query(`
-      UPDATE TaskAtions 
+      UPDATE TaskActions 
       SET description = @description, dtu = GETDATE()
       WHERE id = @actionId
     `, { actionId, description });
@@ -97,11 +97,11 @@ export async function deleteTaskAction(actionId: number): Promise<void> {
   try {
     // Получаем информацию о действии и задаче для логирования
     const actionInfo = await query(`
-      SELECT taskId, description FROM TaskAtions WHERE id = @actionId
+      SELECT taskId, description FROM TaskActions WHERE id = @actionId
     `, { actionId });
 
     await query(`
-      DELETE FROM TaskAtions 
+      DELETE FROM TaskActions 
       WHERE id = @actionId
     `, { actionId });
 
