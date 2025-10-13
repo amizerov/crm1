@@ -14,16 +14,43 @@ const transporter = nodemailer.createTransport({
 });
 
 /**
+ * Универсальная функция отправки email
+ */
+export async function sendEmail(
+  to: string,
+  subject: string,
+  html: string,
+  text: string
+): Promise<{ success?: boolean; error?: string }> {
+  const mailOptions = {
+    from: `"Argo CRM" <${process.env.SMTP_USER}>`,
+    to,
+    subject,
+    html,
+    text,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log('✅ Email sent to:', to);
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Error sending email:', error);
+    if (error instanceof Error) {
+      console.error('❌ Error details:', error.message);
+    }
+    return { error: 'Не удалось отправить email' };
+  }
+}
+
+/**
  * Отправка письма с подтверждением регистрации
  */
 export async function sendVerificationEmail(email: string, token: string) {
   const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify?token=${token}`;
 
-  const mailOptions = {
-    from: `"Argo CRM" <${process.env.SMTP_USER}>`,
-    to: email,
-    subject: 'Подтверждение регистрации в Argo CRM',
-    html: `
+  const subject = 'Подтверждение регистрации в Argo CRM';
+  const html = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -123,8 +150,8 @@ export async function sendVerificationEmail(email: string, token: string) {
           </div>
         </body>
       </html>
-    `,
-    text: `
+    `;
+  const text = `
 Добро пожаловать в Argo CRM!
 
 Для подтверждения регистрации перейдите по ссылке:
@@ -136,18 +163,7 @@ ${verificationUrl}
 
 С уважением,
 Команда Argo CRM
-    `.trim(),
-  };
+    `.trim();
 
-  try {
-    await transporter.sendMail(mailOptions);
-    console.log('✅ Verification email sent to:', email);
-    return { success: true };
-  } catch (error) {
-    console.error('❌ Error sending email:', error);
-    if (error instanceof Error) {
-      console.error('❌ Error details:', error.message);
-    }
-    return { error: 'Не удалось отправить email' };
-  }
+  return sendEmail(email, subject, html, text);
 }

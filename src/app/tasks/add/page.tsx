@@ -1,7 +1,7 @@
 import { addTask } from '../actions/addTask'
 import { getTaskStatuses } from '@/app/tasks/actions/getTaskStatuses'
 import { getPriorities } from '@/app/tasks/actions/getPriorities'
-import { getEmployees, type Employee } from '@/app/employees/actions'
+import { getEmployees, type Employee } from '@/app/employees/actions/actions'
 import { getTasksForParentSelection } from '@/app/tasks/actions/getTasks'
 import { getUserCompanies } from '@/app/tasks/actions/getUserCompanies'
 import AddTaskForm from '../components/AddTaskForm'

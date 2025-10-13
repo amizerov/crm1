@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import WindowsWindow from '@/components/WindowsWindow';
-import { Employee } from '@/app/employees/actions';
+import { Employee } from '@/app/employees/actions/actions';
 import EditTaskEmployeeSelector from '../../components/EditTaskEmployeeSelector';
 
 interface Task {

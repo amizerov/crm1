@@ -6,7 +6,7 @@ import { updateTaskFromKanban } from '../../actions/updateTaskFromKanban';
 import { deleteTaskFromKanban } from '../../actions/deleteTaskFromKanban';
 import { getTaskStatuses } from '../../actions/getTaskStatuses';
 import { getPriorities } from '../../actions/getPriorities';
-import { getEmployees, getEmployeesByCompany } from '@/app/employees/actions';
+import { getEmployees, getEmployeesByCompany } from '@/app/employees/actions/actions';
 import { getTaskActions, TaskAction } from '../../actions/taskActions';
 import { getTaskTypes } from '../actions/taskTypes';
 import TaskDetailsTab from './TaskDetailsTab';

@@ -1,7 +1,7 @@
 import { getTaskById } from '@/app/tasks/actions/updateTask'
 import { getTaskStatuses } from '@/app/tasks/actions/getTaskStatuses'
 import { getPriorities } from '../../actions/getPriorities'
-import { getEmployees, getEmployeesByCompany, type Employee } from '@/app/employees/actions'
+import { getEmployees, getEmployeesByCompany, type Employee } from '@/app/employees/actions/actions'
 import { getTasksForParentSelection, getSubtasks } from '@/app/tasks/actions/getTasks'
 import { getTaskActions } from '@/app/tasks/actions/taskActions'
 import { getTaskDocuments } from '@/app/tasks/actions/taskDocuments'

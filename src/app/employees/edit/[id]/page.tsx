@@ -1,6 +1,6 @@
 import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { redirect } from 'next/navigation';
-import { getEmployeeById, getUsers, getCompanies } from '../../actions';
+import { getEmployeeById, getUsers, getCompanies } from '../../actions/actions';
 import { updateEmployeeAction } from './actions';
 import ButtonBack from '@/components/ButtonBack';
 import ButtonCancel from '@/components/ButtonCancel';

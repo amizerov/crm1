@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Employee } from './actions';
+import { Employee } from './actions/actions';
 import { useRouter } from 'next/navigation';
 
 interface EmployeeRowProps {

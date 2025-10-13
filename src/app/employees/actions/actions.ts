@@ -17,6 +17,54 @@ export interface Employee {
   dtu?: string; // дата обновления
 }
 
+/**
+ * Получить пользователей, связанных с текущим пользователем через другие компании
+ * (коллеги по другим компаниям, с которыми можно быстро связать нового сотрудника)
+ */
+export async function getRelatedUsers() {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return [];
+    }
+
+    const result = await query(`
+      SELECT DISTINCT
+        u.id,
+        u.login,
+        u.nicName,
+        u.fullName,
+        u.email,
+        COALESCE(u.nicName, u.fullName, u.login) as displayName
+      FROM [User] u
+      WHERE u.id != @currentUserId
+      AND (
+        -- Пользователи, которые являются сотрудниками в тех же компаниях
+        u.id IN (
+          SELECT DISTINCT e2.userId
+          FROM Employee e1
+          JOIN Employee e2 ON e1.companyId = e2.companyId
+          WHERE e1.userId = @currentUserId AND e2.userId IS NOT NULL
+        )
+        OR
+        -- Пользователи-партнёры в тех же компаниях
+        u.id IN (
+          SELECT DISTINCT uc2.userId
+          FROM User_Company uc1
+          JOIN User_Company uc2 ON uc1.companyId = uc2.companyId
+          WHERE uc1.userId = @currentUserId
+        )
+      )
+      ORDER BY displayName
+    `, { currentUserId: currentUser.id });
+
+    return (result as any).recordset || result;
+  } catch (error) {
+    console.error('Ошибка получения связанных пользователей:', error);
+    return [];
+  }
+}
+
 // Получение сотрудников всех компаний текущего пользователя
 export async function getEmployees() {
   try {

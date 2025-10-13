@@ -1,6 +1,6 @@
 'use server';
 
-import { updateEmployee } from '../../actions';
+import { updateEmployee } from '../../actions/actions';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { query } from '@/db/connect';

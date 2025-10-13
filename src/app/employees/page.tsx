@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition, useEffect, useCallback } from 'react';
-import { getEmployeesByCompany, getUserCompanies } from './actions';
+import { getEmployeesByCompany, getUserCompanies } from './actions/actions';
 import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { redirect } from 'next/navigation';
 import EmployeesTable from './EmployeesTable';

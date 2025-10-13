@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getEmployeesByCompany } from '@/app/employees/actions';
+import { getEmployeesByCompany } from '@/app/employees/actions/actions';
 
 interface Employee {
   id: number;
