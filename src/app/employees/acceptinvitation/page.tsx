@@ -4,11 +4,12 @@ import { getCurrentUser } from '@/app/(auth)/actions/login';
 import AcceptInvitationForm from './AcceptInvitationForm';
 
 interface PageProps {
-  searchParams: { token?: string };
+  searchParams: Promise<{ token?: string }>;
 }
 
 export default async function AcceptInvitationPage({ searchParams }: PageProps) {
-  const token = searchParams.token;
+  const resolvedParams = await searchParams;
+  const token = resolvedParams.token;
 
   if (!token) {
     return (
