@@ -35,6 +35,6 @@ export function middleware(req: NextRequest) {
  */
 export const config = {
   matcher: [
-    '/((?!_next|static|public|favicon.ico|robots.txt|sitemap.xml|images|api/auth|login|signup|register|verify|employees/acceptinvitation).*)',
+    '/((?!_next|static|public|favicon.ico|robots.txt|sitemap.xml|images|api/auth|login|signup|register|verify|employees/acceptinvitation|^/$).*)',
   ],
 };
