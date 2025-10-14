@@ -8,6 +8,11 @@ import { NextResponse, NextRequest } from 'next/server';
 export function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
   
+  // Разрешаем доступ к корневой странице без авторизации
+  if (pathname === '/') {
+    return NextResponse.next();
+  }
+  
   // Проверяем наличие сессии
   const userId = req.cookies.get('userId')?.value?.trim();
   const hasSession = !!userId;
@@ -35,6 +40,6 @@ export function middleware(req: NextRequest) {
  */
 export const config = {
   matcher: [
-    '/((?!_next|static|public|favicon.ico|robots.txt|sitemap.xml|images|api/auth|login|signup|register|verify|employees/acceptinvitation|^/$).*)',
+    '/((?!_next|static|favicon.ico|robots.txt|sitemap.xml|logo|screenshots|api/auth|login|signup|register|verify|employees/acceptinvitation).+)',
   ],
 };
