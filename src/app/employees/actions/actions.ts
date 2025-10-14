@@ -29,32 +29,22 @@ export async function getRelatedUsers() {
     }
 
     const result = await query(`
-      SELECT DISTINCT
-        u.id,
-        u.login,
-        u.nicName,
-        u.fullName,
-        u.email,
-        COALESCE(u.nicName, u.fullName, u.login) as displayName
-      FROM [User] u
-      WHERE u.id != @currentUserId
-      AND (
-        -- Пользователи, которые являются сотрудниками в тех же компаниях
-        u.id IN (
-          SELECT DISTINCT e2.userId
-          FROM Employee e1
-          JOIN Employee e2 ON e1.companyId = e2.companyId
-          WHERE e1.userId = @currentUserId AND e2.userId IS NOT NULL
-        )
-        OR
-        -- Пользователи-партнёры в тех же компаниях
-        u.id IN (
-          SELECT DISTINCT uc2.userId
-          FROM User_Company uc1
-          JOIN User_Company uc2 ON uc1.companyId = uc2.companyId
-          WHERE uc1.userId = @currentUserId
-        )
-      )
+	  SELECT DISTINCT
+        id,
+        login,
+        nicName,
+        fullName,
+        email,
+        COALESCE(nicName, fullName, login) as displayName
+      FROM [User]
+	  where id in (select userId from Employee where companyId 
+					in (select companyId from Employee where userId=@currentUserId))
+	     or id in (select userId from User_Company where companyId 
+					in (select companyId from User_Company where userId=@currentUserId)) 
+		 or id in (select userId from Employee where companyId 
+					in (select Id from Company where ownerId=@currentUserId))
+		 or id in (select userId from User_Company where companyId 
+					in (select Id from Company where ownerId=@currentUserId))
       ORDER BY displayName
     `, { currentUserId: currentUser.id });
 

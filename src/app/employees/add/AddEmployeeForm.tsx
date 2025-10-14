@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import FormContainer from '@/components/FormContainer';
 import FormFieldStandard from '@/components/FormFieldStandard';
 import { StandardInput, StandardSelect } from '@/components/StandardInputs';
 import ButtonSave from '@/components/ButtonSave';
 import ButtonCancel from '@/components/ButtonCancel';
+import Notification from '@/components/Notification';
 import { addEmployee } from '../actions/actions';
 import { createInvitation, InvitationRole } from '../actions/invitations';
 
@@ -32,47 +33,102 @@ interface Props {
 export default function AddEmployeeForm({ relatedUsers, companies }: Props) {
   const [mode, setMode] = useState<'link' | 'invite'>('link');
   const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number>(0);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string; isVisible: boolean }>({
+    type: 'success',
+    message: '',
+    isVisible: false
+  });
   const router = useRouter();
 
+  // Загружаем выбранную компанию из localStorage при инициализации
+  useEffect(() => {
+    const savedCompanyId = localStorage.getItem('selectedCompanyId');
+    if (savedCompanyId) {
+      const companyId = parseInt(savedCompanyId, 10);
+      // Проверяем, что компания существует в списке доступных компаний
+      if (companyId === 0 || companies.some(c => c.id === companyId)) {
+        setSelectedCompanyId(companyId);
+      }
+    }
+  }, [companies]);
+
+  // Обработчик изменения компании
+  const handleCompanyChange = (companyId: number) => {
+    setSelectedCompanyId(companyId);
+    localStorage.setItem('selectedCompanyId', companyId.toString());
+  };
+
   const handleSubmit = async (formData: FormData) => {
-    setError(null);
-    setSuccess(null);
+    setNotification({ type: 'success', message: '', isVisible: false });
 
     try {
       if (mode === 'link') {
         // Связываем существующего пользователя
+        // Добавляем selectedCompanyId в FormData если он не установлен
+        if (selectedCompanyId) {
+          formData.set('companyId', selectedCompanyId.toString());
+        }
+        
         startTransition(() => {
           addEmployee(formData);
         });
       } else {
         // Отправляем приглашение
         const email = formData.get('email') as string;
-        const companyId = Number(formData.get('companyId'));
+        const companyId = selectedCompanyId; // Используем selectedCompanyId вместо formData
         const role = formData.get('role') as InvitationRole;
 
         if (!email || !companyId || !role) {
-          setError('Заполните все обязательные поля');
+          setNotification({
+            type: 'error',
+            message: 'Заполните все обязательные поля',
+            isVisible: true
+          });
           return;
         }
 
-        const result = await createInvitation({ email, companyId, role });
+        startTransition(async () => {
+          const result = await createInvitation({ email, companyId, role });
 
-        if (result.error) {
-          setError(result.error);
-        } else {
-          setSuccess('Приглашение успешно отправлено на ' + email);
-          setTimeout(() => router.push('/employees'), 2000);
-        }
+          if (result.error) {
+            setNotification({
+              type: 'error',
+              message: result.error,
+              isVisible: true
+            });
+          } else {
+            setNotification({
+              type: 'success',
+              message: 'Приглашение успешно отправлено на ' + email,
+              isVisible: true
+            });
+            setTimeout(() => router.push('/employees'), 2000);
+          }
+        });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Произошла ошибка');
+      setNotification({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Произошла ошибка',
+        isVisible: true
+      });
     }
+  };
+
+  const closeNotification = () => {
+    setNotification(prev => ({ ...prev, isVisible: false }));
   };
 
   return (
     <>
+      <Notification
+        message={notification.message}
+        type={notification.type}
+        isVisible={notification.isVisible}
+        onClose={closeNotification}
+      />
+
       {/* Переключатель режимов */}
       <div className="mb-6 flex gap-4 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
         <button
@@ -99,18 +155,6 @@ export default function AddEmployeeForm({ relatedUsers, companies }: Props) {
         </button>
       </div>
 
-      {/* Сообщения об ошибках/успехе */}
-      {error && (
-        <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-300">
-          {error}
-        </div>
-      )}
-      {success && (
-        <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-green-800 dark:text-green-300">
-          {success}
-        </div>
-      )}
-
       <FormContainer action={handleSubmit}>
         {mode === 'link' ? (
           /* Режим: Связать существующего пользователя */
@@ -130,7 +174,7 @@ export default function AddEmployeeForm({ relatedUsers, companies }: Props) {
                 {relatedUsers.length > 0 ? (
                   relatedUsers.map(user => (
                     <option key={user.id} value={user.id}>
-                      {user.displayName} ({user.email})
+                      {user.displayName} ({user.email || user.fullName || user.login})
                     </option>
                   ))
                 ) : (
@@ -143,7 +187,12 @@ export default function AddEmployeeForm({ relatedUsers, companies }: Props) {
             </FormFieldStandard>
 
             <FormFieldStandard label="Компания" required>
-              <StandardSelect name="companyId" required>
+              <StandardSelect 
+                name="companyId" 
+                value={selectedCompanyId || ''} 
+                onChange={(e) => handleCompanyChange(Number(e.target.value))}
+                required
+              >
                 <option value="">Выберите компанию</option>
                 {companies.map(company => (
                   <option key={company.id} value={company.id}>
@@ -179,7 +228,12 @@ export default function AddEmployeeForm({ relatedUsers, companies }: Props) {
             </FormFieldStandard>
 
             <FormFieldStandard label="Компания" required>
-              <StandardSelect name="companyId" required>
+              <StandardSelect 
+                name="companyId" 
+                value={selectedCompanyId || ''} 
+                onChange={(e) => handleCompanyChange(Number(e.target.value))}
+                required
+              >
                 <option value="">Выберите компанию</option>
                 {companies.map(company => (
                   <option key={company.id} value={company.id}>
@@ -194,7 +248,10 @@ export default function AddEmployeeForm({ relatedUsers, companies }: Props) {
         <div className="pt-6 flex justify-end gap-3">
           <ButtonCancel href="/employees" />
           <ButtonSave disabled={isPending}>
-            {mode === 'link' ? 'Сохранить' : 'Отправить приглашение'}
+            {isPending 
+              ? (mode === 'link' ? 'Сохранение...' : 'Отправка...') 
+              : (mode === 'link' ? 'Сохранить' : 'Отправить приглашение')
+            }
           </ButtonSave>
         </div>
       </FormContainer>

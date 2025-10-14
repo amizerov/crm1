@@ -174,6 +174,7 @@ export async function registerWithInvitation(token: string, password: string, fu
 
     return { 
       success: true, 
+      redirect: '/dashboard',
       message: `Добро пожаловать в ${invitation.companyName}! Вы успешно присоединились как ${invitation.role === 'Partner' ? 'партнёр' : 'сотрудник'}.` 
     };
 

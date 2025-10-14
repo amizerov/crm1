@@ -60,10 +60,9 @@ export default function InvitationRegisterForm({ token, invitation }: Props) {
         setError(result.error);
       } else if (result.success) {
         setSuccess(result.message || 'Регистрация успешна!');
-        // Перенаправляем на дашборд через 2 секунды
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 2000);
+        // Редирект на указанную страницу или дашборд по умолчанию
+        const redirectUrl = result.redirect || '/dashboard';
+        router.push(redirectUrl);
       }
     });
   };

@@ -35,8 +35,16 @@ export default async function AcceptInvitationPage({ searchParams }: PageProps) 
     );
   }
 
+  // Получаем текущего пользователя
+  const currentUser = await getCurrentUser();
+
   // Получаем информацию о приглашении
   const invitationResult = await getInvitationByToken(token);
+
+  // Если приглашение уже использовано и пользователь авторизован, перенаправляем на дашборд
+  if (invitationResult.error === 'Приглашение уже использовано' && currentUser) {
+    redirect('/dashboard');
+  }
 
   if (invitationResult.error) {
     return (
@@ -63,7 +71,6 @@ export default async function AcceptInvitationPage({ searchParams }: PageProps) 
   }
 
   const invitation = invitationResult.invitation!;
-  const currentUser = await getCurrentUser();
 
   // Если пользователь не авторизован - редирект на специальную регистрацию через приглашение
   if (!currentUser) {
