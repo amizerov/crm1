@@ -10,7 +10,7 @@ export default function ButtonSave({ children = 'Сохранить', disabled =
           disabled={disabled}
           style={{ 
             padding: '12px 24px', 
-            backgroundColor: disabled ? '#6c757d' : '#007bff', 
+            backgroundColor: disabled ? '#6c757d' : '#1e3a8a', 
             color: 'white', 
             border: 'none', 
             borderRadius: 4, 

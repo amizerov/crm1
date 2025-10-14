@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getCurrentUser, logoutAction } from '@/app/(auth)/actions/login';
 
 export default async function Header() {
@@ -8,11 +9,20 @@ export default async function Header() {
     <header className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 py-3 sticky top-0 z-[1000] shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
         <div className="flex items-center gap-8">
-          <Link 
-            href="/" 
-            className="text-2xl font-bold text-blue-900 dark:text-blue-400 no-underline hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+          <Link
+            href="/"
+            className="flex items-center gap-3 no-underline"
           >
-            Argo CRM
+            <Image 
+              src="/logo1.png" 
+              alt="Argo CRM Logo" 
+              width={40}
+              height={40}
+              className="rounded object-contain"
+            />
+            <span className="text-2xl font-bold text-blue-900 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
+              Argo CRM
+            </span>
           </Link>
           
           {currentUser && (
@@ -49,12 +59,20 @@ export default async function Header() {
               </form>
             </>
           ) : (
-            <Link 
-              href="/login" 
-              className="no-underline bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
-            >
-              Войти
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/register"
+                className="no-underline bg-white border border-blue-900 text-blue-600 px-3 py-1.5 rounded-md text-sm font-medium hover:bg-blue-50 transition-colors"
+              >
+                Регистрация
+              </Link>
+              <Link 
+                href="/login" 
+                className="no-underline bg-blue-900 dark:bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
+              >
+                Войти
+              </Link>
+            </div>
           )}
         </nav>
       </div>

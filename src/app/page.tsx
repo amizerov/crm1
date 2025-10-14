@@ -1,80 +1,58 @@
 import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { redirect } from 'next/navigation';
-import InteractiveButton from '@/components/InteractiveButton';
+import Link from 'next/link';
+import Slider from '@/components/Slider';
 
 export default async function HomePage() {
-  // Проверяем авторизацию пользователя
   const currentUser = await getCurrentUser();
-  
-  if (currentUser) {
-    // Если пользователь авторизован, перенаправляем на дашборд
-    redirect('/dashboard');
-  }
+  if (currentUser) redirect('/dashboard');
 
-  // Если не авторизован, показываем стартовую страницу
   return (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-5 py-10">
-      {/* Логотип и заставка */}
-      <div className="mb-12">
-        <div className="text-6xl font-bold text-blue-600 dark:text-blue-400 mb-4">
-          Argo CRM
-        </div>
-        
-        <div className="text-xl text-gray-600 dark:text-gray-300 mb-3 font-normal">
-          Система управления взаимоотношениями с клиентами
-        </div>
-        
-        <div className="text-sm text-gray-500 dark:text-gray-400 max-w-[600px] mx-auto leading-relaxed">
-          Управляйте задачами, клиентами и проектами в одном месте. Эффективное
-          решение для организации работы вашей команды.
-        </div>
-      </div>
+    <main className="min-h-[80vh] flex items-center justify-center px-4 py-8">
+      <section className="max-w-6xl w-full bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-lg shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="flex items-stretch">
+          {/* Left: slider */}
+          <div className="w-2/3 p-8">
+            <div className="mb-4">
+              <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-gray-50">
+                Cистема управления задачами
+              </h1>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 max-w-[60ch]">
+                Контроль за потоком внедрения фич и исправления багов в IT проектах. 
+                Визуализация процесса на Канбан-доске и Диаграмме Ганта. 
+                Мониторинг эффективности разработки.
+              </p>
+            </div>
 
-      {/* Кнопка входа */}
-      <div className="mb-12">
-        <InteractiveButton href="/login" size="lg">
-          Войти в систему
-        </InteractiveButton>
-      </div>
-
-      {/* Преимущества */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl w-full">
-        <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 transition-all duration-300">
-          <div className="text-4xl mb-3">
-            📋
+            <Slider />
           </div>
-          <h3 className="text-base text-gray-800 dark:text-gray-200 mb-2 font-semibold">
-            Управление задачами
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-            Создавайте, назначайте и отслеживайте выполнение задач с удобной системой приоритетов
-          </p>
-        </div>
 
-        <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 transition-all duration-300">
-          <div className="text-4xl mb-3">
-            👥
-          </div>
-          <h3 className="text-base text-gray-800 dark:text-gray-200 mb-2 font-semibold">
-            База клиентов
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-            Ведите полную базу данных клиентов с контактной информацией и историей взаимодействий
-          </p>
-        </div>
+          {/* Right: short CTA and templates */}
+          <aside className="w-1/3 border-l border-gray-100 dark:border-gray-800 p-6">
+            <div className="sticky top-6">
+              <div className="mb-4">
+                <span className="inline-block px-3 py-1 bg-green-600 text-white text-xs font-semibold rounded">БЕСПЛАТНО</span>
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-50">Argo Task Manager — для команд и личных дел</h2>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">Управляйте разработкой и повседневными делами с помощью шаблонов и визуальных инструментов.</p>
 
-        <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 transition-all duration-300">
-          <div className="text-4xl mb-3">
-            📊
-          </div>
-          <h3 className="text-base text-gray-800 dark:text-gray-200 mb-2 font-semibold">
-            Аналитика и отчеты
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-            Получайте детальную статистику по работе команды и эффективности процессов
-          </p>
+              <div className="mt-6">
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Шаблоны Канбан колонок</h4>
+                <ul className="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                  <li className="px-3 py-2 bg-white dark:bg-gray-800 rounded border">Agile (To Do / In Progress / Review / Done)</li>
+                  <li className="px-3 py-2 bg-white dark:bg-gray-800 rounded border">Scrum (Backlog / Sprint / In Progress / Done)</li>
+                  <li className="px-3 py-2 bg-white dark:bg-gray-800 rounded border">Личный (Идея / Завтра / Сегодня / Готово)</li>
+                </ul>
+              </div>
+
+              <div className="mt-6">
+                <Link href="/register" className="block w-full text-center bg-blue-900 text-white py-2 rounded-md font-medium">Начать бесплатно</Link>
+                <Link href="/login" className="block w-full text-center mt-3 border border-gray-300 text-sm rounded-md py-2">Войти</Link>
+              </div>
+            </div>
+          </aside>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }
