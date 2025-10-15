@@ -164,39 +164,16 @@ export default function ProjectTaskTypeEditor({ projectId, initialTaskTypes }: P
   };
 
   return (
-    <div style={{
-      backgroundColor: '#f8fafc',
-      border: '1px solid #e2e8f0',
-      borderRadius: '8px',
-      padding: '24px',
-      marginTop: '24px'
-    }}>
-      <h2 style={{
-        fontSize: '20px',
-        fontWeight: '600',
-        color: '#1e293b',
-        marginBottom: '16px'
-      }}>
+    <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 mt-6">
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
         Типы задач проекта
       </h2>
 
       {/* Форма добавления нового типа */}
-      <div style={{
-        backgroundColor: 'white',
-        border: '1px solid #e2e8f0',
-        borderRadius: '6px',
-        padding: '16px',
-        marginBottom: '16px'
-      }}>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'end' }}>
-          <div style={{ flex: 1 }}>
-            <label style={{
-              display: 'block',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: '#374151',
-              marginBottom: '4px'
-            }}>
+      <div className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md p-4 mb-4">
+        <div className="flex gap-3 items-end">
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Название типа
             </label>
             <input
@@ -204,61 +181,34 @@ export default function ProjectTaskTypeEditor({ projectId, initialTaskTypes }: P
               value={newTypeName}
               onChange={(e) => setNewTypeName(e.target.value)}
               placeholder="Введите название типа задач"
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px'
-              }}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               onKeyDown={(e) => e.key === 'Enter' && handleAddTaskType()}
             />
           </div>
           <div>
-            <label style={{
-              display: 'block',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: '#374151',
-              marginBottom: '4px'
-            }}>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Цвет
             </label>
             <input
               type="color"
               value={newTypeColor}
               onChange={(e) => setNewTypeColor(e.target.value)}
-              style={{
-                width: '60px',
-                height: '36px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                cursor: 'pointer'
-              }}
+              className="w-15 h-9 border border-gray-300 dark:border-gray-600 rounded-md cursor-pointer"
             />
           </div>
           <button
             onClick={handleAddTaskType}
             disabled={!newTypeName.trim() || isSaving}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: newTypeName.trim() && !isSaving ? 'pointer' : 'not-allowed',
-              opacity: newTypeName.trim() && !isSaving ? 1 : 0.6
-            }}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white border-none rounded-md text-sm font-medium cursor-pointer disabled:cursor-not-allowed transition-colors"
           >
             Добавить
           </button>
         </div>
       </div>
 
+
       {/* Список типов задач */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div className="flex flex-col gap-2">
         {taskTypes.map((taskType) => (
           <div
             key={taskType.id}
@@ -266,88 +216,45 @@ export default function ProjectTaskTypeEditor({ projectId, initialTaskTypes }: P
             onDragStart={(e) => handleDragStart(e, taskType.id)}
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, taskType.id)}
-            style={{
-              backgroundColor: 'white',
-              border: '1px solid #e2e8f0',
-              borderRadius: '6px',
-              padding: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              cursor: 'move',
-              opacity: draggedId === taskType.id ? 0.5 : 1
-            }}
+            className={`bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md p-3 flex items-center gap-3 cursor-move transition-opacity ${
+              draggedId === taskType.id ? 'opacity-50' : 'opacity-100'
+            }`}
           >
             {/* Индикатор порядка */}
-            <div style={{
-              width: '24px',
-              height: '24px',
-              backgroundColor: '#f1f5f9',
-              borderRadius: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px',
-              fontWeight: '500',
-              color: '#64748b'
-            }}>
+            <div className="w-6 h-6 bg-gray-100 dark:bg-gray-600 rounded flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-400">
               {taskType.typeOrder}
             </div>
 
             {/* Цветовой индикатор */}
             <div
-              style={{
-                width: '16px',
-                height: '16px',
-                backgroundColor: taskType.typeColor || '#3B82F6',
-                borderRadius: '50%',
-                border: '1px solid #e2e8f0'
-              }}
+              className="w-4 h-4 rounded-full border border-gray-200 dark:border-gray-600"
+              style={{ backgroundColor: taskType.typeColor || '#3B82F6' }}
             />
 
             {/* Название типа */}
-            <div style={{ flex: 1 }}>
+            <div className="flex-1">
               {editingId === taskType.id ? (
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <div className="flex gap-2 items-center">
                   <input
                     type="text"
                     value={editingName}
                     onChange={(e) => setEditingName(e.target.value)}
-                    style={{
-                      flex: 1,
-                      padding: '6px 8px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '4px',
-                      fontSize: '14px'
-                    }}
+                    className="flex-1 px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                     onKeyDown={(e) => e.key === 'Enter' && saveEdit()}
                   />
                   <input
                     type="color"
                     value={editingColor}
                     onChange={(e) => setEditingColor(e.target.value)}
-                    style={{
-                      width: '32px',
-                      height: '32px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '4px',
-                      cursor: 'pointer'
-                    }}
+                    className="w-8 h-8 border border-gray-300 dark:border-gray-600 rounded cursor-pointer"
                   />
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    color: '#1e293b'
-                  }}>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     {taskType.typeName}
                   </span>
-                  <span style={{
-                    fontSize: '12px',
-                    color: '#6b7280'
-                  }}>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
                     ID: {taskType.id}
                   </span>
                 </div>
@@ -355,35 +262,19 @@ export default function ProjectTaskTypeEditor({ projectId, initialTaskTypes }: P
             </div>
 
             {/* Кнопки действий */}
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div className="flex gap-2">
               {editingId === taskType.id ? (
                 <>
                   <button
                     onClick={saveEdit}
                     disabled={!editingName.trim() || isSaving}
-                    style={{
-                      padding: '4px 8px',
-                      backgroundColor: '#10b981',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      fontSize: '12px',
-                      cursor: editingName.trim() && !isSaving ? 'pointer' : 'not-allowed'
-                    }}
+                    className="px-2 py-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white border-none rounded text-xs cursor-pointer disabled:cursor-not-allowed"
                   >
                     ✓
                   </button>
                   <button
                     onClick={cancelEdit}
-                    style={{
-                      padding: '4px 8px',
-                      backgroundColor: '#6b7280',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      fontSize: '12px',
-                      cursor: 'pointer'
-                    }}
+                    className="px-2 py-1 bg-gray-600 hover:bg-gray-700 text-white border-none rounded text-xs cursor-pointer"
                   >
                     ✕
                   </button>
@@ -392,29 +283,13 @@ export default function ProjectTaskTypeEditor({ projectId, initialTaskTypes }: P
                 <>
                   <button
                     onClick={() => startEditing(taskType)}
-                    style={{
-                      padding: '4px 8px',
-                      backgroundColor: '#3b82f6',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      fontSize: '12px',
-                      cursor: 'pointer'
-                    }}
+                    className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white border-none rounded text-xs cursor-pointer"
                   >
                     ✏
                   </button>
                   <button
                     onClick={() => handleDelete(taskType.id)}
-                    style={{
-                      padding: '4px 8px',
-                      backgroundColor: '#ef4444',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      fontSize: '12px',
-                      cursor: 'pointer'
-                    }}
+                    className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white border-none rounded text-xs cursor-pointer"
                   >
                     🗑
                   </button>
@@ -425,15 +300,7 @@ export default function ProjectTaskTypeEditor({ projectId, initialTaskTypes }: P
         ))}
         
         {taskTypes.length === 0 && (
-          <div style={{
-            backgroundColor: 'white',
-            border: '1px solid #e2e8f0',
-            borderRadius: '6px',
-            padding: '24px',
-            textAlign: 'center',
-            color: '#6b7280',
-            fontSize: '14px'
-          }}>
+          <div className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md p-6 text-center text-gray-500 dark:text-gray-400 text-sm">
             Типы задач не добавлены. Добавьте первый тип задач для этого проекта.
           </div>
         )}

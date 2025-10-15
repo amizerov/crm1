@@ -6,7 +6,7 @@ import ButtonSave from '@/components/ButtonSave';
 import ButtonCancel from '@/components/ButtonCancel';
 import FormContainer from '@/components/FormContainer';
 import FormFieldStandard from '@/components/FormFieldStandard';
-import { COMPONENT_STYLES } from '@/styles/constants';
+import { StandardInput, StandardSelect, StandardTextarea } from '@/components/StandardInputs';
 
 interface Company {
   id: number;
@@ -52,25 +52,23 @@ export default function AddProjectForm({ companies, templates, defaultCompanyId 
     >
       {/* Название проекта */}
       <FormFieldStandard label="Название проекта" required>
-        <input
+        <StandardInput
           type="text"
           id="projectName"
           name="projectName"
           required
-          style={COMPONENT_STYLES.input}
           placeholder="Введите название проекта"
         />
       </FormFieldStandard>
 
       {/* Компания */}
       <FormFieldStandard label="Компания" required>
-        <select
+        <StandardSelect
           id="companyId"
           name="companyId"
           required
           value={selectedCompanyId || ''}
           onChange={(e) => setSelectedCompanyId(Number(e.target.value))}
-          style={COMPONENT_STYLES.input}
         >
           <option value="">Выберите компанию</option>
           {companies.map((company) => (
@@ -78,35 +76,26 @@ export default function AddProjectForm({ companies, templates, defaultCompanyId 
               {company.companyName}
             </option>
           ))}
-        </select>
+        </StandardSelect>
       </FormFieldStandard>
 
       {/* Описание на полную ширину */}
-      <FormFieldStandard label="Описание" style={{ gridColumn: '1 / -1' }}>
-        <textarea
+      <FormFieldStandard label="Описание" className="col-span-full">
+        <StandardTextarea
           id="description"
           name="description"
           rows={4}
-          style={{
-            ...COMPONENT_STYLES.input,
-            resize: 'vertical',
-            fontFamily: 'inherit'
-          }}
           placeholder="Введите описание проекта"
         />
       </FormFieldStandard>
 
       {/* Шаблон статусов на полную ширину */}
-      <FormFieldStandard label="Шаблон шагов процесса (статусы задач)" required style={{ gridColumn: '1 / -1' }}>
-        <select
+      <FormFieldStandard label="Шаблон шагов процесса (статусы задач)" required className="col-span-full">
+        <StandardSelect
           id="statusSource"
           name="statusSource"
           required
           defaultValue="default"
-          style={{
-            ...COMPONENT_STYLES.input,
-            cursor: 'pointer'
-          }}
         >
           <option value="default">📋 Стандартные шаги (Идея → Готово к взятию → В работе → Тестирование → Готово)</option>
           {templates.map((template) => (
@@ -114,12 +103,8 @@ export default function AddProjectForm({ companies, templates, defaultCompanyId 
               📝 Из шаблона: {template.templName}
             </option>
           ))}
-        </select>
-        <div style={{ 
-          fontSize: '14px', 
-          color: '#6c757d', 
-          marginTop: '8px' 
-        }}>
+        </StandardSelect>
+        <div className="text-sm text-gray-600 dark:text-gray-400 mt-2">
           💡 Стандартные шаги подходят для большинства проектов. Вы также можете выбрать готовый шаблон статусов или создать свой собственный в разделе "Шаблоны".
         </div>
       </FormFieldStandard>
