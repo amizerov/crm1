@@ -19,3 +19,8 @@
   user-select: none;
   stroke-width: 0;
 }
+
+/* Dark theme support */
+:global(.dark) .barHandle {
+  fill: #6b7280;
+}

@@ -21,3 +21,20 @@
   vertical-align: -webkit-baseline-middle;
   vertical-align: middle;
 }
+
+/* Dark theme support */
+:global(.dark) .ganttTable {
+  border-bottom: #4b5563 1px solid;
+  border-top: #4b5563 1px solid;
+  border-left: #4b5563 1px solid;
+  background-color: #1f2937;
+  color: #f9fafb;
+}
+
+:global(.dark) .ganttTable_HeaderSeparator {
+  border-right: 1px solid #6b7280;
+}
+
+:global(.dark) .ganttTable_HeaderItem {
+  color: #f9fafb;
+}

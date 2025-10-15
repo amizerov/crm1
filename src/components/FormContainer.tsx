@@ -31,7 +31,7 @@ export default function FormContainer({
         bg-white dark:bg-gray-800 
         rounded-lg shadow-md 
         p-6
-        ${useGrid ? 'grid grid-cols-1 md:grid-cols-2 gap-6' : ''}
+        ${useGrid ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : ''}
         ${className}
       `}
     >

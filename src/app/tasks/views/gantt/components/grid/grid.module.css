@@ -13,3 +13,20 @@
 .gridTick {
   stroke: #e6e4e4;
 }
+
+/* Dark theme support */
+:global(.dark) .gridRow {
+  fill: #1f2937;
+}
+
+:global(.dark) .gridRow:nth-child(even) {
+  fill: #374151;
+}
+
+:global(.dark) .gridRowLine {
+  stroke: #4b5563;
+}
+
+:global(.dark) .gridTick {
+  stroke: #6b7280;
+}

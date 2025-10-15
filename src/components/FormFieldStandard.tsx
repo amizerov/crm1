@@ -25,8 +25,8 @@ export default function FormFieldStandard({
   className = ''
 }: FormFieldStandardProps) {
   return (
-    <div className={`${isLast ? 'mb-8' : 'mb-4'} ${className}`}>
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-400 mb-2">
+    <div className={`${isLast ? 'mb-6' : 'mb-3'} ${className}`}>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-400 mb-1">
         {label}{required && <span className="text-red-500 dark:text-red-400"> *</span>}
       </label>
       {children}

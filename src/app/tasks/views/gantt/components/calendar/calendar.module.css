@@ -29,3 +29,21 @@
   stroke: #e0e0e0;
   stroke-width: 1.4;
 }
+
+/* Dark theme support */
+:global(.dark) .calendarBottomText {
+  fill: #d1d5db;
+}
+
+:global(.dark) .calendarTopTick {
+  stroke: #4b5563;
+}
+
+:global(.dark) .calendarTopText {
+  fill: #9ca3af;
+}
+
+:global(.dark) .calendarHeader {
+  fill: #374151;
+  stroke: #4b5563;
+}

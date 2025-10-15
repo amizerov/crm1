@@ -19,3 +19,12 @@
   outline: none;
   position: relative;
 }
+
+/* Dark theme support */
+:global(.dark) .ganttVerticalContainer {
+  background-color: #1f2937;
+}
+
+:global(.dark) .horizontalContainer {
+  background-color: #1f2937;
+}

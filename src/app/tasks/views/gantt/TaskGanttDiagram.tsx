@@ -7,6 +7,31 @@ import { Task as GanttTask, ViewMode } from './types/public-types';
 import { updateTaskDates, updateTaskProgress, deleteTask } from './actions';
 import TimeScaleControls from './components/TimeScaleControls';
 
+// Хук для определения темы
+function useTheme() {
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const checkTheme = () => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    };
+
+    // Проверяем тему при монтировании
+    checkTheme();
+
+    // Следим за изменениями темы
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  return isDark;
+}
+
 // Динамический импорт Gantt компонента
 const GanttChart = dynamic(() => import('./GanttChart'), {
   ssr: false,
@@ -69,6 +94,7 @@ export default function TaskGanttDiagram({
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Day);
   const [availableHeight, setAvailableHeight] = useState(0);
   const [showTaskList, setShowTaskList] = useState(true);
+  const isDark = useTheme(); // Добавляем определение темы
 
   // Восстанавливаем сохранённый масштаб и состояние списка задач при загрузке
   useEffect(() => {
@@ -388,14 +414,26 @@ export default function TaskGanttDiagram({
           tasks={ganttTasks}
           viewMode={viewMode}
           locale="ru-RU"
-          ganttHeight={availableHeight > 70 ? availableHeight - 70 : 0} // Вычитаем примерную высоту панели управления
+          ganttHeight={availableHeight > 70 ? availableHeight - 70 : 0}
           columnWidth={getColumnWidth(viewMode)}
-          listCellWidth={showTaskList ? "155px" : ""} // Управляем отображением списка задач
+          listCellWidth={showTaskList ? "155px" : ""}
           rowHeight={50}
           barCornerRadius={4}
           fontFamily="var(--font-inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif)"
           fontSize="14px"
-          todayColor="rgba(59, 130, 246, 0.1)" // Синий оттенок для "сегодня"
+          // Цвета адаптированные для темной/светлой темы
+          todayColor={isDark ? "rgba(59, 130, 246, 0.2)" : "rgba(59, 130, 246, 0.1)"}
+          barProgressColor={isDark ? "#60a5fa" : "#3b82f6"}
+          barProgressSelectedColor={isDark ? "#3b82f6" : "#1d4ed8"}
+          barBackgroundColor={isDark ? "#4b5563" : "#e5e7eb"}
+          barBackgroundSelectedColor={isDark ? "#374151" : "#d1d5db"}
+          projectProgressColor={isDark ? "#10b981" : "#059669"}
+          projectProgressSelectedColor={isDark ? "#059669" : "#047857"}
+          projectBackgroundColor={isDark ? "#f59e0b" : "#f59e0b"}
+          projectBackgroundSelectedColor={isDark ? "#d97706" : "#d97706"}
+          milestoneBackgroundColor={isDark ? "#f59e0b" : "#f59e0b"}
+          milestoneBackgroundSelectedColor={isDark ? "#d97706" : "#d97706"}
+          arrowColor={isDark ? "#9ca3af" : "#6b7280"}
           // Callbacks
           onDoubleClick={(task) => {
             const originalTask = tasks.find(t => String(t.id) === task.id);

@@ -36,3 +36,23 @@
   padding-left: 1rem;
   user-select: none;
 }
+
+/* Dark theme support */
+:global(.dark) .taskListWrapper {
+  border-bottom: #4b5563 1px solid;
+  border-left: #4b5563 1px solid;
+  background-color: #1f2937;
+  color: #f9fafb;
+}
+
+:global(.dark) .taskListTableRow:nth-of-type(even) {
+  background-color: #374151;
+}
+
+:global(.dark) .taskListExpander {
+  color: #9ca3af;
+}
+
+:global(.dark) .taskListCell {
+  color: #f9fafb;
+}

@@ -5,10 +5,10 @@ import { deleteCompany, updateCompany } from './actions';
 import { CompanyFormProps} from "../../types";
 import FormContainer from '@/components/FormContainer';
 import FormFieldStandard from '@/components/FormFieldStandard';
+import { StandardInput, StandardTextarea } from '@/components/StandardInputs';
 import ButtonSave from '@/components/ButtonSave';
 import ButtonCancel from '@/components/ButtonCancel';
 import ButtonDelete from '@/components/ButtonDelete';
-import { COMPONENT_STYLES } from '@/styles/constants';
 
 export default function CompanyForm({ company }: CompanyFormProps) {
   const [activeTab, setActiveTab] = useState(0);
@@ -22,27 +22,21 @@ export default function CompanyForm({ company }: CompanyFormProps) {
   return (
     <>
       {/* Табы */}
-      <div style={{ 
-        borderBottom: '1px solid #dee2e6', 
-        marginBottom: 24 
-      }}>
-        <div style={{ display: 'flex', gap: 0 }}>
+      <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
+        <div className="flex gap-0">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              style={{
-                padding: '12px 24px',
-                color: activeTab === tab.id ? '#007bff' : '#6c757d',
-                fontWeight: activeTab === tab.id ? 'bold' : 'normal',
-                backgroundColor: 'transparent',
-                fontSize: 16,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                border: 'none',
-                borderBottom: activeTab === tab.id ? '2px solid #007bff' : '2px solid transparent'
-              }}
+              className={`
+                px-6 py-3 text-base font-medium transition-all duration-200 border-none cursor-pointer
+                border-b-2 bg-transparent
+                ${activeTab === tab.id 
+                  ? 'text-blue-600 dark:text-blue-400 font-bold border-b-blue-600 dark:border-b-blue-400' 
+                  : 'text-gray-600 dark:text-gray-400 font-normal border-b-transparent hover:text-gray-800 dark:hover:text-gray-200'
+                }
+              `}
             >
               {tab.label}
             </button>
@@ -53,14 +47,14 @@ export default function CompanyForm({ company }: CompanyFormProps) {
       <FormContainer
         action={updateCompany}
         buttons={
-          <div style={{ display: 'flex', gap: 16, justifyContent: 'space-between', width: '100%' }}>
+          <div className="flex justify-between items-center w-full gap-4">
             <ButtonDelete
               confirmTitle="Удалить компанию"
               confirmMessage={`Вы уверены, что хотите удалить компанию ${company.companyName}?`}
               deleteAction={deleteCompany.bind(null, company.id)}
               redirectTo="/companies"
             />
-            <div style={{ display: 'flex', gap: 16 }}>
+            <div className="flex gap-4">
               <ButtonCancel />
               <ButtonSave />
             </div>
@@ -73,157 +67,141 @@ export default function CompanyForm({ company }: CompanyFormProps) {
         <div className="min-h-[400px] flex flex-col">
 
           {/* Вкладка 0: Профиль */}
-          <div style={{ display: activeTab === 0 ? 'block' : 'none' }}>
+          <div className={activeTab === 0 ? 'block' : 'hidden'}>
             {/* ИНН и Название компании */}
-            <div style={{ display: 'flex', gap: 16 }}>
-              <FormFieldStandard label="ИНН" style={{ flex: 1 }}>
-                <input
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormFieldStandard label="ИНН">
+                <StandardInput
                   type="text"
                   name="inn"
                   defaultValue={company.inn || ''}
                   placeholder="1234567890"
-                  style={{ ...COMPONENT_STYLES.input, fontFamily: 'monospace' }}
+                  className="font-mono"
                 />
               </FormFieldStandard>
               
-              <FormFieldStandard label="Название компании" required style={{ flex: 2 }}>
-                <input
+              <FormFieldStandard label="Название компании" required className="md:col-span-2">
+                <StandardInput
                   type="text"
                   name="companyName"
                   required
                   defaultValue={company.companyName}
-                  style={COMPONENT_STYLES.input}
                 />
               </FormFieldStandard>
             </div>
 
             {/* КПП и ОГРН */}
-            <div style={{ display: 'flex', gap: 16 }}>
-              <FormFieldStandard label="КПП" style={{ flex: 1 }}>
-                <input
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormFieldStandard label="КПП">
+                <StandardInput
                   type="text"
                   name="kpp"
                   defaultValue={company.kpp || ''}
                   placeholder="123456789"
-                  style={COMPONENT_STYLES.input}
                 />
               </FormFieldStandard>
               
-              <FormFieldStandard label="ОГРН" style={{ flex: 1 }}>
-                <input
+              <FormFieldStandard label="ОГРН">
+                <StandardInput
                   type="text"
                   name="ogrn"
                   defaultValue={company.ogrn || ''}
                   placeholder="1234567890123"
-                  style={COMPONENT_STYLES.input}
                 />
               </FormFieldStandard>
             </div>
 
             {/* Директор */}
             <FormFieldStandard label="Директор">
-              <input
+              <StandardInput
                 type="text"
                 name="director"
                 defaultValue={company.director || ''}
                 placeholder="Фамилия Имя Отчество"
-                style={COMPONENT_STYLES.input}
               />
             </FormFieldStandard>
 
             {/* Адрес */}
             <FormFieldStandard label="Адрес">
-              <input
+              <StandardInput
                 type="text"
                 name="address"
                 defaultValue={company.address || ''}
-                style={COMPONENT_STYLES.input}
               />
             </FormFieldStandard>
           </div>
 
           {/* Вкладка 1: Контакты */}
-          <div style={{ display: activeTab === 1 ? 'block' : 'none' }}>
+          <div className={activeTab === 1 ? 'block' : 'hidden'}>
             {/* Телефон и Email в одну строку */}
-            <div style={{ display: 'flex', gap: 16 }}>
-              <FormFieldStandard label="Телефон" style={{ flex: 1 }}>
-                <input
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormFieldStandard label="Телефон">
+                <StandardInput
                   type="tel"
                   name="phone"
                   defaultValue={company.phone || ''}
-                  style={COMPONENT_STYLES.input}
                 />
               </FormFieldStandard>
               
-              <FormFieldStandard label="Email" style={{ flex: 1 }}>
-                <input
+              <FormFieldStandard label="Email">
+                <StandardInput
                   type="email"
                   name="email"
                   defaultValue={company.email || ''}
-                  style={COMPONENT_STYLES.input}
                 />
               </FormFieldStandard>
             </div>
 
             {/* Веб-сайт */}
             <FormFieldStandard label="Веб-сайт">
-              <input
+              <StandardInput
                 type="url"
                 name="website"
                 defaultValue={company.website || ''}
                 placeholder="https://example.com"
-                style={COMPONENT_STYLES.input}
               />
             </FormFieldStandard>
 
             {/* Комментарий */}
             <FormFieldStandard label="Комментарий">
-              <textarea
+              <StandardTextarea
                 name="comment"
                 defaultValue={company.description || ''}
                 rows={6}
                 placeholder="Дополнительная информация о компании..."
-                style={{
-                  ...COMPONENT_STYLES.input,
-                  resize: 'vertical',
-                  fontFamily: 'inherit'
-                }}
               />
             </FormFieldStandard>
           </div>
 
           {/* Вкладка 2: Реквизиты */}
-          <div style={{ display: activeTab === 2 ? 'block' : 'none' }}>
+          <div className={activeTab === 2 ? 'block' : 'hidden'}>
             {/* БИК и Название банка */}
-            <div style={{ display: 'flex', gap: 16 }}>
-              <FormFieldStandard label="БИК" style={{ flex: 1 }}>
-                <input
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormFieldStandard label="БИК">
+                <StandardInput
                   type="text"
                   name="bankBik"
                   defaultValue={''}
                   placeholder="044525225"
-                  style={COMPONENT_STYLES.input}
                 />
               </FormFieldStandard>
               
-              <FormFieldStandard label="Название банка" style={{ flex: 2 }}>
-                <input
+              <FormFieldStandard label="Название банка" className="md:col-span-2">
+                <StandardInput
                   type="text"
                   name="bankName"
                   defaultValue={''}
-                  style={COMPONENT_STYLES.input}
                 />
               </FormFieldStandard>
             </div>
 
             {/* Расчетный счет */}
             <FormFieldStandard label="Расчетный счет" isLast>
-              <input
+              <StandardInput
                 type="text"
                 name="bankAccount"
                 defaultValue={''}
                 placeholder="40702810000000000000"
-                style={COMPONENT_STYLES.input}
               />
             </FormFieldStandard>
           </div>

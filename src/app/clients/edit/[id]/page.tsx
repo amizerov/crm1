@@ -105,7 +105,7 @@ export default async function EditClientPage({
               deleteAction={handleDeleteClient.bind(null, client.id)}
               redirectTo="/clients"
             />
-            <div style={{ flex: 1 }} />
+            <div className="flex-1" />
             <ButtonCancel />
             <ButtonSave />
           </>
@@ -157,7 +157,7 @@ export default async function EditClientPage({
         </FormFieldStandard>
 
         {/* Третья строка: Сумма | Дата платежа | Тип платежа */}
-        <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+        <div className="col-span-full grid grid-cols-1 md:grid-cols-3 gap-4">
           <FormFieldStandard label="Сумма">
             <StandardInput
               name="summa"
@@ -187,7 +187,7 @@ export default async function EditClientPage({
         </div>
 
         {/* Четвертая строка: Описание на полную ширину */}
-        <FormFieldStandard label="Описание" style={{ gridColumn: '1 / -1' }}>
+        <FormFieldStandard label="Описание" className="col-span-full">
           <StandardTextarea
             name="description"
             rows={3}

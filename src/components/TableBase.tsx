@@ -61,13 +61,14 @@ export default function TableBase<T extends Record<string, any>>({
       <table className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
         <thead>
           <tr className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-            {columns.map((column) => (
+            {columns.map((column, columnIndex) => (
               <th
                 key={String(column.key)}
                 className={`
                   px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300
                   ${column.align === 'center' ? 'text-center' : 
                     column.align === 'right' ? 'text-right' : 'text-left'}
+                  ${columnIndex < columns.length - 1 ? 'border-r border-gray-200 dark:border-gray-600' : ''}
                 `}
                 style={{ width: column.width }}
               >
@@ -87,7 +88,7 @@ export default function TableBase<T extends Record<string, any>>({
               `}
               onClick={() => onRowClick?.(row)}
             >
-              {columns.map((column) => (
+              {columns.map((column, columnIndex) => (
                 <td
                   key={String(column.key)}
                   className={`
@@ -95,6 +96,7 @@ export default function TableBase<T extends Record<string, any>>({
                     ${column.align === 'center' ? 'text-center' : 
                       column.align === 'right' ? 'text-right' : 'text-left'}
                     ${column.className || ''}
+                    ${columnIndex < columns.length - 1 ? 'border-r border-gray-200 dark:border-gray-600' : ''}
                   `}
                 >
                   {column.render 

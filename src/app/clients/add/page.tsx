@@ -116,8 +116,8 @@ export default async function AddClientPage() {
           </StandardSelect>
         </FormFieldStandard>
 
-        {/* Третья строка: нужно изменить grid на 3 колонки для этой части */}
-        <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+        {/* Третья строка: Сумма, Дата платежа, Тип платежа в 3 колонки */}
+        <div className="col-span-full grid grid-cols-1 md:grid-cols-3 gap-4">
           <FormFieldStandard label="Сумма">
             <StandardInput
               name="summa"
@@ -144,7 +144,7 @@ export default async function AddClientPage() {
         </div>
 
         {/* Четвертая строка: Описание на полную ширину */}
-        <FormFieldStandard label="Описание" style={{ gridColumn: '1 / -1' }}>
+        <FormFieldStandard label="Описание" className="col-span-full">
           <StandardTextarea
             name="description"
             rows={3}

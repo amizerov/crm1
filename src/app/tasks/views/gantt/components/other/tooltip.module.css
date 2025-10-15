@@ -2,6 +2,7 @@
   background: #fff;
   padding: 12px;
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+  border-radius: 6px;
 }
 
 .tooltipDefaultContainerParagraph {
@@ -27,4 +28,15 @@
   position: absolute;
   display: flex;
   pointer-events: none;
+}
+
+/* Dark theme support */
+:global(.dark) .tooltipDefaultContainer {
+  background: #374151;
+  color: #f9fafb;
+  border: 1px solid #4b5563;
+}
+
+:global(.dark) .tooltipDefaultContainerParagraph {
+  color: #d1d5db;
 }
