@@ -8,16 +8,26 @@ interface ButtonCancelProps {
   href?: string;
   /** Текст на кнопке */
   text?: string;
-  /** Дополнительные стили для кнопки */
-  style?: React.CSSProperties;
+  /** Дополнительный класс */
+  className?: string;
 }
 
 export default function ButtonCancel({ 
   href, 
   text = 'Отмена', 
-  style 
+  className = '' 
 }: ButtonCancelProps) {
   const router = useRouter();
+
+  const buttonClasses = `
+    px-6 py-3 
+    bg-gray-500 dark:bg-gray-600
+    hover:bg-gray-600 dark:hover:bg-gray-500
+    text-white font-medium
+    rounded transition-colors
+    cursor-pointer
+    ${className}
+  `;
 
   // Если href не указан или пустой, используем router.back()
   if (!href) {
@@ -25,16 +35,7 @@ export default function ButtonCancel({
       <button 
         type="button" 
         onClick={() => router.back()}
-        style={{ 
-          padding: '12px 24px', 
-          backgroundColor: '#6c757d', 
-          color: 'white', 
-          border: 'none', 
-          borderRadius: 4, 
-          cursor: 'pointer',
-          transition: 'all 0.2s ease',
-          ...style
-        }}
+        className={buttonClasses}
       >
         {text}
       </button>
@@ -44,16 +45,7 @@ export default function ButtonCancel({
   // Если href указан, используем Link
   return (
     <Link href={href}>
-      <button type="button" style={{ 
-        padding: '12px 24px', 
-        backgroundColor: '#6c757d', 
-        color: 'white', 
-        border: 'none', 
-        borderRadius: 4, 
-        cursor: 'pointer',
-        transition: 'all 0.2s ease',
-        ...style
-      }}>
+      <button type="button" className={buttonClasses}>
         {text}
       </button>
     </Link>

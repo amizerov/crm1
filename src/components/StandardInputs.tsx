@@ -1,44 +1,38 @@
 'use client';
 
 import React from 'react';
-import { COMPONENT_STYLES } from '@/styles/constants';
 
 interface StandardInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  /** Дополнительные стили */
-  style?: React.CSSProperties;
+  /** Дополнительный класс */
+  className?: string;
 }
 
 /**
  * Стандартный инпут с единообразными стилями
  */
-export function StandardInput({ style, onFocus, onBlur, ...props }: StandardInputProps) {
-  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    Object.assign(e.target.style, COMPONENT_STYLES.inputFocus);
-    onFocus?.(e);
-  };
-
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.style.borderColor = COMPONENT_STYLES.input.border.split(' ')[2];
-    e.target.style.boxShadow = 'none';
-    onBlur?.(e);
-  };
-
+export function StandardInput({ className = '', ...props }: StandardInputProps) {
   return (
     <input
-      style={{
-        ...COMPONENT_STYLES.input,
-        ...style
-      }}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
+      className={`
+        w-full px-3 py-2 
+        border border-gray-300 dark:border-gray-700
+        bg-white dark:bg-gray-800
+        text-gray-900 dark:text-gray-200
+        rounded
+        focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent
+        disabled:bg-gray-100 dark:disabled:bg-gray-900 disabled:cursor-not-allowed
+        placeholder:text-gray-400 dark:placeholder:text-gray-500
+        transition-colors
+        ${className}
+      `}
       {...props}
     />
   );
 }
 
 interface StandardSelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
-  /** Дополнительные стили */
-  style?: React.CSSProperties;
+  /** Дополнительный класс */
+  className?: string;
   /** Опции для select */
   children: React.ReactNode;
 }
@@ -46,26 +40,20 @@ interface StandardSelectProps extends React.SelectHTMLAttributes<HTMLSelectEleme
 /**
  * Стандартный select с единообразными стилями
  */
-export function StandardSelect({ style, children, onFocus, onBlur, ...props }: StandardSelectProps) {
-  const handleFocus = (e: React.FocusEvent<HTMLSelectElement>) => {
-    Object.assign(e.target.style, COMPONENT_STYLES.inputFocus);
-    onFocus?.(e);
-  };
-
-  const handleBlur = (e: React.FocusEvent<HTMLSelectElement>) => {
-    e.target.style.borderColor = COMPONENT_STYLES.input.border.split(' ')[2];
-    e.target.style.boxShadow = 'none';
-    onBlur?.(e);
-  };
-
+export function StandardSelect({ className = '', children, ...props }: StandardSelectProps) {
   return (
     <select
-      style={{
-        ...COMPONENT_STYLES.input,
-        ...style
-      }}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
+      className={`
+        w-full px-3 py-2 
+        border border-gray-300 dark:border-gray-700
+        bg-white dark:bg-gray-800
+        text-gray-900 dark:text-gray-200
+        rounded
+        focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent
+        disabled:bg-gray-100 dark:disabled:bg-gray-900 disabled:cursor-not-allowed
+        transition-colors
+        ${className}
+      `}
       {...props}
     >
       {children}
@@ -74,22 +62,29 @@ export function StandardSelect({ style, children, onFocus, onBlur, ...props }: S
 }
 
 interface StandardTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-  /** Дополнительные стили */
-  style?: React.CSSProperties;
+  /** Дополнительный класс */
+  className?: string;
 }
 
 /**
  * Стандартная textarea с единообразными стилями
  */
-export function StandardTextarea({ style, ...props }: StandardTextareaProps) {
+export function StandardTextarea({ className = '', ...props }: StandardTextareaProps) {
   return (
     <textarea
-      style={{
-        ...COMPONENT_STYLES.input,
-        resize: 'vertical',
-        fontFamily: 'inherit',
-        ...style
-      }}
+      className={`
+        w-full px-3 py-2 
+        border border-gray-300 dark:border-gray-700
+        bg-white dark:bg-gray-800
+        text-gray-900 dark:text-gray-200
+        rounded
+        resize-vertical
+        focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent
+        disabled:bg-gray-100 dark:disabled:bg-gray-900 disabled:cursor-not-allowed
+        placeholder:text-gray-400 dark:placeholder:text-gray-500
+        transition-colors
+        ${className}
+      `}
       {...props}
     />
   );

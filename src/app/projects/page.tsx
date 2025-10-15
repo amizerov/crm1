@@ -5,9 +5,9 @@ import { getProjectsByCompany, getUserCompanies } from './actions/actions';
 import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { redirect } from 'next/navigation';
 import ProjectsTable from './ProjectsTable';
-import CompanySelector from '@/components/CompanySelector';
 import LoadingCEP from '@/components/LoadingCEP';
-import Link from 'next/link';
+import ListPageLayout from '@/components/ListPageLayout';
+import StatCard from '@/components/StatCard';
 
 export default function ProjectsPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -72,79 +72,29 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div style={{ padding: '20px 0' }}>
-      {/* Шапка с заголовком, селектором компании и кнопкой */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: 32, 
-        flexWrap: 'wrap', 
-        gap: 16 
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
-          <h1 style={{ margin: 0 }}>Проекты</h1>
-          
-          <CompanySelector
-            companies={companies}
-            selectedCompanyId={selectedCompanyId}
-            onCompanyChange={handleCompanyChange}
-            isPending={isPending}
-            storageKey="selectedCompanyId"
-          />
-        </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-          <Link href="/projects/add">
-            <button style={{ 
-              padding: '12px 24px', 
-              backgroundColor: '#28a745', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: 4, 
-              cursor: 'pointer' 
-            }}>
-              + Добавить проект
-            </button>
-          </Link>
-        </div>
-      </div>
-
+    <ListPageLayout
+      title="Проекты"
+      companies={companies}
+      selectedCompanyId={selectedCompanyId}
+      onCompanyChange={handleCompanyChange}
+      isPending={isPending}
+      addButtonText="+ Добавить проект"
+      addButtonHref="/projects/add"
+      footer={
+        <>
+          <StatCard label="Всего проектов" value={projects.length} />
+          <div className="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded">
+            <span className="text-xs italic text-blue-700 dark:text-blue-300">
+              💡 Нажмите на строку для редактирования
+            </span>
+          </div>
+        </>
+      }
+    >
       <ProjectsTable 
         projects={projects}
         isPending={isPending}
       />
-      
-      {/* Футер с информацией */}
-      <div style={{ 
-        display: 'flex', 
-        gap: '16px', 
-        marginTop: '20px',
-        justifyContent: 'flex-start',
-        flexWrap: 'wrap'
-      }}>
-        <div style={{ 
-          backgroundColor: '#f8f9fa', 
-          padding: '8px 16px', 
-          borderRadius: 6, 
-          border: '1px solid #dee2e6' 
-        }}>
-          <span style={{ fontSize: 14, color: '#6c757d', fontWeight: 'bold' }}>
-            Всего проектов: {projects.length}
-          </span>
-        </div>
-        
-        <div style={{ 
-          backgroundColor: '#e7f3ff', 
-          padding: '6px 12px', 
-          borderRadius: 4, 
-          border: '1px solid #b3d9ff' 
-        }}>
-          <span style={{ fontSize: 12, color: '#0056b3', fontStyle: 'italic' }}>
-            💡 Нажмите на строку для редактирования
-          </span>
-        </div>
-      </div>
-    </div>
+    </ListPageLayout>
   );
 }

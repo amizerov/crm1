@@ -1,22 +1,24 @@
 interface ButtonSaveProps {
   children?: React.ReactNode;
   disabled?: boolean;
+  className?: string;
 }
 
-export default function ButtonSave({ children = 'Сохранить', disabled = false }: ButtonSaveProps) {
+export default function ButtonSave({ children = 'Сохранить', disabled = false, className = '' }: ButtonSaveProps) {
     return (
         <button 
           type="submit" 
           disabled={disabled}
-          style={{ 
-            padding: '12px 24px', 
-            backgroundColor: disabled ? '#6c757d' : '#1e3a8a', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: 4, 
-            cursor: disabled ? 'not-allowed' : 'pointer',
-            opacity: disabled ? 0.6 : 1
-          }}
+          className={`
+            px-6 py-3 
+            bg-blue-900 dark:bg-blue-700
+            hover:bg-blue-800 dark:hover:bg-blue-600
+            disabled:bg-gray-500 disabled:cursor-not-allowed disabled:opacity-60
+            text-white font-medium
+            rounded transition-colors
+            cursor-pointer
+            ${className}
+          `}
         >
           {children}
         </button>

@@ -14,8 +14,8 @@ interface ButtonDeleteProps {
   deleteAction: () => Promise<{ success: boolean; error?: string } | void>;
   /** URL для перенаправления после удаления (переопределяет редирект из server action) */
   redirectTo?: string;
-  /** Дополнительные стили для кнопки */
-  style?: React.CSSProperties;
+  /** Дополнительный класс */
+  className?: string;
   /** Отключить кнопку */
   disabled?: boolean;
 }
@@ -26,7 +26,7 @@ export default function ButtonDelete({
   confirmMessage,
   deleteAction,
   redirectTo,
-  style,
+  className = '',
   disabled = false
 }: ButtonDeleteProps) {
   const [showModal, setShowModal] = useState(false);
@@ -43,99 +43,53 @@ export default function ButtonDelete({
           setError(null);
         }}
         disabled={disabled || isDeleting}
-        style={{
-          padding: '12px 24px',
-          backgroundColor: isDeleting ? '#6c757d' : '#dc3545',
-          color: 'white',
-          border: 'none',
-          borderRadius: 4,
-          cursor: (disabled || isDeleting) ? 'not-allowed' : 'pointer',
-          opacity: (disabled || isDeleting) ? 0.6 : 1,
-          transition: 'all 0.3s ease',
-          ...style
-        }}
+        className={`
+          px-6 py-3 
+          bg-red-600 dark:bg-red-700
+          hover:bg-red-700 dark:hover:bg-red-600
+          disabled:bg-gray-500 disabled:cursor-not-allowed disabled:opacity-60
+          text-white font-medium
+          rounded transition-all
+          cursor-pointer
+          ${className}
+        `}
       >
         {isDeleting ? 'Удаляется...' : buttonText}
       </button>
 
       {showModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 10000,
-          animation: 'fadeIn 0.3s ease'
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            padding: 32,
-            borderRadius: 8,
-            maxWidth: 500,
-            width: '90%',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
-            animation: 'slideIn 0.3s ease',
-            transform: isDeleting ? 'scale(0.98)' : 'scale(1)',
-            transition: 'transform 0.2s ease'
-          }}>
-            <h3 style={{ 
-              margin: '0 0 16px 0', 
-              color: '#dc3545',
-              fontSize: '1.25rem',
-              fontWeight: 'bold'
-            }}>
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-[10000] animate-fadeIn">
+          <div className={`
+            bg-white dark:bg-gray-800 
+            p-8 rounded-lg 
+            max-w-[500px] w-[90%] 
+            shadow-xl
+            animate-slideIn
+            transition-transform
+            ${isDeleting ? 'scale-[0.98]' : 'scale-100'}
+          `}>
+            <h3 className="m-0 mb-4 text-red-600 dark:text-red-400 text-xl font-bold">
               {confirmTitle}
             </h3>
             
-            <p style={{ 
-              margin: '0 0 24px 0', 
-              color: '#666',
-              lineHeight: 1.5
-            }}>
+            <p className="m-0 mb-6 text-gray-600 dark:text-gray-400 leading-relaxed">
               {confirmMessage}
             </p>
 
             {error && (
-              <div style={{
-                padding: '12px 16px',
-                backgroundColor: '#fee',
-                border: '1px solid #fcc',
-                borderRadius: 4,
-                marginBottom: 16,
-                color: '#c33',
-                fontSize: '0.9rem',
-                lineHeight: 1.4
-              }}>
+              <div className="px-4 py-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded mb-4 text-red-700 dark:text-red-300 text-sm leading-normal">
                 {error}
               </div>
             )}
             
-            <div style={{ 
-              display: 'flex', 
-              gap: 12, 
-              justifyContent: 'flex-end' 
-            }}>
+            <div className="flex gap-3 justify-end">
                 <button
                     onClick={() => {
                       setShowModal(false);
                       setError(null);
                     }}
                     disabled={isDeleting}
-                    style={{
-                    padding: '8px 16px',
-                    backgroundColor: '#6c757d',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: 4,
-                    cursor: isDeleting ? 'not-allowed' : 'pointer',
-                    opacity: isDeleting ? 0.6 : 1,
-                    transition: 'all 0.2s ease'
-                    }}
+                    className="px-4 py-2 bg-gray-500 dark:bg-gray-600 hover:bg-gray-600 dark:hover:bg-gray-500 text-white rounded transition-all disabled:cursor-not-allowed disabled:opacity-60"
                 >
                     Отмена
                 </button>
@@ -170,29 +124,10 @@ export default function ButtonDelete({
                     }
                   }}
                   disabled={isDeleting}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: isDeleting ? '#6c757d' : '#dc3545',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: 4,
-                    cursor: isDeleting ? 'not-allowed' : 'pointer',
-                    opacity: isDeleting ? 0.8 : 1,
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8
-                  }}
+                  className="px-4 py-2 bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-600 text-white rounded transition-all disabled:cursor-not-allowed disabled:opacity-80 flex items-center gap-2"
                 >
                   {isDeleting && (
-                    <div style={{
-                      width: 16,
-                      height: 16,
-                      border: '2px solid transparent',
-                      borderTop: '2px solid white',
-                      borderRadius: '50%',
-                      animation: 'spin 1s linear infinite'
-                    }} />
+                    <div className="w-4 h-4 border-2 border-transparent border-t-white rounded-full animate-spin" />
                   )}
                   {isDeleting ? 'Удаление...' : 'Удалить'}
                 </button>
@@ -200,38 +135,6 @@ export default function ButtonDelete({
           </div>
         </div>
       )}
-      
-      {/* CSS анимации */}
-      <style jsx global>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-        
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateY(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        @keyframes spin {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-      `}</style>
     </>
   );
 }

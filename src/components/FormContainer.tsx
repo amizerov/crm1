@@ -1,5 +1,4 @@
 import React, { ReactNode } from 'react';
-import { COMPONENT_STYLES } from '@/styles/constants';
 
 interface FormContainerProps {
   /** Server action для формы */
@@ -10,8 +9,8 @@ interface FormContainerProps {
   buttons?: ReactNode;
   /** Использовать grid-layout для полей */
   useGrid?: boolean;
-  /** Дополнительные стили для формы */
-  style?: React.CSSProperties;
+  /** Дополнительный класс */
+  className?: string;
 }
 
 /**
@@ -23,25 +22,24 @@ export default function FormContainer({
   children,
   buttons,
   useGrid = false,
-  style
+  className = ''
 }: FormContainerProps) {
-  const containerStyle = useGrid 
-    ? COMPONENT_STYLES.formContainerGrid 
-    : COMPONENT_STYLES.formContainer;
-
   return (
     <form 
       action={action}
-      style={{ 
-        ...containerStyle,
-        ...style
-      }}
+      className={`
+        bg-white dark:bg-gray-800 
+        rounded-lg shadow-md 
+        p-6
+        ${useGrid ? 'grid grid-cols-1 md:grid-cols-2 gap-6' : ''}
+        ${className}
+      `}
     >
       {children}
       
       {/* Кнопки формы */}
       {buttons && (
-        <div style={COMPONENT_STYLES.buttonContainer}>
+        <div className="flex justify-end gap-3 mt-6 col-span-full">
           {buttons}
         </div>
       )}

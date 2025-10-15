@@ -104,8 +104,8 @@ export default function Slider() {
             key={index}
             className={`w-2 h-2 rounded-full transition-colors ${
               index === currentSlide 
-                ? 'bg-blue-500' 
-                : 'bg-gray-300 hover:bg-gray-400'
+                ? 'bg-blue-500 dark:bg-blue-400' 
+                : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
             }`}
             onClick={() => setCurrentSlide(index)}
           />

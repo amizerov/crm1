@@ -1,6 +1,7 @@
 'use client';
 
-import ProjectRow from './ProjectRow';
+import { useRouter } from 'next/navigation';
+import TableBase, { Column } from '@/components/TableBase';
 
 export type Project = {
   id: number;
@@ -21,54 +22,68 @@ interface ProjectsTableProps {
 }
 
 export default function ProjectsTable({ projects, isPending = false }: ProjectsTableProps) {
+  const router = useRouter();
+
+  const columns: Column<Project>[] = [
+    {
+      key: 'id',
+      label: 'ID',
+      className: 'w-16 font-mono text-center'
+    },
+    {
+      key: 'projectName',
+      label: 'Название проекта'
+    },
+    {
+      key: 'description',
+      label: 'Описание',
+      render: (project) => project.description || '-'
+    },
+    {
+      key: 'companyName',
+      label: 'Компания',
+      render: (project) => project.companyName || '-'
+    },
+    {
+      key: 'userNicName',
+      label: 'Создатель',
+      render: (project) => project.userNicName || project.userFullName || '-'
+    },
+    {
+      key: 'dtc',
+      label: 'Дата создания',
+      className: 'font-mono',
+      render: (project) => {
+        if (!project.dtc) return '-';
+        const date = new Date(project.dtc);
+        return date.toLocaleDateString('ru-RU');
+      }
+    },
+    {
+      key: 'dtu',
+      label: 'Обновлено',
+      className: 'font-mono',
+      render: (project) => {
+        if (!project.dtu) return '-';
+        const date = new Date(project.dtu);
+        return date.toLocaleDateString('ru-RU');
+      }
+    }
+  ];
+
+  const handleRowClick = (project: Project) => {
+    router.push(`/projects/edit/${project.id}`);
+  };
+
   return (
-    <div>
-      {/* Таблица проектов */}
-      <div style={{ 
-        border: '1px solid #dee2e6', 
-        borderRadius: 8, 
-        overflow: 'hidden',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-      }}>
-        <table style={{ 
-          width: '100%', 
-          borderCollapse: 'collapse',
-          backgroundColor: 'white'
-        }}>
-          <thead>
-            <tr style={{ 
-              backgroundColor: '#f8f9fa',
-              borderBottom: '2px solid #dee2e6'
-            }}>
-              <th style={{ padding: 16, textAlign: 'left', fontWeight: 'bold', color: '#495057' }}>ID</th>
-              <th style={{ padding: 16, textAlign: 'left', fontWeight: 'bold', color: '#495057' }}>Название проекта</th>
-              <th style={{ padding: 16, textAlign: 'left', fontWeight: 'bold', color: '#495057' }}>Описание</th>
-              <th style={{ padding: 16, textAlign: 'left', fontWeight: 'bold', color: '#495057' }}>Компания</th>
-              <th style={{ padding: 16, textAlign: 'left', fontWeight: 'bold', color: '#495057' }}>Создатель</th>
-              <th style={{ padding: 16, textAlign: 'left', fontWeight: 'bold', color: '#495057' }}>Дата создания</th>
-              <th style={{ padding: 16, textAlign: 'left', fontWeight: 'bold', color: '#495057' }}>Обновлено</th>
-            </tr>
-          </thead>
-          <tbody>
-            {projects.length === 0 ? (
-              <tr>
-                <td colSpan={7} style={{ 
-                  padding: 40, 
-                  textAlign: 'center', 
-                  color: '#6c757d',
-                  fontStyle: 'italic'
-                }}>
-                  {isPending ? 'Загрузка проектов...' : 'Нет проектов для отображения'}
-                </td>
-              </tr>
-            ) : (
-              projects.map((project) => (
-                <ProjectRow key={project.id} project={project} />
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <TableBase
+      data={projects}
+      columns={columns}
+      onRowClick={handleRowClick}
+      loading={isPending}
+      emptyMessage="Проекты не найдены"
+      addButtonText="Добавить первый проект"
+      addButtonLink="/projects/add"
+    />
   );
 }

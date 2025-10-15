@@ -5,9 +5,9 @@ import { getTotalSum, getUserCompanies, getClientsByCompany, getStatuses } from 
 import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { redirect } from 'next/navigation';
 import ClientsTable from './ClientsTable';
-import CompanySelector from '@/components/CompanySelector';
 import LoadingCEP from '@/components/LoadingCEP';
-import Link from 'next/link';
+import ListPageLayout from '@/components/ListPageLayout';
+import StatCard from '@/components/StatCard';
 
 export type Client = {
   id: number;
@@ -111,67 +111,24 @@ export default function ClientsPage() {
   }
 
   return (
-    <div style={{ padding: '20px 0' }}>
-      {/* Заголовок и селектор компании */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: 32, 
-        flexWrap: 'wrap', 
-        gap: 16 
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 32, flexWrap: 'wrap' }}>
-          <h1 style={{ margin: 0 }}>Клиенты</h1>
-          
-          <CompanySelector 
-            companies={companies}
-            selectedCompanyId={selectedCompanyId}
-            onCompanyChange={handleCompanyChange}
-            storageKey="selectedCompanyId"
-          />
-        </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-          <Link href="/clients/add">
-            <button style={{ 
-              padding: '12px 24px', 
-              backgroundColor: '#28a745', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: 4, 
-              cursor: 'pointer' 
-            }}>
-              + Добавить клиента
-            </button>
-          </Link>
-        </div>
-      </div>
-
+    <ListPageLayout
+      title="Клиенты"
+      companies={companies}
+      selectedCompanyId={selectedCompanyId}
+      onCompanyChange={handleCompanyChange}
+      addButtonText="+ Добавить клиента"
+      addButtonHref="/clients/add"
+      footer={
+        <>
+          <StatCard label="Всего клиентов" value={clients.length} />
+          <StatCard label="Общая сумма" value={totalSum} variant="success" />
+        </>
+      }
+    >
       <ClientsTable 
         clients={clients}
         statuses={statuses}
       />
-      
-      <div style={{ 
-        display: 'flex', 
-        gap: '16px', 
-        marginTop: '20px',
-        justifyContent: 'flex-start',
-        flexWrap: 'wrap'
-      }}>
-        <div style={{ backgroundColor: '#f8f9fa', padding: '8px 16px', borderRadius: 6, border: '1px solid #dee2e6' }}>
-          <span style={{ fontSize: 14, color: '#6c757d', fontWeight: 'bold' }}>
-            Всего клиентов: {clients.length}
-          </span>
-        </div>
-        
-        <div style={{ backgroundColor: '#e8f5e8', padding: '8px 16px', borderRadius: 6, border: '1px solid #28a745' }}>
-          <span style={{ fontSize: 14, color: '#155724', fontWeight: 'bold' }}>
-            Общая сумма: {totalSum.toLocaleString('ru-RU')} ₽
-          </span>
-        </div>
-      </div>
-    </div>
+    </ListPageLayout>
   );
 }

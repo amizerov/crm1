@@ -64,63 +64,29 @@ export default function ButtonCard({
     }
   };
 
-  const baseStyle = { 
-    padding: '20px',
-    backgroundColor: '#f8f9fa',
-    border: '1px solid #e9ecef',
-    borderRadius: '12px',
-    textAlign: 'center' as const,
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    minHeight: '160px',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    justifyContent: 'center' as const,
-    alignItems: 'center' as const,
-    userSelect: 'none' as const
-  };
-
-  // Подсветка нужной карточки
-  const cardStyle = isHighlighted ? {
-    ...baseStyle,
-    border: '3px solid #ffc107',
-    backgroundColor: '#fff8e1',
-    boxShadow: '0 0 20px rgba(255, 193, 7, 0.4)',
-    transform: 'scale(1.05)'
-  } : baseStyle;
-
   return (
-    <div style={{ position: 'relative' }}>
+    <div className="relative">
       <div 
         onClick={handleClick}
-        style={cardStyle}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = isHighlighted ? 'scale(1.05)' : 'translateY(-4px)';
-          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-        }}
-        onMouseLeave={(e) => {
-          if (!isHighlighted) {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = 'none';
+        className={`
+          p-5 rounded-xl text-center cursor-pointer 
+          transition-all duration-300 ease-in-out
+          min-h-[160px] flex flex-col justify-center items-center
+          select-none
+          ${isHighlighted 
+            ? 'border-3 border-yellow-400 dark:border-yellow-500 bg-yellow-50 dark:bg-yellow-900/30 shadow-[0_0_20px_rgba(255,193,7,0.4)] scale-105' 
+            : 'border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:-translate-y-1 hover:shadow-lg'
           }
-        }}
+        `}
       >
-        <div style={{ fontSize: '40px', marginBottom: '12px' }}>{icon}</div>
-        <h3 style={{ 
-          margin: '0 0 8px 0', 
-          fontSize: '18px', 
-          color,
-          fontWeight: '600'
-        }}>
+        <div className="text-4xl mb-3">{icon}</div>
+        <h3 
+          className="m-0 mb-2 text-lg font-semibold"
+          style={{ color }}
+        >
           {title}
         </h3>
-        <p style={{ 
-          margin: 0, 
-          color: '#6c757d', 
-          fontSize: '13px',
-          lineHeight: '1.4',
-          whiteSpace: 'pre-line'
-        }}>
+        <p className="m-0 text-gray-600 dark:text-gray-400 text-xs leading-relaxed whitespace-pre-line">
           {description}
         </p>
       </div>

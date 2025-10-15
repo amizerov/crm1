@@ -62,13 +62,13 @@ export default async function Header() {
             <div className="flex items-center gap-3">
               <Link
                 href="/register"
-                className="no-underline bg-white border border-blue-900 text-blue-600 px-3 py-1.5 rounded-md text-sm font-medium hover:bg-blue-50 transition-colors"
+                className="no-underline bg-white dark:bg-gray-700 border border-blue-900 dark:border-blue-400 text-blue-600 dark:text-blue-400 px-3 py-1.5 rounded-md text-sm font-medium hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors"
               >
                 Регистрация
               </Link>
               <Link 
                 href="/login" 
-                className="no-underline bg-blue-900 dark:bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
+                className="no-underline bg-blue-900 dark:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-500 transition-colors"
               >
                 Войти
               </Link>

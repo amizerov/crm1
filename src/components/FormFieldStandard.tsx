@@ -1,5 +1,4 @@
 import React from 'react';
-import { COMPONENT_STYLES } from '@/styles/constants';
 
 interface FormFieldStandardProps {
   /** Текст лейбла */
@@ -10,8 +9,8 @@ interface FormFieldStandardProps {
   children: React.ReactNode;
   /** Это последнее поле перед кнопками */
   isLast?: boolean;
-  /** Дополнительные стили для контейнера */
-  style?: React.CSSProperties;
+  /** Дополнительный класс */
+  className?: string;
 }
 
 /**
@@ -23,16 +22,12 @@ export default function FormFieldStandard({
   required = false,
   children,
   isLast = false,
-  style
+  className = ''
 }: FormFieldStandardProps) {
-  const containerStyle = isLast 
-    ? COMPONENT_STYLES.lastFieldSection 
-    : COMPONENT_STYLES.fieldSection;
-
   return (
-    <div style={{ ...containerStyle, ...style }}>
-      <label style={COMPONENT_STYLES.fieldLabel}>
-        {label}{required && ' *'}
+    <div className={`${isLast ? 'mb-8' : 'mb-4'} ${className}`}>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-400 mb-2">
+        {label}{required && <span className="text-red-500 dark:text-red-400"> *</span>}
       </label>
       {children}
     </div>

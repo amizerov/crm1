@@ -9,7 +9,7 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-[80vh] flex items-center justify-center px-4 py-8">
-      <section className="max-w-6xl w-full bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-lg shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <section className="max-w-6xl w-full bg-white dark:bg-gray-800 backdrop-blur-sm rounded-lg shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="flex items-stretch">
           {/* Left: slider */}
           <div className="w-2/3 p-8">
@@ -39,15 +39,15 @@ export default async function HomePage() {
               <div className="mt-6">
                 <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Шаблоны Канбан колонок</h4>
                 <ul className="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                  <li className="px-3 py-2 bg-white dark:bg-gray-800 rounded border">Agile (To Do / In Progress / Review / Done)</li>
-                  <li className="px-3 py-2 bg-white dark:bg-gray-800 rounded border">Scrum (Backlog / Sprint / In Progress / Done)</li>
-                  <li className="px-3 py-2 bg-white dark:bg-gray-800 rounded border">Личный (Идея / Завтра / Сегодня / Готово)</li>
+                  <li className="px-3 py-2 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">Agile (To Do / In Progress / Review / Done)</li>
+                  <li className="px-3 py-2 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">Scrum (Backlog / Sprint / In Progress / Done)</li>
+                  <li className="px-3 py-2 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">Личный (Идея / Завтра / Сегодня / Готово)</li>
                 </ul>
               </div>
 
               <div className="mt-6">
-                <Link href="/register" className="block w-full text-center bg-blue-900 text-white py-2 rounded-md font-medium">Начать бесплатно</Link>
-                <Link href="/login" className="block w-full text-center mt-3 border border-gray-300 text-sm rounded-md py-2">Войти</Link>
+                <Link href="/register" className="block w-full text-center bg-blue-900 dark:bg-blue-600 text-white py-2 rounded-md font-medium hover:bg-blue-800 dark:hover:bg-blue-500 transition-colors">Начать бесплатно</Link>
+                <Link href="/login" className="block w-full text-center mt-3 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-200 text-sm rounded-md py-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">Войти</Link>
               </div>
             </div>
           </aside>

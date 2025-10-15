@@ -5,9 +5,9 @@ import { getEmployeesByCompany, getUserCompanies } from './actions/actions';
 import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { redirect } from 'next/navigation';
 import EmployeesTable from './EmployeesTable';
-import CompanySelector from '@/components/CompanySelector';
 import LoadingCEP from '@/components/LoadingCEP';
-import Link from 'next/link';
+import ListPageLayout from '@/components/ListPageLayout';
+import StatCard from '@/components/StatCard';
 
 export default function EmployeesPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -72,48 +72,29 @@ export default function EmployeesPage() {
   }
 
   return (
-    <div style={{ padding: '20px 0' }}>
-      {/* Шапка с заголовком, селектором компании и кнопкой */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: 32, 
-        flexWrap: 'wrap', 
-        gap: 16 
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
-          <h1 style={{ margin: 0 }}>Сотрудники</h1>
-          
-          <CompanySelector
-            companies={companies}
-            selectedCompanyId={selectedCompanyId}
-            onCompanyChange={handleCompanyChange}
-            isPending={isPending}
-            storageKey="selectedCompanyId"
-          />
-        </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-          <Link href="/employees/add">
-            <button style={{ 
-              padding: '12px 24px', 
-              backgroundColor: '#28a745', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: 4, 
-              cursor: 'pointer' 
-            }}>
-              + Добавить сотрудника
-            </button>
-          </Link>
-        </div>
-      </div>
-
+    <ListPageLayout
+      title="Сотрудники"
+      companies={companies}
+      selectedCompanyId={selectedCompanyId}
+      onCompanyChange={handleCompanyChange}
+      isPending={isPending}
+      addButtonText="+ Добавить сотрудника"
+      addButtonHref="/employees/add"
+      footer={
+        <>
+          <StatCard label="Всего сотрудников" value={employees.length} />
+          <div className="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded">
+            <span className="text-xs italic text-blue-700 dark:text-blue-300">
+              💡 Нажмите на строку для редактирования
+            </span>
+          </div>
+        </>
+      }
+    >
       <EmployeesTable 
         employees={employees}
         isPending={isPending}
       />
-    </div>
+    </ListPageLayout>
   );
 }

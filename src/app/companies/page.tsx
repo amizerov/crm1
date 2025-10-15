@@ -2,7 +2,7 @@ import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { getUserCompanies } from '@/db/getUsers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import CompanySwitcher from '@/components/CompanySwitcher';
+import CompanyCard from './CompanyCard';
 
 type Company = {
   id: number;
@@ -25,178 +25,50 @@ export default async function CompaniesPage() {
   const companies = await getUserCompanies(currentUser.id);
 
   return (
-    <div style={{ padding: '20px 0', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className="py-5 max-w-7xl mx-auto">
+      <div className="mb-8 flex justify-between items-center flex-wrap gap-4">
         <div>
-          <h1 style={{ margin: '0 0 12px 0', fontSize: '28px', color: '#333' }}>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-3">
             Мои компании
           </h1>
-          <p style={{ margin: 0, color: '#666', fontSize: '16px' }}>
+          <p className="text-gray-600 dark:text-gray-400 text-base">
             Управление компаниями и переключение между ними
           </p>
         </div>
         
         <Link 
           href="/companies/add"
-          style={{
-            display: 'inline-block',
-            padding: '12px 24px',
-            backgroundColor: '#007bff',
-            color: 'white',
-            textDecoration: 'none',
-            borderRadius: '6px',
-            fontSize: '14px',
-            fontWeight: '600',
-            transition: 'background-color 0.2s'
-          }}
+          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-lg text-sm font-semibold transition-colors"
         >
           + Создать компанию
         </Link>
       </div>
 
       {companies.length === 0 ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '60px 20px',
-          backgroundColor: '#f8f9fa',
-          borderRadius: '12px',
-          border: '1px solid #e9ecef'
-        }}>
-          <div style={{ fontSize: '64px', marginBottom: '24px' }}>🏢</div>
-          <h3 style={{ margin: '0 0 12px 0', fontSize: '20px', color: '#333' }}>
+        <div className="text-center py-16 px-5 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+          <div className="text-6xl mb-6">🏢</div>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
             У вас пока нет компаний
           </h3>
-          <p style={{ margin: '0 0 24px 0', color: '#666', fontSize: '16px' }}>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
             Создайте первую компанию или попросите коллег добавить вас в существующую
           </p>
           <Link 
             href="/companies/add"
-            style={{
-              display: 'inline-block',
-              padding: '12px 24px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '6px',
-              fontSize: '16px',
-              fontWeight: '600'
-            }}
+            className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-lg font-semibold transition-colors"
           >
             Создать первую компанию
           </Link>
         </div>
       ) : (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-          gap: '24px'
-        }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {companies.map((company) => (
-            <div
+            <CompanyCard
               key={company.id}
-              style={{
-                backgroundColor: '#ffffff',
-                border: '1px solid #e9ecef',
-                borderRadius: '12px',
-                padding: '24px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                <div>
-                  <h3 style={{ 
-                    margin: '0 0 8px 0', 
-                    fontSize: '18px', 
-                    color: '#333',
-                    fontWeight: '600'
-                  }}>
-                    {company.companyName}
-                  </h3>
-                  <div style={{
-                    display: 'inline-block',
-                    padding: '4px 12px',
-                    backgroundColor: company.isOwner ? '#d4edda' : '#fff3cd',
-                    color: company.isOwner ? '#155724' : '#856404',
-                    borderRadius: '20px',
-                    fontSize: '12px',
-                    fontWeight: '500'
-                  }}>
-                    {company.isOwner ? 'Владелец' : 'Сотрудник'}
-                  </div>
-                </div>
-                
-                {currentUser.companyId === company.id && (
-                  <div style={{
-                    padding: '4px 8px',
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    borderRadius: '4px',
-                    fontSize: '12px',
-                    fontWeight: '500'
-                  }}>
-                    Активная
-                  </div>
-                )}
-              </div>
-
-              {company.ownerName && !company.isOwner && (
-                <p style={{ 
-                  margin: '0 0 16px 0', 
-                  color: '#6c757d', 
-                  fontSize: '14px' 
-                }}>
-                  Владелец: {company.ownerName}
-                </p>
-              )}
-
-              <div style={{
-                display: 'flex',
-                gap: '8px',
-                flexWrap: 'wrap'
-              }}>
-                {company.isOwner && (
-                  <Link
-                    href={`/companies/edit/${company.id}`}
-                    style={{
-                      padding: '8px 16px',
-                      backgroundColor: '#28a745',
-                      color: 'white',
-                      textDecoration: 'none',
-                      borderRadius: '4px',
-                      fontSize: '13px',
-                      fontWeight: '500'
-                    }}
-                  >
-                    Редактировать
-                  </Link>
-                )}
-                
-                {currentUser.companyId !== company.id && (
-                  <CompanySwitcher 
-                    companies={companies}
-                    currentCompanyId={currentUser.companyId}
-                  >
-                    <input type="hidden" name="companyId" value={company.id} />
-                    <button
-                      type="submit"
-                      style={{
-                        padding: '8px 16px',
-                        backgroundColor: '#007bff',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        fontSize: '13px',
-                        fontWeight: '500',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Сделать активной
-                    </button>
-                  </CompanySwitcher>
-                )}
-              </div>
-            </div>
+              company={company}
+              currentCompanyId={currentUser.companyId}
+              companies={companies}
+            />
           ))}
         </div>
       )}

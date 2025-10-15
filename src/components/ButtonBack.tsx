@@ -4,11 +4,10 @@ import { useRouter } from 'next/navigation';
 
 interface BackButtonProps {
   className?: string;
-  style?: React.CSSProperties;
   children?: React.ReactNode;
 }
 
-export default function ButtonBack({ className, style, children }: BackButtonProps) {
+export default function ButtonBack({ className = '', children }: BackButtonProps) {
   const router = useRouter();
 
   const handleBack = () => {
@@ -18,20 +17,14 @@ export default function ButtonBack({ className, style, children }: BackButtonPro
   return (
     <button
       onClick={handleBack}
-      className={className}
-      style={{
-        backgroundColor: 'transparent',
-        backgroundImage: 'none',
-        borderWidth: 0,
-        borderStyle: 'none',
-        cursor: 'pointer',
-        textDecoration: 'none',
-        color: '#6c757d',
-        fontSize: 14,
-        padding: 0,
-        whiteSpace: 'nowrap',
-        ...style
-      }}
+      className={`
+        bg-transparent border-none cursor-pointer
+        text-gray-600 dark:text-gray-400
+        hover:text-gray-800 dark:hover:text-gray-200
+        text-sm p-0 whitespace-nowrap
+        transition-colors
+        ${className}
+      `}
     >
       {children || '← Назад'}
     </button>

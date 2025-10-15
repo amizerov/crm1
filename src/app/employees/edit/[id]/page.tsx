@@ -10,7 +10,7 @@ import ButtonSave from '@/components/ButtonSave';
 import FormPageLayout from '@/components/FormPageLayout';
 import FormContainer from '@/components/FormContainer';
 import FormFieldStandard from '@/components/FormFieldStandard';
-import { COMPONENT_STYLES } from '@/styles/constants';
+import { StandardInput, StandardSelect } from '@/components/StandardInputs';
 
 interface EditEmployeePageProps {
   params: Promise<{ id: string }>;
@@ -63,24 +63,22 @@ export default async function EditEmployeePage({ params }: EditEmployeePageProps
 
         {/* Имя сотрудника */}
         <FormFieldStandard label="Имя сотрудника" required>
-          <input
+          <StandardInput
             type="text"
             id="Name"
             name="Name"
             defaultValue={employee.Name}
             required
-            style={COMPONENT_STYLES.input}
             placeholder="Имя сотрудника"
           />
         </FormFieldStandard>
 
         {/* Связать с пользователем */}
         <FormFieldStandard label="Связать с пользователем">
-          <select
+          <StandardSelect
             id="userId"
             name="userId"
             defaultValue={employee.userId || ''}
-            style={COMPONENT_STYLES.input}
           >
             <option value="">Не связан с пользователем</option>
             {users.map(user => (
@@ -88,17 +86,16 @@ export default async function EditEmployeePage({ params }: EditEmployeePageProps
                 {user.nicName} ({user.login})
               </option>
             ))}
-          </select>
+          </StandardSelect>
         </FormFieldStandard>
 
         {/* Компания на полную ширину */}
-        <FormFieldStandard label="Компания" required style={{ gridColumn: '1 / -1' }}>
-          <select
+        <FormFieldStandard label="Компания" required className="col-span-full">
+          <StandardSelect
             id="companyId"
             name="companyId"
             defaultValue={employee.companyId || ''}
             required
-            style={COMPONENT_STYLES.input}
           >
             <option value="">Выберите компанию</option>
             {companies.map(company => (
@@ -106,7 +103,7 @@ export default async function EditEmployeePage({ params }: EditEmployeePageProps
                 {company.companyName}
               </option>
             ))}
-          </select>
+          </StandardSelect>
         </FormFieldStandard>
       </FormContainer>
     </FormPageLayout>

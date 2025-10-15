@@ -45,12 +45,11 @@ export default function CompanySelector({
   };
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: 8 
-    }}>
-      <label htmlFor="company-select" style={{ fontSize: 14, fontWeight: 'bold', color: '#333' }}>
+    <div className="flex items-center gap-2">
+      <label 
+        htmlFor="company-select" 
+        className="text-sm font-bold text-gray-700 dark:text-gray-300"
+      >
         Компания:
       </label>
       <select
@@ -58,16 +57,18 @@ export default function CompanySelector({
         value={currentSelectedId}
         onChange={(e) => handleCompanyChange(Number(e.target.value))}
         disabled={isPending}
-        style={{
-          padding: '8px 12px',
-          border: '1px solid #ddd',
-          borderRadius: 4,
-          fontSize: 14,
-          backgroundColor: isPending ? '#f5f5f5' : 'white',
-          cursor: isPending ? 'not-allowed' : 'pointer',
-          minWidth: 180,
-          opacity: isPending ? 0.7 : 1
-        }}
+        className={`
+          px-3 py-2 border rounded text-sm min-w-[180px]
+          border-gray-300 dark:border-gray-600
+          bg-white dark:bg-gray-800
+          text-gray-900 dark:text-gray-100
+          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+          ${isPending 
+            ? 'bg-gray-100 dark:bg-gray-900 cursor-not-allowed opacity-70' 
+            : 'cursor-pointer'
+          }
+          transition-colors
+        `}
       >
         <option value={0}>Все компании</option>
         {companies.map((company) => (
@@ -77,7 +78,7 @@ export default function CompanySelector({
         ))}
       </select>
       {isPending && (
-        <span style={{ fontSize: 12, color: '#666', fontStyle: 'italic' }}>
+        <span className="text-xs text-gray-500 dark:text-gray-400 italic">
           Загрузка...
         </span>
       )}
