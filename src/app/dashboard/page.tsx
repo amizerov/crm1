@@ -9,6 +9,7 @@ import { checkEmployeesAvailability } from './actions/checkEmploys';
 import { checkProjectsAvailability } from './actions/checkProjects';
 import { getUserCompanies } from '@/app/projects/actions/actions';
 import { getProjectsByCompany } from '@/app/projects/actions/actions';
+import { redirect } from 'next/navigation';
 
 export default function DashboardPage() {
   const [highlightedCard, setHighlightedCard] = useState<string | null>(null);

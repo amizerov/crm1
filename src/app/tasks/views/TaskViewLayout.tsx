@@ -10,9 +10,10 @@ import TaskDetails from './components/TaskDetails';
 import TaskList from './list/TaskList';
 import KanbanBoard from './desk/KanbanBoard';
 import TaskGanttDiagram from './gantt/TaskGanttDiagram';
+import InboxView from './inbox/InboxView';
 import { StatusTask } from '@/app/projects/actions/statusActions';
 
-type ViewMode = 'list' | 'desk' | 'gantt';
+type ViewMode = 'list' | 'desk' | 'gantt' | 'inbox';
 
 interface Task {
   id: number;
@@ -85,7 +86,7 @@ export default function TaskViewLayout({
       const savedLeftPanelVisible = localStorage.getItem('leftPanelVisible');
       const savedFullscreen = localStorage.getItem('taskFullscreen');
       
-      if (savedView && ['list', 'desk', 'gantt'].includes(savedView)) {
+      if (savedView && ['list', 'desk', 'gantt', 'inbox'].includes(savedView)) {
         setCurrentView(savedView);
       }
       if (savedLeftPanelVisible !== null) {
@@ -287,6 +288,8 @@ export default function TaskViewLayout({
         return <KanbanBoard {...commonProps} />;
       case 'gantt':
         return <TaskGanttDiagram {...commonProps} />;
+      case 'inbox':
+        return <InboxView tasks={tasks} currentUserId={currentUserId} />;
       default:
         return <TaskList {...commonProps} />;
     }
@@ -329,6 +332,7 @@ export default function TaskViewLayout({
             selectedProjectId={selectedProjectId}
             onProjectChange={handleProjectChange}
             isPending={isPending}
+            onViewChange={handleViewChange}
           />
         )}
 

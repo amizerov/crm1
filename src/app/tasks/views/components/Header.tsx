@@ -5,8 +5,8 @@ interface NavigationHeaderProps {
   onToggleLeftPanel: () => void;
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
-  currentView?: 'list' | 'desk' | 'gantt';
-  onViewChange?: (view: 'list' | 'desk' | 'gantt') => void;
+  currentView?: 'list' | 'desk' | 'gantt' | 'inbox';
+  onViewChange?: (view: 'list' | 'desk' | 'gantt' | 'inbox') => void;
 }
 
 export default function Header({
@@ -20,6 +20,7 @@ export default function Header({
   const isListView = currentView === 'list';
   const isDeskView = currentView === 'desk';
   const isGanttView = currentView === 'gantt';
+  const isInboxView = currentView === 'inbox';
 
   // Определяем заголовок на основе текущего вида
   const getTitle = () => {
@@ -30,6 +31,8 @@ export default function Header({
         return 'Канбан доска';
       case 'gantt':
         return 'Диаграмма Ганта';
+      case 'inbox':
+        return 'Входящие';
       default:
         return 'Задачи';
     }
