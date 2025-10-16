@@ -12,14 +12,28 @@ interface InboxViewProps {
 export default function InboxView({ tasks, currentUserId }: InboxViewProps) {
   const [filter, setFilter] = useState<'all' | 'new' | 'overdue'>('all');
 
+  // Фильтруем завершённые и отменённые задачи
+  const activeTasks = tasks.filter(task => {
+    const statusName = task.statusName?.toLowerCase() || '';
+    // Исключаем задачи со статусами Done, Cancel, Completed, Closed
+    return !statusName.includes('done') && 
+           !statusName.includes('cancel') && 
+           !statusName.includes('completed') && 
+           !statusName.includes('closed') &&
+           !statusName.includes('выполнено') &&
+           !statusName.includes('отменено') &&
+           !statusName.includes('закрыто') &&
+           !statusName.includes('завершено');
+  });
+
   // Группируем задачи
-  const newTasks = tasks.filter(task => {
+  const newTasks = activeTasks.filter(task => {
     const createdDate = new Date(task.dtc);
     const daysSinceCreated = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
     return daysSinceCreated <= 7;
   });
 
-  const overdueTasks = tasks.filter(task => {
+  const overdueTasks = activeTasks.filter(task => {
     if (!task.dedline) return false;
     const deadline = new Date(task.dedline);
     return deadline < new Date();
@@ -28,7 +42,7 @@ export default function InboxView({ tasks, currentUserId }: InboxViewProps) {
   const displayTasks = 
     filter === 'new' ? newTasks :
     filter === 'overdue' ? overdueTasks :
-    tasks;
+    activeTasks;
 
   return (
     <div className="h-full flex flex-col bg-white dark:bg-gray-900">
@@ -61,7 +75,7 @@ export default function InboxView({ tasks, currentUserId }: InboxViewProps) {
                 : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
             }`}
           >
-            Все ({tasks.length})
+            Все ({activeTasks.length})
           </button>
           <button
             onClick={() => setFilter('new')}
