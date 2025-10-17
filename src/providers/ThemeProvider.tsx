@@ -13,21 +13,38 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
-    // Инициализируем тему из класса HTML (установленного скриптом в head)
+    // Инициализируем темную тему по умолчанию
     if (typeof window !== 'undefined') {
-      return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+      const savedTheme = localStorage.getItem('theme') as Theme;
+      if (savedTheme) {
+        return savedTheme;
+      }
+      // Если тема не сохранена - используем темную по умолчанию
+      return 'dark';
     }
-    return 'light';
+    return 'dark'; // Темная тема по умолчанию
   });
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     
-    // Синхронизируем состояние с текущим классом
-    const isDark = document.documentElement.classList.contains('dark');
-    const currentTheme = isDark ? 'dark' : 'light';
-    setTheme(currentTheme);
+    // Устанавливаем тему при монтировании
+    const savedTheme = localStorage.getItem('theme') as Theme;
+    const defaultTheme = savedTheme || 'dark'; // Темная по умолчанию
+    
+    if (defaultTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    
+    setTheme(defaultTheme);
+    
+    // Сохраняем тему если её не было
+    if (!savedTheme) {
+      localStorage.setItem('theme', 'dark');
+    }
   }, []);
 
   const toggleTheme = () => {
