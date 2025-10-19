@@ -69,8 +69,14 @@ export async function loginAction(formData: FormData) {
       isPasswordValid = await bcrypt.compare(password, storedPassword);
       
       // Для новых пользователей ОБЯЗАТЕЛЬНА проверка email
+      // Легаси-пользователи имеют isVerified = NULL (не false или 0, а именно NULL)
       if (isPasswordValid) {
-        if (isVerified === 0 || isVerified === false || isVerified === null || isVerified === undefined) {
+        // Если isVerified = null или undefined, это легаси-пользователь
+        if (isVerified === null || isVerified === undefined) {
+          console.log('ℹ️ Легаси-пользователь (isVerified = NULL), пропускаем проверку email');
+        }
+        // Если isVerified = 0 или false, это новый пользователь без подтверждения
+        else if (isVerified === 0 || isVerified === false) {
           console.log('❌ Email не подтвержден! Отказано в доступе.');
           return { 
             success: false, 
@@ -78,7 +84,10 @@ export async function loginAction(formData: FormData) {
             needsVerification: true 
           };
         }
-        console.log('✅ Email подтвержден, доступ разрешен');
+        // Если isVerified = 1 или true, email подтверждён
+        else {
+          console.log('✅ Email подтвержден, доступ разрешен');
+        }
       }
     } 
     // Случай 2 и 3: Легаси-пользователи с паролями в открытом виде
@@ -108,15 +117,9 @@ export async function loginAction(formData: FormData) {
         needsPasswordMigration = true;
         console.log('⚠️ Легаси-пароль корректен, будет мигрирован на bcrypt');
         
-        // Для старых пользователей проверяем email только если поле установлено
-        if (isVerified === 0 || isVerified === false) {
-          console.log('❌ Email не подтвержден у старого пользователя');
-          return { 
-            success: false, 
-            error: 'Пожалуйста, подтвердите ваш email перед входом. Проверьте почту.',
-            needsVerification: true 
-          };
-        }
+        // Для легаси-пользователей разрешаем вход без проверки email
+        // В профиле будет показано предупреждение о неподтверждённом email
+        console.log('ℹ️ Легаси-пользователь, пропускаем проверку email');
       }
     }
 
@@ -219,6 +222,7 @@ export async function getCurrentUser() {
         u.email,
         u.phone,
         u.companyId,
+        u.isVerified,
         e.companyId as employeeCompanyId
       FROM [Users] u
       LEFT JOIN Employee e ON u.id = e.userId
@@ -237,7 +241,8 @@ export async function getCurrentUser() {
       fullName: user.fullName,
       email: user.email,
       phone: user.phone,
-      companyId: user.companyId || user.employeeCompanyId // Приоритет Employee.companyId
+      companyId: user.companyId || user.employeeCompanyId, // Приоритет Employee.companyId
+      isVerified: user.isVerified
     };
   } catch (error) {
     console.error('Ошибка при получении текущего пользователя:', error);
