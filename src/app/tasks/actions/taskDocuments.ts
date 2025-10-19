@@ -150,7 +150,7 @@ export async function getTaskDocuments(taskId: number) {
         td.dtc,
         u.nicName as uploadedByName
       FROM TaskDocuments td
-      LEFT JOIN [User] u ON td.uploadedBy = u.id
+      LEFT JOIN [Users] u ON td.uploadedBy = u.id
       WHERE td.taskId = @taskId
       ORDER BY td.dtc DESC
     `, { taskId });

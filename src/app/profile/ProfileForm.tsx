@@ -11,7 +11,7 @@ import ButtonSave from '@/components/ButtonSave';
 import { COMPONENT_STYLES } from '@/styles/constants';
 import Link from 'next/link';
 
-type User = {
+type Users = {
   id: number;
   nicName: string;
   login: string;
@@ -34,7 +34,7 @@ type Company = {
 };
 
 type ProfileFormProps = {
-  user: User;
+  user: Users;
   companies: Company[];
 };
 

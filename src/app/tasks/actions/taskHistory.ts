@@ -71,7 +71,7 @@ export async function getTaskHistory(taskId: number) {
         u.nicName as userName,
         u.fullName as userFullName
       FROM TaskHistory th
-      LEFT JOIN [User] u ON th.userId = u.id
+      LEFT JOIN [Users] u ON th.userId = u.id
       WHERE th.taskId = @taskId
       ORDER BY th.dtc DESC
     `, { taskId });

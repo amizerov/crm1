@@ -40,7 +40,7 @@ export async function getProjects() {
         p.dtu
       FROM Project p
       LEFT JOIN Company c ON p.companyId = c.id
-      LEFT JOIN [User] u ON p.userId = u.id
+      LEFT JOIN [Users] u ON p.userId = u.id
       WHERE p.companyId IN (
         -- Получаем компании, где текущий пользователь является сотрудником или владельцем
         SELECT DISTINCT companyId 
@@ -94,7 +94,7 @@ export async function getProjectsByCompany(companyId?: number) {
         p.dtu
       FROM Project p
       LEFT JOIN Company c ON p.companyId = c.id
-      LEFT JOIN [User] u ON p.userId = u.id
+      LEFT JOIN [Users] u ON p.userId = u.id
       WHERE p.companyId = @companyId
         AND p.companyId IN (
           -- Проверяем доступ к компании
@@ -219,7 +219,7 @@ export async function getProjectById(id: number): Promise<Project | null> {
         p.dtu
       FROM Project p
       LEFT JOIN Company c ON p.companyId = c.id
-      LEFT JOIN [User] u ON p.userId = u.id
+      LEFT JOIN [Users] u ON p.userId = u.id
       WHERE p.id = @id
         AND p.companyId IN (
           SELECT DISTINCT companyId 

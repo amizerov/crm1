@@ -7,23 +7,23 @@ CREATE TABLE VerificationToken (
     token NVARCHAR(255) NOT NULL UNIQUE,
     expiresAt DATETIME NOT NULL,
     createdAt DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (userId) REFERENCES [User](id) ON DELETE CASCADE
+    FOREIGN KEY (userId) REFERENCES [Users](id) ON DELETE CASCADE
 );
 
 -- Создаем индексы для быстрого поиска
 CREATE INDEX idx_verification_token ON VerificationToken(token);
 CREATE INDEX idx_verification_user ON VerificationToken(userId);
 
--- Добавляем поле isVerified в таблицу User (если еще не добавлено)
-IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[User]') AND name = 'isVerified')
+-- Добавляем поле isVerified в таблицу Users (если еще не добавлено)
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[Users]') AND name = 'isVerified')
 BEGIN
-    ALTER TABLE [User] ADD isVerified BIT DEFAULT 0;
+    ALTER TABLE [Users] ADD isVerified BIT DEFAULT 0;
 END
 GO
 
 -- Обновляем существующих пользователей (делаем их верифицированными)
-UPDATE [User] SET isVerified = 1 WHERE isVerified IS NULL;
+UPDATE [Users] SET isVerified = 1 WHERE isVerified IS NULL;
 GO
 
 PRINT 'Таблица VerificationToken создана успешно!';
-PRINT 'Поле isVerified добавлено в таблицу User';
+PRINT 'Поле isVerified добавлено в таблицу Users';

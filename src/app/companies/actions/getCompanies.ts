@@ -9,7 +9,7 @@ export async function getCompanies() {
         c.ownerId,
         u.nicName as ownerName
       FROM Company c
-      LEFT JOIN [User] u ON c.ownerId = u.id
+      LEFT JOIN [Users] u ON c.ownerId = u.id
       ORDER BY c.companyName
     `);
     

@@ -120,7 +120,7 @@ export async function getTaskById(id: number) {
       FROM Task t
       LEFT JOIN StatusTask st ON t.statusId = st.id
       LEFT JOIN Priority p ON t.priorityId = p.id
-      LEFT JOIN [User] u ON t.executorId = u.id
+      LEFT JOIN [Users] u ON t.executorId = u.id
       WHERE t.id = @id
     `, {
       id: id

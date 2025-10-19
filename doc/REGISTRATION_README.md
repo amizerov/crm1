@@ -39,11 +39,11 @@ CREATE TABLE VerificationToken (
     token NVARCHAR(255) NOT NULL UNIQUE,
     expiresAt DATETIME NOT NULL,
     createdAt DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (userId) REFERENCES [User](id) ON DELETE CASCADE
+    FOREIGN KEY (userId) REFERENCES [Users](id) ON DELETE CASCADE
 );
 ```
 
-### Изменения в таблице `User`
+### Изменения в таблице `Users`
 Добавлено поле `isVerified` для отслеживания статуса подтверждения email.
 
 ## 🔄 Процесс регистрации
@@ -197,7 +197,7 @@ if (result.success) {
 ### Проверка базы данных
 ```sql
 -- Проверить созданного пользователя
-SELECT id, fullName, email, isVerified FROM [User];
+SELECT id, fullName, email, isVerified FROM [Users];
 
 -- Проверить токены (должны удаляться после использования)
 SELECT * FROM VerificationToken;

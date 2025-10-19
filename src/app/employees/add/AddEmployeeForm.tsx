@@ -11,7 +11,7 @@ import Notification from '@/components/Notification';
 import { addEmployee } from '../actions/actions';
 import { createInvitation, InvitationRole } from '../actions/invitations';
 
-interface User {
+interface Users {
   id: number;
   login: string;
   nicName: string;
@@ -26,7 +26,7 @@ interface Company {
 }
 
 interface Props {
-  relatedUsers: User[];
+  relatedUsers: Users[];
   companies: Company[];
 }
 

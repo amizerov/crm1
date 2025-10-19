@@ -128,7 +128,7 @@ async function createCompany(formData: FormData) {
 
     // Делаем новую компанию активной для пользователя
     await query(`
-      UPDATE [User] SET companyId = @companyId WHERE id = @userId
+      UPDATE [Users] SET companyId = @companyId WHERE id = @userId
     `, {
       companyId: newCompanyId,
       userId: currentUser.id

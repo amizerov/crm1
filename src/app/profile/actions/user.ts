@@ -33,7 +33,7 @@ export async function updateUserProfile(formData: FormData) {
 
     // Проверяем уникальность никнейма (исключая текущего пользователя)
     const existingUser = await query(
-      'SELECT id FROM [User] WHERE nicName = @nicName AND id != @userId',
+      'SELECT id FROM [Users] WHERE nicName = @nicName AND id != @userId',
       { nicName: nicName.trim(), userId }
     );
 
@@ -58,7 +58,7 @@ export async function updateUserProfile(formData: FormData) {
 
     // Обновляем профиль
     await query(`
-      UPDATE [User] SET 
+      UPDATE [Users] SET 
         nicName = @nicName,
         fullName = @fullName,
         email = @email,

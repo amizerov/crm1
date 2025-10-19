@@ -27,7 +27,7 @@ export async function getTaskActions(taskId: number): Promise<TaskAction[]> {
         ta.dtu,
         u.nicName as userName
       FROM TaskActions ta
-      LEFT JOIN [User] u ON ta.userId = u.id
+      LEFT JOIN [Users] u ON ta.userId = u.id
       WHERE ta.taskId = @taskId
       ORDER BY ta.dtc DESC
     `, { taskId });

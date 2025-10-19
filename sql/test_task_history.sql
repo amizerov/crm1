@@ -65,6 +65,6 @@ SELECT
     th.dtc,
     u.nicName as userName
 FROM TaskHistory th
-    LEFT JOIN [User] u ON th.userId = u.id
+    LEFT JOIN [Users] u ON th.userId = u.id
 WHERE th.taskId = @taskId
 ORDER BY th.dtc DESC;

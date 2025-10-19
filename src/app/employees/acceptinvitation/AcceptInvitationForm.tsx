@@ -13,7 +13,7 @@ interface Invitation {
   inviterName: string;
 }
 
-interface User {
+interface Users {
   id: number;
   email: string;
   nicName: string;
@@ -23,7 +23,7 @@ interface User {
 interface Props {
   token: string;
   invitation: Invitation;
-  currentUser: User;
+  currentUser: Users;
 }
 
 export default function AcceptInvitationForm({ token, invitation, currentUser }: Props) {
