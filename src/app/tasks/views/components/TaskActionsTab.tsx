@@ -383,6 +383,7 @@ export default function TaskActionsTab({
                 text-gray-500 hover:text-gray-700 
                 dark:text-gray-400 dark:hover:text-gray-200
                 transition-colors
+                cursor-pointer
               "
               title={showAddInput ? "Отменить" : "Добавить пункт"}
             >
@@ -483,13 +484,13 @@ export default function TaskActionsTab({
                     <button
                       onClick={() => handleSaveEditChecklist(item.id)}
                       disabled={!editingChecklistText.trim()}
-                      className="text-xs px-2 py-1 text-blue-600 hover:text-blue-700 dark:text-blue-400 disabled:opacity-50"
+                      className="text-xs px-2 py-1 text-blue-600 hover:text-blue-700 dark:text-blue-400 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
                     >
                       Сохр.
                     </button>
                     <button
                       onClick={handleCancelEditChecklist}
-                      className="text-xs px-2 py-1 text-gray-600 hover:text-gray-700 dark:text-gray-400"
+                      className="text-xs px-2 py-1 text-gray-600 hover:text-gray-700 dark:text-gray-400 cursor-pointer"
                     >
                       Отм.
                     </button>
@@ -524,14 +525,14 @@ export default function TaskActionsTab({
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => handleStartEditChecklist(item)}
-                        className="text-xs px-2 py-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        className="text-xs px-2 py-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 cursor-pointer"
                         title="Редактировать"
                       >
                         Ред.
                       </button>
                       <button
                         onClick={() => handleDeleteChecklistItem(item.id)}
-                        className="text-xs px-2 py-1 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+                        className="text-xs px-2 py-1 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 cursor-pointer"
                         title="Удалить"
                       >
                         Удал.
@@ -562,6 +563,7 @@ export default function TaskActionsTab({
               text-sm text-gray-500 hover:text-gray-700
               dark:text-gray-400 dark:hover:text-gray-200
               transition-colors
+              cursor-pointer
             "
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
