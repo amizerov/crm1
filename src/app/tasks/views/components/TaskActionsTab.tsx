@@ -355,66 +355,87 @@ export default function TaskActionsTab({
     });
   };
 
+  const [showAddInput, setShowAddInput] = useState(false);
+  
   const completedCount = checklist.filter(item => item.isCompleted).length;
   const totalCount = checklist.length;
 
   return (
     <div className="flex flex-col h-full">
       {/* ЧЕКЛИСТ */}
-      <div className="flex-shrink-0 mb-6 border-b border-gray-200 dark:border-gray-700 pb-6">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-            Чеклист
-          </h3>
-          {totalCount > 0 && (
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {completedCount} / {totalCount}
-            </span>
-          )}
-        </div>
-
-        {/* Форма добавления пункта */}
-        <div className="mb-3">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={newChecklistItem}
-              onChange={(e) => setNewChecklistItem(e.target.value)}
-              placeholder="Добавить пункт..."
-              className="
-                flex-1 px-3 py-2
-                text-sm
-                border border-gray-300 dark:border-gray-600
-                rounded
-                bg-white dark:bg-gray-700
-                text-gray-900 dark:text-gray-100
-                placeholder-gray-400 dark:placeholder-gray-500
-                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-              "
-              disabled={isPending}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleAddChecklistItem();
-                }
-              }}
-            />
+      {(totalCount > 0 || showAddInput) && (
+        <div className="flex-shrink-0 mb-6 border-b border-gray-200 dark:border-gray-700 pb-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                Чеклист
+              </h3>
+              {totalCount > 0 && (
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {completedCount} / {totalCount}
+                </span>
+              )}
+            </div>
             <button
-              onClick={handleAddChecklistItem}
-              disabled={!newChecklistItem.trim() || isPending}
+              onClick={() => setShowAddInput(!showAddInput)}
               className="
-                px-4 py-2
-                text-sm font-medium
-                bg-gray-600 hover:bg-gray-700
-                disabled:bg-gray-400 disabled:cursor-not-allowed
-                text-white
-                rounded
+                w-5 h-5 flex items-center justify-center
+                text-gray-500 hover:text-gray-700 
+                dark:text-gray-400 dark:hover:text-gray-200
                 transition-colors
               "
+              title={showAddInput ? "Отменить" : "Добавить пункт"}
             >
-              Добавить
+              {showAddInput ? (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              )}
             </button>
           </div>
-        </div>
+
+          {/* Форма добавления пункта */}
+          {showAddInput && (
+            <div className="mb-3">
+              <input
+                type="text"
+                value={newChecklistItem}
+                onChange={(e) => setNewChecklistItem(e.target.value)}
+                placeholder="Добавить пункт..."
+                className="
+                  w-full px-3 py-2
+                  text-sm
+                  border border-gray-300 dark:border-gray-600
+                  rounded
+                  bg-white dark:bg-gray-700
+                  text-gray-900 dark:text-gray-100
+                  placeholder-gray-400 dark:placeholder-gray-500
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                "
+                disabled={isPending}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && newChecklistItem.trim()) {
+                    handleAddChecklistItem();
+                    setShowAddInput(false);
+                  } else if (e.key === 'Escape') {
+                    setNewChecklistItem('');
+                    setShowAddInput(false);
+                  }
+                }}
+                onBlur={() => {
+                  if (newChecklistItem.trim()) {
+                    handleAddChecklistItem();
+                  }
+                  setShowAddInput(false);
+                }}
+              />
+            </div>
+          )}
 
         {/* Список пунктов чеклиста */}
         <div className="space-y-1">
@@ -523,12 +544,33 @@ export default function TaskActionsTab({
           })}
         </div>
 
-        {checklist.length === 0 && (
+        {checklist.length === 0 && !showAddInput && (
           <div className="text-center py-4 text-gray-400 dark:text-gray-500 text-sm">
             Пунктов чеклиста пока нет
           </div>
         )}
-      </div>
+        </div>
+      )}
+
+      {/* Кнопка добавления чеклиста, если его нет */}
+      {totalCount === 0 && !showAddInput && (
+        <div className="flex-shrink-0 mb-6">
+          <button
+            onClick={() => setShowAddInput(true)}
+            className="
+              flex items-center gap-2
+              text-sm text-gray-500 hover:text-gray-700
+              dark:text-gray-400 dark:hover:text-gray-200
+              transition-colors
+            "
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Добавить чеклист</span>
+          </button>
+        </div>
+      )}
 
       {/* КОММЕНТАРИИ */}
       <div className="flex-shrink-0 mb-3">
