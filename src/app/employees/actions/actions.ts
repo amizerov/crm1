@@ -36,7 +36,7 @@ export async function getRelatedUsers() {
         fullName,
         email,
         COALESCE(nicName, fullName, login) as displayName
-      FROM [User]
+      FROM [Users]
 	  where id in (select userId from Employee where companyId 
 					in (select companyId from Employee where userId=@currentUserId))
 	     or id in (select userId from User_Company where companyId 
@@ -82,7 +82,7 @@ export async function getEmployees() {
         e.dtu
       FROM Employee e
       LEFT JOIN Company c ON e.companyId = c.id
-      LEFT JOIN [User] u ON e.userId = u.id
+      LEFT JOIN [Users] u ON e.userId = u.id
       WHERE e.companyId IN (
         -- Получаем компании, где текущий пользователь является сотрудником или владельцем
         SELECT DISTINCT companyId 
@@ -155,7 +155,7 @@ export async function getEmployeesByCompany(companyId?: number) {
         e.dtc
       FROM Employee e
       LEFT JOIN Company c ON e.companyId = c.id
-      LEFT JOIN [User] u ON e.userId = u.id
+      LEFT JOIN [Users] u ON e.userId = u.id
       WHERE e.companyId = @companyId
 
       UNION
@@ -172,7 +172,7 @@ export async function getEmployeesByCompany(companyId?: number) {
         COALESCE(u.nicName, u.fullName, u.login) as displayName,
         u.dtc
       FROM User_Company uc
-      INNER JOIN [User] u ON uc.userId = u.id
+      INNER JOIN [Users] u ON uc.userId = u.id
       INNER JOIN Company c ON uc.companyId = c.id
       WHERE uc.companyId = @companyId
       AND NOT EXISTS (
@@ -385,7 +385,7 @@ export async function getUsers(): Promise<{id: number, login: string, nicName: s
         id,
         login,
         nicName
-      FROM [User]
+      FROM [Users]
       ORDER BY nicName
     `);
     

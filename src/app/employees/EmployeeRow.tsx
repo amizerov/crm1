@@ -39,7 +39,7 @@ export default function EmployeeRow({ employee }: EmployeeRowProps) {
         </div>
       </td>
       <td style={{ padding: 12, border: '1px solid #ddd' }}>
-        {employee.userId ? `User ID: ${employee.userId}` : 'Не связан с пользователем'}
+        {employee.userId ? `Users ID: ${employee.userId}` : 'Не связан с пользователем'}
       </td>
       <td style={{ padding: 12, border: '1px solid #ddd' }}>
         {employee.companyName || 'Не указана'}

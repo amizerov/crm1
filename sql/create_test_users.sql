@@ -3,9 +3,9 @@ USE [MizerCRM]
 GO
 
 -- Проверяем, есть ли уже пользователь с логином admin
-IF NOT EXISTS (SELECT 1 FROM [User] WHERE login = 'admin')
+IF NOT EXISTS (SELECT 1 FROM [Users] WHERE login = 'admin')
 BEGIN
-    INSERT INTO [User] (login, nicName, password)
+    INSERT INTO [Users] (login, nicName, password)
     VALUES ('admin', 'Администратор', 'admin');
     
     PRINT 'Тестовый пользователь создан: admin/admin';
@@ -16,9 +16,9 @@ BEGIN
 END
 
 -- Можно добавить еще тестовых пользователей
-IF NOT EXISTS (SELECT 1 FROM [User] WHERE login = 'manager')
+IF NOT EXISTS (SELECT 1 FROM [Users] WHERE login = 'manager')
 BEGIN
-    INSERT INTO [User] (login, nicName, password)
+    INSERT INTO [Users] (login, nicName, password)
     VALUES ('manager', 'Менеджер', 'manager123');
     
     PRINT 'Тестовый пользователь создан: manager/manager123';
@@ -29,4 +29,4 @@ BEGIN
 END
 
 -- Показываем всех пользователей
-SELECT id, login, nicName FROM [User];
+SELECT id, login, nicName FROM [Users];

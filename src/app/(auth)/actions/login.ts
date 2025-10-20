@@ -3,6 +3,7 @@
 import { query } from '@/db/connect';
 import { cookies } from 'next/headers';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 
 /**
  * Хеширование пароля с помощью bcrypt
@@ -35,7 +36,7 @@ export async function loginAction(formData: FormData) {
     // Получаем пользователя из БД
     const userResult = await query(`
       SELECT id, login, nicName, password, isVerified 
-      FROM [User] 
+      FROM [Users] 
       WHERE login = @login
     `, { login });
     
@@ -60,6 +61,7 @@ export async function loginAction(formData: FormData) {
 
     // Проверка пароля
     let isPasswordValid = false;
+    let needsPasswordMigration = false;
 
     // Случай 1: Хешированный пароль (новые пользователи через регистрацию)
     if (storedPassword && (storedPassword.startsWith('$2b$') || storedPassword.startsWith('$2a$'))) {
@@ -67,8 +69,14 @@ export async function loginAction(formData: FormData) {
       isPasswordValid = await bcrypt.compare(password, storedPassword);
       
       // Для новых пользователей ОБЯЗАТЕЛЬНА проверка email
+      // Легаси-пользователи имеют isVerified = NULL (не false или 0, а именно NULL)
       if (isPasswordValid) {
-        if (isVerified === 0 || isVerified === false || isVerified === null || isVerified === undefined) {
+        // Если isVerified = null или undefined, это легаси-пользователь
+        if (isVerified === null || isVerified === undefined) {
+          console.log('ℹ️ Легаси-пользователь (isVerified = NULL), пропускаем проверку email');
+        }
+        // Если isVerified = 0 или false, это новый пользователь без подтверждения
+        else if (isVerified === 0 || isVerified === false) {
           console.log('❌ Email не подтвержден! Отказано в доступе.');
           return { 
             success: false, 
@@ -76,28 +84,42 @@ export async function loginAction(formData: FormData) {
             needsVerification: true 
           };
         }
-        console.log('✅ Email подтвержден, доступ разрешен');
+        // Если isVerified = 1 или true, email подтверждён
+        else {
+          console.log('✅ Email подтвержден, доступ разрешен');
+        }
       }
     } 
-    // Случай 2: Легаси-пользователь с паролем "123" в открытом виде
-    else if (storedPassword === '123' && password === '123') {
-      console.log('⚠️ Легаси-пользователь с паролем "123" (без хеширования)');
-      isPasswordValid = true;
-      // Для легаси-пользователей проверка email опциональна
-    }
-    // Случай 3: Другие старые пользователи с паролями в открытом виде
-    else {
-      console.log('⚠️ Проверка пароля в открытом виде (старый пользователь)');
-      isPasswordValid = password === storedPassword;
+    // Случай 2 и 3: Легаси-пользователи с паролями в открытом виде
+    else if (storedPassword) {
+      console.log('⚠️ Проверка легаси-пароля (без хеширования)');
       
-      // Для старых пользователей проверяем email только если поле установлено
-      if (isPasswordValid && (isVerified === 0 || isVerified === false)) {
-        console.log('❌ Email не подтвержден у старого пользователя');
-        return { 
-          success: false, 
-          error: 'Пожалуйста, подтвердите ваш email перед входом. Проверьте почту.',
-          needsVerification: true 
-        };
+      // Timing-safe сравнение паролей для защиты от timing attack
+      const storedBuffer = Buffer.from(storedPassword, 'utf8');
+      const inputBuffer = Buffer.from(password, 'utf8');
+      
+      // Если длины разные, создаем буфер той же длины для безопасного сравнения
+      const maxLength = Math.max(storedBuffer.length, inputBuffer.length);
+      const paddedStored = Buffer.alloc(maxLength);
+      const paddedInput = Buffer.alloc(maxLength);
+      storedBuffer.copy(paddedStored);
+      inputBuffer.copy(paddedInput);
+      
+      try {
+        isPasswordValid = crypto.timingSafeEqual(paddedStored, paddedInput) && 
+                         storedBuffer.length === inputBuffer.length;
+      } catch {
+        isPasswordValid = false;
+      }
+      
+      if (isPasswordValid) {
+        // Помечаем для автоматической миграции на bcrypt
+        needsPasswordMigration = true;
+        console.log('⚠️ Легаси-пароль корректен, будет мигрирован на bcrypt');
+        
+        // Для легаси-пользователей разрешаем вход без проверки email
+        // В профиле будет показано предупреждение о неподтверждённом email
+        console.log('ℹ️ Легаси-пользователь, пропускаем проверку email');
       }
     }
 
@@ -107,6 +129,25 @@ export async function loginAction(formData: FormData) {
         success: false, 
         error: 'Неверный логин или пароль' 
       };
+    }
+
+    // Миграция легаси-пароля на bcrypt при успешном входе
+    if (needsPasswordMigration) {
+      try {
+        const hashedPassword = await hashPassword(password);
+        await query(`
+          UPDATE [Users] 
+          SET password = @hashedPassword 
+          WHERE id = @userId
+        `, { 
+          hashedPassword, 
+          userId: user.id 
+        });
+        console.log('✅ Пароль пользователя мигрирован на bcrypt');
+      } catch (migrationError) {
+        // Миграция не критична, логируем но продолжаем вход
+        console.error('⚠️ Не удалось мигрировать пароль:', migrationError);
+      }
     }
 
     // Успешная аутентификация - устанавливаем сессию
@@ -181,8 +222,9 @@ export async function getCurrentUser() {
         u.email,
         u.phone,
         u.companyId,
+        u.isVerified,
         e.companyId as employeeCompanyId
-      FROM [User] u
+      FROM [Users] u
       LEFT JOIN Employee e ON u.id = e.userId
       WHERE u.id = @userId
     `, { userId: parseInt(userId) });
@@ -199,7 +241,8 @@ export async function getCurrentUser() {
       fullName: user.fullName,
       email: user.email,
       phone: user.phone,
-      companyId: user.companyId || user.employeeCompanyId // Приоритет Employee.companyId
+      companyId: user.companyId || user.employeeCompanyId, // Приоритет Employee.companyId
+      isVerified: user.isVerified
     };
   } catch (error) {
     console.error('Ошибка при получении текущего пользователя:', error);

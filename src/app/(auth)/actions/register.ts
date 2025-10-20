@@ -11,7 +11,7 @@ export async function registerUser(email: string, password: string, fullName: st
 
     // 1. Проверка, существует ли пользователь
     const existingUser = await query(
-      'SELECT id, isVerified FROM [User] WHERE login = @email',
+      'SELECT id, isVerified FROM [Users] WHERE login = @email',
       { email }
     );
 
@@ -33,14 +33,14 @@ export async function registerUser(email: string, password: string, fullName: st
 
     // 4. Создаем пользователя (НЕ подтвержденный)
     const result = await query(
-      `INSERT INTO [User] (login, password, fullName, nicName, email, isVerified, dtc) 
+      `INSERT INTO [Users] (login, password, fullName, nicName, email, isVerified, dtc) 
        OUTPUT INSERTED.id
        VALUES (@email, @password, @fullName, @nicName, @email, 0, GETDATE())`,
       { email, password: hashedPassword, fullName, nicName }
     );
 
     const userId = result[0].id;
-    console.log('👤 User created with ID:', userId, 'email:', email, 'isVerified: 0');
+    console.log('👤 Users created with ID:', userId, 'email:', email, 'isVerified: 0');
 
     // 5. Генерируем токен подтверждения (криптографически безопасный)
     const token = crypto.randomBytes(32).toString('hex');
@@ -64,7 +64,7 @@ export async function registerUser(email: string, password: string, fullName: st
 
     if (emailResult.error) {
       // Пользователь создан, но письмо не отправлено
-      console.error('⚠️ User created but email failed');
+      console.error('⚠️ Users created but email failed');
       return { 
         error: 'Пользователь создан, но не удалось отправить письмо подтверждения. Обратитесь к администратору.' 
       };
@@ -103,7 +103,7 @@ export async function registerWithInvitation(token: string, password: string, fu
 
     // 2. Проверяем, не существует ли уже пользователь
     const existingUser = await query(
-      'SELECT id, isVerified FROM [User] WHERE login = @email',
+      'SELECT id, isVerified FROM [Users] WHERE login = @email',
       { email }
     );
 
@@ -121,14 +121,14 @@ export async function registerWithInvitation(token: string, password: string, fu
 
     // 5. Создаем пользователя (УЖЕ подтвержденный через приглашение)
     const userResult = await query(
-      `INSERT INTO [User] (login, password, fullName, nicName, email, isVerified, dtc) 
+      `INSERT INTO [Users] (login, password, fullName, nicName, email, isVerified, dtc) 
        OUTPUT INSERTED.id
        VALUES (@email, @password, @fullName, @nicName, @email, 1, GETDATE())`,
       { email, password: hashedPassword, fullName, nicName }
     );
 
     const userId = userResult[0].id;
-    console.log('👤 User created with ID:', userId, 'email:', email, 'isVerified: 1 (via invitation)');
+    console.log('👤 Users created with ID:', userId, 'email:', email, 'isVerified: 1 (via invitation)');
 
     // 6. Создаем сотрудника
     const employeeName = nicName || fullName || email;

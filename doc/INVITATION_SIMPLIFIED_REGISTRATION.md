@@ -64,7 +64,7 @@ graph TD
     E -->|Невалиден| G[Ошибка приглашения]
     
     F --> H[registerWithInvitation]
-    H --> I[Создать User с isVerified=1]
+    H --> I[Создать Users с isVerified=1]
     I --> J[Создать Employee]
     J --> K{Роль Partner?}
     K -->|Да| L[Создать User_Company]
@@ -99,12 +99,12 @@ graph TD
 1. **Регистрация сотрудника**
    - URL: `/employees/acceptinvitation?token=test-invitation-token-12345`
    - Email: `test@example.com`
-   - Ожидается: создание User + Employee
+   - Ожидается: создание Users + Employee
 
 2. **Регистрация партнера**
    - URL: `/employees/acceptinvitation?token=test-invitation-partner-token-12345`
    - Email: `partner@example.com`
-   - Ожидается: создание User + Employee + User_Company
+   - Ожидается: создание Users + Employee + User_Company
 
 3. **Невалидный токен**
    - URL: `/employees/acceptinvitation?token=invalid-token`

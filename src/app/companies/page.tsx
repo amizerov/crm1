@@ -15,7 +15,7 @@ type Company = {
 export default async function CompaniesPage() {
   // Проверяем авторизацию
   const currentUser = await getCurrentUser();
-  console.log('Current User:', currentUser);
+  console.log('Current Users:', currentUser);
 
   if (!currentUser) {
     redirect('/login');

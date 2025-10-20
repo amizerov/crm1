@@ -124,7 +124,7 @@ export async function getTasks(executorId?: number, companyId?: number): Promise
         LEFT JOIN StatusTask st ON t.statusId = st.id
         LEFT JOIN Priority p ON t.priorityId = p.id
         LEFT JOIN Employee e ON t.executorId = e.id
-        LEFT JOIN [User] u ON t.userId = u.id
+        LEFT JOIN [Users] u ON t.userId = u.id
         LEFT JOIN Project pr ON t.projectId = pr.id
         LEFT JOIN Company c ON t.companyId = c.id
         LEFT JOIN TaskTypes tt ON t.typeId = tt.id
@@ -163,7 +163,7 @@ export async function getTasks(executorId?: number, companyId?: number): Promise
         LEFT JOIN StatusTask st ON t.statusId = st.id
         LEFT JOIN Priority p ON t.priorityId = p.id
         LEFT JOIN Employee e ON t.executorId = e.id
-        LEFT JOIN [User] u ON t.userId = u.id
+        LEFT JOIN [Users] u ON t.userId = u.id
         LEFT JOIN Project pr ON t.projectId = pr.id
         LEFT JOIN Company c ON t.companyId = c.id
         LEFT JOIN TaskTypes tt ON t.typeId = tt.id
@@ -258,7 +258,7 @@ export async function getCompletedTasks(executorId?: number): Promise<Task[]> {
       LEFT JOIN StatusTask st ON t.statusId = st.id
       LEFT JOIN Priority p ON t.priorityId = p.id
       LEFT JOIN Employee e ON t.executorId = e.id
-      LEFT JOIN [User] u ON t.userId = u.id
+      LEFT JOIN [Users] u ON t.userId = u.id
       LEFT JOIN Project pr ON t.projectId = pr.id
       LEFT JOIN Company c ON t.companyId = c.id
       ${whereClause}
@@ -441,7 +441,7 @@ export async function getSubtasks(parentTaskId: number): Promise<Task[]> {
       FROM Task t
       LEFT JOIN StatusTask st ON t.statusId = st.id
       LEFT JOIN Priority p ON t.priorityId = p.id
-      LEFT JOIN [User] u ON t.userId = u.id
+      LEFT JOIN [Users] u ON t.userId = u.id
       LEFT JOIN Employee e ON t.executorId = e.id
       LEFT JOIN Project pr ON t.projectId = pr.id
       LEFT JOIN Company c ON t.companyId = c.id

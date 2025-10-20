@@ -62,7 +62,7 @@ export async function getUserCompanies(): Promise<UserCompany[]> {
             'primary' as accessType,
             'Основная' as roleDescription,
             4 as priority
-          FROM [User] u 
+          FROM [Users] u 
           WHERE u.id = @userId AND u.companyId IS NOT NULL
           
           UNION ALL

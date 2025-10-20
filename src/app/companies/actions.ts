@@ -38,7 +38,7 @@ export async function switchCompany(formData: FormData) {
     console.log(`✅ Пользователь ${currentUser.nicName} переключился на компанию ID ${companyId}`);
     // Обновляем активную компанию пользователя
     await query(`
-      UPDATE [User] SET companyId = @companyId WHERE id = @userId
+      UPDATE [Users] SET companyId = @companyId WHERE id = @userId
     `, {
       companyId,
       userId: currentUser.id

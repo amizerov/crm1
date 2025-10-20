@@ -54,7 +54,7 @@ export async function createInvitation({ email, companyId, role }: CreateInvitat
     const existingEmployee = await query(`
       SELECT e.id 
       FROM Employee e
-      JOIN [User] u ON e.userId = u.id
+      JOIN [Users] u ON e.userId = u.id
       WHERE u.email = @email AND e.companyId = @companyId
     `, { email, companyId });
 
@@ -265,7 +265,7 @@ export async function getInvitationByToken(token: string) {
         u.nicName as inviterName
       FROM Invitation i
       JOIN Company c ON i.companyId = c.id
-      JOIN [User] u ON i.invitedByUserId = u.id
+      JOIN [Users] u ON i.invitedByUserId = u.id
       WHERE i.token = @token
     `, { token });
 

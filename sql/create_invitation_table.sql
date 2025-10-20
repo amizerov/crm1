@@ -26,9 +26,9 @@ BEGIN
         CONSTRAINT [FK_Invitation_Company] FOREIGN KEY ([companyId]) 
             REFERENCES [Company]([id]) ON DELETE CASCADE,
         CONSTRAINT [FK_Invitation_InvitedBy] FOREIGN KEY ([invitedByUserId]) 
-            REFERENCES [User]([id]),
+            REFERENCES [Users]([id]),
         CONSTRAINT [FK_Invitation_AcceptedBy] FOREIGN KEY ([acceptedByUserId]) 
-            REFERENCES [User]([id])
+            REFERENCES [Users]([id])
     );
 
     CREATE INDEX [IX_Invitation_Token] ON [Invitation]([token]);

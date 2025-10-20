@@ -20,7 +20,7 @@ CREATE TABLE TaskHistory (
     description NVARCHAR(500),
     dtc DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (taskId) REFERENCES Task(id) ON DELETE CASCADE,
-    FOREIGN KEY (userId) REFERENCES [User](id)
+    FOREIGN KEY (userId) REFERENCES [Users](id)
 );
 ```
 

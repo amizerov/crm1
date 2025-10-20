@@ -72,7 +72,7 @@ export async function switchUserCompany(formData: FormData) {
         SELECT 1 FROM Company 
         WHERE id = @companyId AND (
           ownerId = @userId OR 
-          id IN (SELECT companyId FROM [User] WHERE id = @userId AND companyId = @companyId)
+          id IN (SELECT companyId FROM [Users] WHERE id = @userId AND companyId = @companyId)
         )
       `, { companyId, userId: currentUser.id });
 
@@ -83,7 +83,7 @@ export async function switchUserCompany(formData: FormData) {
 
     // Обновляем компанию пользователя
     await query(`
-      UPDATE [User] SET 
+      UPDATE [Users] SET 
         companyId = @companyId
       WHERE id = @userId
     `, {

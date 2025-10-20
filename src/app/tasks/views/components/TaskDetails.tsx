@@ -8,6 +8,7 @@ import { getTaskStatuses } from '../../actions/getTaskStatuses';
 import { getPriorities } from '../../actions/getPriorities';
 import { getEmployees, getEmployeesByCompany } from '@/app/employees/actions/actions';
 import { getTaskActions, TaskAction } from '../../actions/taskActions';
+import { getTaskChecklist, ChecklistItem } from '../../actions/taskChecklist';
 import { getTaskTypes } from '../actions/taskTypes';
 import TaskDetailsTab from './TaskDetailsTab';
 import TaskActionsTab from './TaskActionsTab';
@@ -150,21 +151,24 @@ export default function TaskDetailsPanel({ task: initialTask, currentUserId, onC
   const [employees, setEmployees] = useState<Array<{id: number; Name: string; displayName?: string}>>([]);
   const [taskTypes, setTaskTypes] = useState<Array<{id: number; projectId: number; typeName: string; typeOrder: number; typeColor: string | null}>>([]);
   const [actions, setActions] = useState<TaskAction[]>([]);
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
   const [isPending, startTransition] = useTransition();
   const [isSaving, setIsSaving] = useState(false);
   
   // Загрузка справочников
   useEffect(() => {
     const loadData = async () => {
-      const [statusesData, prioritiesData, actionsData, taskTypesData] = await Promise.all([
+      const [statusesData, prioritiesData, actionsData, checklistData, taskTypesData] = await Promise.all([
         getTaskStatuses(task.projectId),
         getPriorities(),
         getTaskActions(task.id),
+        getTaskChecklist(task.id),
         task.projectId ? getTaskTypes(task.projectId) : Promise.resolve([])
       ]);
       setStatuses(statusesData);
       setPriorities(prioritiesData);
       setActions(actionsData);
+      setChecklist(checklistData);
       setTaskTypes(taskTypesData);
       
       // Загружаем сотрудников в зависимости от компании задачи
@@ -661,9 +665,14 @@ export default function TaskDetailsPanel({ task: initialTask, currentUserId, onC
             taskId={task.id}
             currentUserId={currentUserId}
             initialActions={actions}
+            initialChecklist={checklist}
             onActionsUpdate={async () => {
-              const newActions = await getTaskActions(task.id);
+              const [newActions, newChecklist] = await Promise.all([
+                getTaskActions(task.id),
+                getTaskChecklist(task.id)
+              ]);
               setActions(newActions);
+              setChecklist(newChecklist);
             }}
           />
         )}

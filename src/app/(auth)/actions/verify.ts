@@ -35,22 +35,22 @@ export async function verifyEmail(token: string) {
 
     // 3. Проверяем, не подтвержден ли уже пользователь
     const userResult = await query(
-      `SELECT isVerified FROM [User] WHERE id = @userId`,
+      `SELECT isVerified FROM [Users] WHERE id = @userId`,
       { userId }
     );
 
     if (userResult && userResult.length > 0 && userResult[0].isVerified) {
-      console.log('ℹ️ User already verified');
+      console.log('ℹ️ Users already verified');
       return { success: true, message: 'Email уже был подтвержден ранее!' };
     }
 
     // 4. Активируем пользователя
     console.log('🔄 Updating user isVerified to 1 for userId:', userId);
     const updateResult = await query(
-      `UPDATE [User] SET isVerified = 1 WHERE id = @userId`,
+      `UPDATE [Users] SET isVerified = 1 WHERE id = @userId`,
       { userId }
     );
-    console.log('✅ User verified:', userId, 'Update result:', updateResult);
+    console.log('✅ Users verified:', userId, 'Update result:', updateResult);
 
     // 5. Удаляем использованный токен
     console.log('🗑️ Deleting token...');

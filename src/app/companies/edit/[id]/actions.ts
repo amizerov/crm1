@@ -132,7 +132,7 @@ export async function deleteCompany(companyId: number) {
     // Удаляем компанию
     await query(`
       delete User_Company WHERE companyId = @companyId;
-      UPDATE [User] SET companyId = NULL WHERE companyId = @companyId;
+      UPDATE [Users] SET companyId = NULL WHERE companyId = @companyId;
       DELETE FROM Company WHERE id = @companyId`
     , { companyId });
 
@@ -170,7 +170,7 @@ export async function getCompanyById(companyId: number) {
         c.kpp,
         c.ogrn
       FROM Company c
-      LEFT JOIN [User] u ON c.ownerId = u.id
+      LEFT JOIN [Users] u ON c.ownerId = u.id
       WHERE c.id = @companyId
     `, { companyId });
     

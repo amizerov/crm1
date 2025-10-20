@@ -1,21 +1,21 @@
 import { query } from './connect';
 
-type User = {
+type Users = {
   id: number;
   login: string;
   nicName: string;
   password: string;
 };
 
-export async function getUsers(): Promise<User[]> {
+export async function getUsers(): Promise<Users[]> {
   try {
     const result = await query(`
       SELECT id, login, nicName, password
-      FROM [User]
+      FROM [Users]
       ORDER BY nicName
     `);
     
-    return result as User[];
+    return result as Users[];
   } catch (error) {
     console.error('Ошибка при получении пользователей:', error);
     throw new Error('Не удалось получить список пользователей');
@@ -33,7 +33,7 @@ export async function getUserCompanies(userId: number) {
       u.fullName as ownerName,
       CASE WHEN c.ownerId = @userId THEN 1 ELSE 0 END as isOwner
     FROM Company c
-    LEFT JOIN [User] u ON c.ownerId = u.id
+    LEFT JOIN [Users] u ON c.ownerId = u.id
     WHERE c.id IN (
       -- Компании, где пользователь владелец
       SELECT DISTINCT id 

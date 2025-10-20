@@ -42,7 +42,7 @@ END
 UPDATE e 
 SET e.companyId = u.companyId
 FROM Employee e
-INNER JOIN [User] u ON e.userId = u.id
+INNER JOIN [Users] u ON e.userId = u.id
 WHERE e.companyId IS NULL AND u.companyId IS NOT NULL;
 
 PRINT 'Обновление завершено';

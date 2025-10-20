@@ -13,12 +13,12 @@ SELECT TOP 1 @companyId = id FROM Company;
 -- Получаем первого партнёра (пользователь с записью в User_Company)
 SELECT TOP 1 @inviterUserId = uc.userId 
 FROM User_Company uc
-JOIN [User] u ON uc.userId = u.id;
+JOIN [Users] u ON uc.userId = u.id;
 
 -- Если нет партнёров, берём первого пользователя
 IF @inviterUserId IS NULL
 BEGIN
-    SELECT TOP 1 @inviterUserId = id FROM [User];
+    SELECT TOP 1 @inviterUserId = id FROM [Users];
 END
 
 -- Удаляем старое тестовое приглашение если есть
@@ -80,5 +80,5 @@ SELECT
     u.nicName as inviterName
 FROM Invitation i
 JOIN Company c ON i.companyId = c.id
-JOIN [User] u ON i.invitedByUserId = u.id
+JOIN [Users] u ON i.invitedByUserId = u.id
 WHERE i.token IN (@testToken, @testTokenPartner);
