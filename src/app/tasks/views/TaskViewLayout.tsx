@@ -291,7 +291,7 @@ export default function TaskViewLayout({
       case 'inbox':
         return <InboxView tasks={tasks} currentUserId={currentUserId} />;
       default:
-        return <TaskList {...commonProps} />;
+        return <KanbanBoard {...commonProps} />;
     }
   };
 
