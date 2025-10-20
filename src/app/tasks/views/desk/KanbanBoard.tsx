@@ -623,10 +623,8 @@ export default function KanbanBoard({
     <div 
       ref={boardRef}
       onMouseDown={handleBoardMouseDown}
-      className="h-full w-full overflow-x-auto"
+      className="h-full w-full overflow-x-auto hide-scrollbar"
       style={{
-        scrollbarWidth: 'thin',
-        scrollbarColor: '#cbd5e0 #f7fafc',
         cursor: isPanning ? 'grabbing' : 'grab',
       }}
     >
