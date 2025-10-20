@@ -2,6 +2,7 @@
 
 import { query } from '@/db/connect';
 import { revalidatePath } from 'next/cache';
+import { logTaskHistory } from './taskHistory';
 
 export interface ChecklistItem {
   id: number;
@@ -82,6 +83,12 @@ export async function addChecklistItem(
       userId,
     });
 
+    // Логируем в историю задачи
+    await logTaskHistory(taskId, {
+      actionType: 'checklist_item_added',
+      newValue: description.trim(),
+    });
+
     revalidatePath('/tasks/views');
   } catch (error) {
     console.error('Error adding checklist item:', error);
@@ -97,6 +104,19 @@ export async function updateChecklistItem(
   description: string
 ): Promise<void> {
   try {
+    // Получаем старое значение и taskId
+    const oldItemResult = await query(`
+      SELECT taskId, description
+      FROM TaskChecklist
+      WHERE id = @itemId
+    `, { itemId });
+
+    if (oldItemResult.length === 0) {
+      throw new Error('Пункт чеклиста не найден');
+    }
+
+    const { taskId, description: oldDescription } = oldItemResult[0];
+
     await query(`
       UPDATE TaskChecklist
       SET description = @description, dtu = GETDATE()
@@ -104,6 +124,13 @@ export async function updateChecklistItem(
     `, {
       itemId,
       description: description.trim(),
+    });
+
+    // Логируем в историю задачи
+    await logTaskHistory(taskId, {
+      actionType: 'checklist_item_edited',
+      oldValue: oldDescription,
+      newValue: description.trim(),
     });
 
     revalidatePath('/tasks/views');
@@ -121,6 +148,19 @@ export async function toggleChecklistItem(
   isCompleted: boolean
 ): Promise<void> {
   try {
+    // Получаем taskId и description
+    const itemResult = await query(`
+      SELECT taskId, description
+      FROM TaskChecklist
+      WHERE id = @itemId
+    `, { itemId });
+
+    if (itemResult.length === 0) {
+      throw new Error('Пункт чеклиста не найден');
+    }
+
+    const { taskId, description } = itemResult[0];
+
     await query(`
       UPDATE TaskChecklist
       SET isCompleted = @isCompleted, dtu = GETDATE()
@@ -128,6 +168,12 @@ export async function toggleChecklistItem(
     `, {
       itemId,
       isCompleted: isCompleted ? 1 : 0,
+    });
+
+    // Логируем в историю задачи
+    await logTaskHistory(taskId, {
+      actionType: isCompleted ? 'checklist_item_completed' : 'checklist_item_uncompleted',
+      newValue: description,
     });
 
     revalidatePath('/tasks/views');
@@ -155,6 +201,15 @@ export async function deleteChecklistItem(itemId: number): Promise<void> {
 
     const { taskId, orderInList } = itemResult[0];
 
+    // Получаем description для логирования
+    const descResult = await query(`
+      SELECT description
+      FROM TaskChecklist
+      WHERE id = @itemId
+    `, { itemId });
+
+    const description = descResult[0]?.description || '';
+
     // Удаляем пункт
     await query(`
       DELETE FROM TaskChecklist
@@ -167,6 +222,12 @@ export async function deleteChecklistItem(itemId: number): Promise<void> {
       SET orderInList = orderInList - 1
       WHERE taskId = @taskId AND orderInList > @orderInList
     `, { taskId, orderInList });
+
+    // Логируем в историю задачи
+    await logTaskHistory(taskId, {
+      actionType: 'checklist_item_deleted',
+      oldValue: description,
+    });
 
     revalidatePath('/tasks/views');
   } catch (error) {
@@ -226,6 +287,12 @@ export async function reorderChecklistItems(
       SET orderInList = @newOrder, dtu = GETDATE()
       WHERE id = @itemId
     `, { itemId, newOrder });
+
+    // Логируем в историю задачи
+    await logTaskHistory(taskId, {
+      actionType: 'checklist_item_reordered',
+      description: `Изменён порядок пункта с позиции ${oldOrder + 1} на позицию ${newOrder + 1}`,
+    });
 
     revalidatePath('/tasks/views');
   } catch (error) {

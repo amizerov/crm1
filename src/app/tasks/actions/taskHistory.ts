@@ -9,7 +9,9 @@ export interface TaskHistoryEntry {
                'updated' | 'deleted' | 'document_added' | 'document_deleted' | 
                'comment_added' | 'comment_edited' | 'comment_deleted' | 
                'moved' | 'deadline_changed' | 'startdate_changed' | 'description_changed' |
-               'name_changed' | 'executor_changed' | 'order_changed' | 'type_changed';
+               'name_changed' | 'executor_changed' | 'order_changed' | 'type_changed' |
+               'checklist_item_added' | 'checklist_item_completed' | 'checklist_item_uncompleted' |
+               'checklist_item_edited' | 'checklist_item_deleted' | 'checklist_item_reordered';
   fieldName?: string;
   oldValue?: string | null;
   newValue?: string | null;
@@ -169,6 +171,18 @@ export async function generateHistoryDescription(
         : 'обновил(а) задачу';
     case 'deleted':
       return 'удалил(а) задачу';
+    case 'checklist_item_added':
+      return `добавил(а) пункт чеклиста: "${formatValue(newValue)}"`;
+    case 'checklist_item_completed':
+      return `отметил(а) выполненным пункт: "${formatValue(newValue)}"`;
+    case 'checklist_item_uncompleted':
+      return `снял(а) отметку выполнения с пункта: "${formatValue(newValue)}"`;
+    case 'checklist_item_edited':
+      return `изменил(а) пункт чеклиста с "${formatValue(oldValue)}" на "${formatValue(newValue)}"`;
+    case 'checklist_item_deleted':
+      return `удалил(а) пункт чеклиста: "${formatValue(oldValue)}"`;
+    case 'checklist_item_reordered':
+      return 'изменил(а) порядок пунктов чеклиста';
     default:
       return 'выполнил(а) действие';
   }
