@@ -49,13 +49,19 @@ interface TaskViewLayoutProps {
   userCompanies: UserCompany[];
   statuses: StatusTask[];
   currentUserId: number;
+  tasksHistory: any[];
+  unreadCount: number;
+  tasksStatsMap: Map<number, { daysFromCreation: number; currentStatus: string }>;
 }
 
 export default function TaskViewLayout({ 
   initialTasks, 
   userCompanies, 
   statuses,
-  currentUserId
+  currentUserId,
+  tasksHistory,
+  unreadCount,
+  tasksStatsMap
 }: TaskViewLayoutProps) {
   // Общее состояние для всех видов
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
@@ -289,7 +295,7 @@ export default function TaskViewLayout({
       case 'gantt':
         return <TaskGanttDiagram {...commonProps} />;
       case 'inbox':
-        return <InboxView tasks={tasks} currentUserId={currentUserId} />;
+        return <InboxView tasks={tasks} currentUserId={currentUserId} tasksHistory={tasksHistory} tasksStatsMap={tasksStatsMap} />;
       default:
         return <KanbanBoard {...commonProps} />;
     }
@@ -333,6 +339,8 @@ export default function TaskViewLayout({
             onProjectChange={handleProjectChange}
             isPending={isPending}
             onViewChange={handleViewChange}
+            currentView={currentView}
+            unreadCount={unreadCount}
           />
         )}
 

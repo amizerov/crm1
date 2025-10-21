@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { getTasks } from '../actions/getTasks';
 import { getUserCompanies } from '../actions/getUserCompanies';
 import { getTaskStatuses } from '../actions/getTaskStatuses';
+import { getTasksHistory, getUnreadHistoryCount, getTasksStatsMap } from './inbox/actions/getTasksHistory';
 import { query } from '@/db/connect';
 import TaskViewLayout from './TaskViewLayout';
 import Link from 'next/link';
@@ -111,11 +112,17 @@ export default async function TasksPage() {
   }
 
   // Если все проверки пройдены - загружаем данные для задач
-  const [initialTasks, userCompanies, statuses] = await Promise.all([
+  const [initialTasks, userCompanies, statuses, tasksHistory, unreadCount] = await Promise.all([
     getTasks(),
     getUserCompanies(),
-    getTaskStatuses()
+    getTaskStatuses(),
+    getTasksHistory(),
+    getUnreadHistoryCount()
   ]);
+
+  // Получаем уникальные taskId из истории и загружаем статистику
+  const uniqueTaskIds = Array.from(new Set(tasksHistory.map(item => item.taskId)));
+  const tasksStatsMap = await getTasksStatsMap(uniqueTaskIds);
 
   return (
     <TaskViewLayout
@@ -123,6 +130,9 @@ export default async function TasksPage() {
       userCompanies={userCompanies}
       statuses={statuses}
       currentUserId={currentUser.id}
+      tasksHistory={tasksHistory}
+      unreadCount={unreadCount}
+      tasksStatsMap={tasksStatsMap}
     />
   );
 }
