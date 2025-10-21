@@ -54,7 +54,7 @@ export default function InboxView({ tasks, currentUserId, tasksHistory, tasksSta
                 Входящие
               </h1>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                История изменений по всем задачам
+                История изменений по всем задачам и другие события по вашим компаниям.
               </p>
             </div>
           </div>
