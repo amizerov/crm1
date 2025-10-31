@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Аутентификация - Argo CRM',
-  description: 'Вход и регистрация в системе Argo CRM',
+  title: 'Аутентификация - TMS, RCC',
+  description: 'Вход и регистрация в системе TMS, RCC',
 };
 
 export default function AuthLayout({

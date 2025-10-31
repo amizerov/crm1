@@ -8,7 +8,7 @@ export default function RegisterPage() {
           Регистрация
         </h1>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Создайте аккаунт в Argo CRM
+          Создайте аккаунт в TMS, RCC
         </p>
       </div>
 

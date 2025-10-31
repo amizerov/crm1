@@ -9,7 +9,7 @@ import TaskViewLayout from './TaskViewLayout';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Задачи - Argo CRM',
+  title: 'Задачи - TMS, RCC',
   description: 'Управление задачами',
 };
 

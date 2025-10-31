@@ -15,13 +15,13 @@ export default async function Header() {
           >
             <Image 
               src="/logo1.png" 
-              alt="Argo CRM Logo" 
+              alt="TMS, RCC Logo" 
               width={40}
               height={40}
               className="rounded object-contain"
             />
             <span className="text-2xl font-bold text-blue-900 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
-              Argo CRM
+              TMS, RCC
             </span>
           </Link>
           

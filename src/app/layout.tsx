@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Argo CRM",
-  description: "Система управления взаимоотношениями с клиентами",
+  title: "Task Management System",
+  description: "Система управления задачами",
 };
 
 export default function RootLayout({

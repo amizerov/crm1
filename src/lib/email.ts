@@ -23,7 +23,7 @@ export async function sendEmail(
   text: string
 ): Promise<{ success?: boolean; error?: string }> {
   const mailOptions = {
-    from: `"Argo CRM" <${process.env.SMTP_USER}>`,
+    from: `"TMS, RCC" <${process.env.SMTP_USER}>`,
     to,
     subject,
     html,
@@ -49,7 +49,7 @@ export async function sendEmail(
 export async function sendVerificationEmail(email: string, token: string) {
   const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify?token=${token}`;
 
-  const subject = 'Подтверждение регистрации в Argo CRM';
+  const subject = 'Подтверждение регистрации в TMS, RCC';
   const html = `
       <!DOCTYPE html>
       <html>
@@ -121,11 +121,11 @@ export async function sendVerificationEmail(email: string, token: string) {
         <body>
           <div class="container">
             <div class="header">
-              <h1>🎉 Добро пожаловать в Argo CRM!</h1>
+              <h1>🎉 Добро пожаловать в TMS, RCC!</h1>
             </div>
             <div class="content">
               <p>Здравствуйте!</p>
-              <p>Спасибо за регистрацию в <strong>Argo CRM</strong>. Для завершения регистрации необходимо подтвердить ваш email адрес.</p>
+              <p>Спасибо за регистрацию в <strong>TMS, RCC</strong>. Для завершения регистрации необходимо подтвердить ваш email адрес.</p>
               
               <p style="text-align: center;">
                 <a href="${verificationUrl}" class="button">Подтвердить Email</a>
@@ -140,29 +140,29 @@ export async function sendVerificationEmail(email: string, token: string) {
                 <strong>⏰ Важно:</strong> Ссылка действительна 24 часа.
               </div>
               
-              <p>Если вы не регистрировались в Argo CRM, просто проигнорируйте это письмо.</p>
+              <p>Если вы не регистрировались в TMS, RCC, просто проигнорируйте это письмо.</p>
               
-              <p>С уважением,<br>Команда Argo CRM</p>
+              <p>С уважением,<br>Команда TMS, RCC</p>
             </div>
             <div class="footer">
-              <p>© 2025 Argo CRM. Все права защищены.</p>
+              <p>© 2025 TMS, RCC. Все права защищены.</p>
             </div>
           </div>
         </body>
       </html>
     `;
   const text = `
-Добро пожаловать в Argo CRM!
+Добро пожаловать в TMS, RCC!
 
 Для подтверждения регистрации перейдите по ссылке:
 ${verificationUrl}
 
 Ссылка действительна 24 часа.
 
-Если вы не регистрировались в Argo CRM, просто проигнорируйте это письмо.
+Если вы не регистрировались в TMS, RCC, просто проигнорируйте это письмо.
 
 С уважением,
-Команда Argo CRM
+Команда TMS, RCC
     `.trim();
 
   return sendEmail(email, subject, html, text);

@@ -31,7 +31,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                     Вход в систему
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Войдите в Argo CRM
+                    Войдите в TMS, RCC
                 </p>
             </div>
 
