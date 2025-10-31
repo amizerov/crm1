@@ -30,10 +30,7 @@ export default async function HomePage() {
           {/* Right: short CTA and templates */}
           <aside className="w-1/3 border-l border-gray-100 dark:border-gray-800 p-6">
             <div className="sticky top-6">
-              <div className="mb-4">
-                <span className="inline-block px-3 py-1 bg-green-600 text-white text-xs font-semibold rounded">БЕСПЛАТНО</span>
-              </div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-50">Argo Task Manager — для команд и личных дел</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-50">RCC, Task Management System — для команд и личных дел</h2>
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">Управляйте разработкой и повседневными делами с помощью шаблонов и визуальных инструментов.</p>
 
               <div className="mt-6">
@@ -46,7 +43,6 @@ export default async function HomePage() {
               </div>
 
               <div className="mt-6">
-                <Link href="/register" className="block w-full text-center bg-blue-900 dark:bg-blue-600 text-white py-2 rounded-md font-medium hover:bg-blue-800 dark:hover:bg-blue-500 transition-colors">Начать бесплатно</Link>
                 <Link href="/login" className="block w-full text-center mt-3 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-200 text-sm rounded-md py-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">Войти</Link>
               </div>
             </div>
