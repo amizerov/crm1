@@ -11,9 +11,10 @@ import TaskList from './list/TaskList';
 import KanbanBoard from './desk/KanbanBoard';
 import TaskGanttDiagram from './gantt/TaskGanttDiagram';
 import InboxView from './inbox/InboxView';
+import ProjectView from './project/ProjectView';
 import { StatusTask } from '@/app/projects/actions/statusActions';
 
-type ViewMode = 'list' | 'desk' | 'gantt' | 'inbox';
+type ViewMode = 'list' | 'desk' | 'gantt' | 'inbox' | 'project';
 
 interface Task {
   id: number;
@@ -92,7 +93,7 @@ export default function TaskViewLayout({
       const savedLeftPanelVisible = localStorage.getItem('leftPanelVisible');
       const savedFullscreen = localStorage.getItem('taskFullscreen');
       
-      if (savedView && ['list', 'desk', 'gantt', 'inbox'].includes(savedView)) {
+      if (savedView && ['list', 'desk', 'gantt', 'inbox', 'project'].includes(savedView)) {
         setCurrentView(savedView);
       }
       if (savedLeftPanelVisible !== null) {
@@ -200,6 +201,8 @@ export default function TaskViewLayout({
   const handleViewChange = (view: ViewMode) => {
     setCurrentView(view);
     localStorage.setItem('taskView', view);
+    // Автоматически закрываем панель деталей задачи при смене вида
+    setSelectedTask(null);
   };
 
   const handleCompanyChange = async (companyId: number) => {
@@ -207,6 +210,8 @@ export default function TaskViewLayout({
     setSelectedProjectId(0);
     localStorage.setItem('selectedCompanyId', companyId.toString());
     localStorage.removeItem('selectedProjectId');
+    // Автоматически закрываем панель деталей задачи при смене компании
+    setSelectedTask(null);
     
     startTransition(async () => {
       await loadDataForCompany(companyId);
@@ -216,6 +221,8 @@ export default function TaskViewLayout({
   const handleProjectChange = async (projectId: number) => {
     setSelectedProjectId(projectId);
     localStorage.setItem('selectedProjectId', projectId.toString());
+    // Автоматически закрываем панель деталей задачи при смене проекта
+    setSelectedTask(null);
     
     startTransition(async () => {
       await loadDataForProject(projectId);
@@ -296,6 +303,8 @@ export default function TaskViewLayout({
         return <TaskGanttDiagram {...commonProps} />;
       case 'inbox':
         return <InboxView tasks={tasks} currentUserId={currentUserId} tasksHistory={tasksHistory} tasksStatsMap={tasksStatsMap} />;
+      case 'project':
+        return <ProjectView projectId={selectedProjectId} currentUserId={currentUserId} />;
       default:
         return <KanbanBoard {...commonProps} />;
     }
@@ -341,6 +350,7 @@ export default function TaskViewLayout({
             onViewChange={handleViewChange}
             currentView={currentView}
             unreadCount={unreadCount}
+            onCloseTaskDetails={() => setSelectedTask(null)}
           />
         )}
 
