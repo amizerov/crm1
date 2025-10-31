@@ -30,16 +30,64 @@ export default async function HomePage() {
           {/* Right: short CTA and templates */}
           <aside className="w-1/3 border-l border-gray-100 dark:border-gray-800 p-6">
             <div className="sticky top-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-50">RCC, Task Management System — для команд и личных дел</h2>
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">Управляйте разработкой и повседневными делами с помощью шаблонов и визуальных инструментов.</p>
+
+              <div className="mt-6">
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Ключевые возможности</h4>
+                <ul className="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                  <li className="flex items-start space-x-2">
+                    <span className="text-blue-500 mt-0.5">•</span>
+                    <span>Канбан-доски с drag & drop</span>
+                  </li>
+                  <li className="flex items-start space-x-2">
+                    <span className="text-blue-500 mt-0.5">•</span>
+                    <span>Вложенные задачи и подзадачи</span>
+                  </li>
+                  <li className="flex items-start space-x-2">
+                    <span className="text-blue-500 mt-0.5">•</span>
+                    <span>Управление проектами и клиентами</span>
+                  </li>
+                  <li className="flex items-start space-x-2">
+                    <span className="text-blue-500 mt-0.5">•</span>
+                    <span>История изменений и комментарии</span>
+                  </li>
+                  <li className="flex items-start space-x-2">
+                    <span className="text-blue-500 mt-0.5">•</span>
+                    <span>Аналитика и отчеты</span>
+                  </li>
+                </ul>
+              </div>
 
               <div className="mt-6">
                 <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Шаблоны Канбан колонок</h4>
                 <ul className="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                  <li className="px-3 py-2 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">Agile (To Do / In Progress / Review / Done)</li>
-                  <li className="px-3 py-2 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">Scrum (Backlog / Sprint / In Progress / Done)</li>
-                  <li className="px-3 py-2 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">Личный (Идея / Завтра / Сегодня / Готово)</li>
+                  <li className="px-3 py-2 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">
+                    <strong>Agile</strong> (To Do / In Progress / Review / Done)
+                  </li>
+                  <li className="px-3 py-2 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">
+                    <strong>Scrum</strong> (Backlog / Sprint / In Progress / Done)
+                  </li>
+                  <li className="px-3 py-2 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600">
+                    <strong>Личный</strong> (Идеи / Завтра / Сегодня / Готово)
+                  </li>
                 </ul>
+              </div>
+
+              <div className="mt-6">
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Для кого подходит</h4>
+                <div className="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                  <div className="flex items-center space-x-2">
+                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                    <span>IT команды и разработчики</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    <span>Проектные менеджеры</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                    <span>Фрилансеры и индивидуалы</span>
+                  </div>
+                </div>
               </div>
 
               <div className="mt-6">
