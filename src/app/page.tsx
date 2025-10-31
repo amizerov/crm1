@@ -40,11 +40,11 @@ export default async function HomePage() {
                   </li>
                   <li className="flex items-start space-x-2">
                     <span className="text-blue-500 mt-0.5">•</span>
-                    <span>Вложенные задачи и подзадачи</span>
+                    <span>Вложенные задачи и чек-листы</span>
                   </li>
                   <li className="flex items-start space-x-2">
                     <span className="text-blue-500 mt-0.5">•</span>
-                    <span>Управление проектами и клиентами</span>
+                    <span>Управление проектами и документами</span>
                   </li>
                   <li className="flex items-start space-x-2">
                     <span className="text-blue-500 mt-0.5">•</span>
