@@ -5,6 +5,7 @@ import { getProjectDetails, ProjectDetails } from './actions/getDetails';
 import { getProjectDocuments, ProjectDocument } from './actions/getDocuments';
 import { getProjectMessages, addProjectMessage, ProjectMessage } from './actions/getMessages';
 import { getProjectTaskStats, ProjectTaskStats } from './actions/getTasks';
+import Description from './components/Description';
 
 interface ProjectViewProps {
   projectId: number;
@@ -174,24 +175,19 @@ export default function ProjectView({ projectId, currentUserId }: ProjectViewPro
       </div>
 
       {/* Содержимое табов */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-hidden flex flex-col">
         {activeTab === 'description' && (
-          <div className="p-6 space-y-6">
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">
-                Описание проекта
-              </h3>
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                  {project.description || 'Описание не добавлено'}
-                </p>
-              </div>
-            </div>
+          <div className="flex-1 flex flex-col min-h-0 p-6">
+            <Description 
+              projectId={projectId}
+              initialDescription={project.description}
+              onDescriptionUpdated={loadProjectData}
+            />
           </div>
         )}
 
         {activeTab === 'documents' && (
-          <div className="p-6">
+          <div className="flex-1 overflow-auto p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
                 Документы проекта

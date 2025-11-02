@@ -66,7 +66,7 @@ export async function getProjectDocuments(projectId: number): Promise<ProjectDoc
         t.id as task_id,
         t.taskName as task_title
       FROM TaskDocuments td
-      INNER JOIN tasks t ON td.taskId = t.id
+      INNER JOIN Task t ON td.taskId = t.id
       LEFT JOIN [Users] u ON td.uploadedBy = u.id
       WHERE t.projectId = @projectId
       
