@@ -315,7 +315,9 @@ export default function TiptapEditor({
           editable ? 'rounded-b-lg' : 'rounded-lg'
         } overflow-auto`}
         style={{ 
-          height: editable ? 'calc(100vh - 372px)' : 'calc(100vh - 315px)', 
+          height: isFullscreen 
+            ? (editable ? 'calc(100vh - 155px)' : 'calc(100vh - 100px)')
+            : (editable ? 'calc(100vh - 372px)' : 'calc(100vh - 315px)'),
           minHeight: '300px' 
         }}
       >

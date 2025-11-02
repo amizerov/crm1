@@ -10,6 +10,17 @@ export default function ResizableImageTemplate({ node, updateAttributes, selecte
   const [resizeHandle, setResizeHandle] = useState<string | null>(null);
   const [startSize, setStartSize] = useState({ width: 0, height: 0 });
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+  const [showModal, setShowModal] = useState(false);
+
+  const handleDoubleClick = () => {
+    if (!isEditable) {
+      setShowModal(true);
+    }
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+  };
 
   const handleMouseDown = (e: React.MouseEvent, handle: string) => {
     e.preventDefault();
@@ -88,34 +99,54 @@ export default function ResizableImageTemplate({ node, updateAttributes, selecte
     updateAttributes({ align });
   };
 
+  const setDisplayMode = (mode: string) => {
+    console.log('Changing display mode to:', mode);
+    updateAttributes({ displayMode: mode });
+  };
+
   const width = node.attrs.width || 'auto';
   const height = node.attrs.height || 'auto';
   const align = node.attrs.align || 'left';
+  const displayMode = node.attrs.displayMode || 'float';
 
   let containerStyle: React.CSSProperties = {
-    display: 'inline-block',
+    display: displayMode === 'inline' ? 'inline-block' : 'inline-block',
     position: 'relative',
     maxWidth: '100%',
   };
 
-  if (align === 'center') {
+  if (displayMode === 'float') {
+    if (align === 'center') {
+      containerStyle = {
+        ...containerStyle,
+        display: 'block',
+        marginLeft: 'auto',
+        marginRight: 'auto',
+        float: 'none',
+      };
+    } else if (align === 'right') {
+      containerStyle = {
+        ...containerStyle,
+        float: 'right',
+        marginLeft: '1rem',
+        marginRight: '0',
+      };
+    } else if (align === 'left') {
+      containerStyle = {
+        ...containerStyle,
+        float: 'left',
+        marginRight: '1rem',
+        marginLeft: '0',
+      };
+    }
+  } else {
+    // Режим "В тексте" - как inline элемент
     containerStyle = {
-      ...containerStyle,
-      display: 'block',
-      marginLeft: 'auto',
-      marginRight: 'auto',
-    };
-  } else if (align === 'right') {
-    containerStyle = {
-      ...containerStyle,
-      float: 'right',
-      marginLeft: '1rem',
-    };
-  } else if (align === 'left') {
-    containerStyle = {
-      ...containerStyle,
-      float: 'left',
-      marginRight: '1rem',
+      display: 'inline-block',
+      position: 'relative',
+      verticalAlign: 'middle',
+      margin: '0 2px',
+      maxWidth: '100%',
     };
   }
 
@@ -123,9 +154,10 @@ export default function ResizableImageTemplate({ node, updateAttributes, selecte
     <NodeViewWrapper
       className="resizable-image-wrapper"
       style={containerStyle}
+      data-drag-handle={isEditable ? "" : undefined}
     >
       <div
-        className={`relative inline-block ${selected && isEditable ? 'ring-2 ring-blue-500' : ''}`}
+        className={`relative inline-block ${selected && isEditable ? 'ring-2 ring-gray-400' : ''}`}
         style={{ maxWidth: '100%' }}
       >
         <img
@@ -138,110 +170,129 @@ export default function ResizableImageTemplate({ node, updateAttributes, selecte
             height,
             display: 'block',
             maxWidth: '100%',
+            cursor: isEditable ? 'move' : 'pointer',
           }}
-          draggable={false}
+          draggable={isEditable}
+          data-drag-handle={isEditable ? "" : undefined}
+          onDoubleClick={handleDoubleClick}
         />
 
         {selected && isEditable && (
           <>
-            {/* Ручка для перетаскивания */}
-            <div 
-              className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-blue-500 text-white text-xs rounded cursor-move hover:bg-blue-600 flex items-center gap-1"
-              data-drag-handle=""
-              title="Перетащите для перемещения"
-            >
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M9 3L5 6.99h3V14h2V6.99h3L9 3zm7 14.01V10h-2v7.01h-3L15 21l4-3.99h-3z"/>
-              </svg>
-              <span>Переместить</span>
-            </div>
-
-            {/* Кнопки выравнивания */}
-            <div className="absolute -top-10 left-0 flex gap-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded shadow-lg p-1 z-10" draggable={false}>
-              <button
-                onClick={() => setAlignment('left')}
-                className={`p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer ${
-                  align === 'left' ? 'bg-blue-100 dark:bg-blue-900' : ''
-                }`}
-                title="Влево"
-                draggable={false}
-              >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M3 3h18v2H3V3zm0 4h12v2H3V7zm0 4h18v2H3v-2zm0 4h12v2H3v-2zm0 4h18v2H3v-2z"/>
-                </svg>
-              </button>
-              <button
-                onClick={() => setAlignment('center')}
-                className={`p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer ${
-                  align === 'center' ? 'bg-blue-100 dark:bg-blue-900' : ''
-                }`}
-                title="По центру"
-                draggable={false}
-              >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M3 3h18v2H3V3zm4 4h10v2H7V7zm-4 4h18v2H3v-2zm4 4h10v2H7v-2zm-4 4h18v2H3v-2z"/>
-                </svg>
-              </button>
-              <button
-                onClick={() => setAlignment('right')}
-                className={`p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer ${
-                  align === 'right' ? 'bg-blue-100 dark:bg-blue-900' : ''
-                }`}
-                title="Вправо"
-                draggable={false}
-              >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M3 3h18v2H3V3zm6 4h12v2H9V7zm-6 4h18v2H3v-2zm6 4h12v2H9v-2zm-6 4h18v2H3v-2z"/>
-                </svg>
-              </button>
-            </div>
-
-            {/* Маркеры изменения размера */}
+            {/* Маркеры изменения размера - стандартные серые */}
             <div
-              className="absolute -top-1 -left-1 w-3 h-3 bg-blue-500 border-2 border-white rounded-full cursor-nw-resize z-10"
+              className="absolute -top-1 -left-1 w-2 h-2 bg-gray-400 border border-gray-600 cursor-nw-resize z-10"
               onMouseDown={(e) => handleMouseDown(e, 'nw')}
               draggable={false}
             />
             <div
-              className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 border-2 border-white rounded-full cursor-ne-resize z-10"
+              className="absolute -top-1 -right-1 w-2 h-2 bg-gray-400 border border-gray-600 cursor-ne-resize z-10"
               onMouseDown={(e) => handleMouseDown(e, 'ne')}
               draggable={false}
             />
             <div
-              className="absolute -bottom-1 -left-1 w-3 h-3 bg-blue-500 border-2 border-white rounded-full cursor-sw-resize z-10"
+              className="absolute -bottom-1 -left-1 w-2 h-2 bg-gray-400 border border-gray-600 cursor-sw-resize z-10"
               onMouseDown={(e) => handleMouseDown(e, 'sw')}
               draggable={false}
             />
             <div
-              className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 border-2 border-white rounded-full cursor-se-resize z-10"
+              className="absolute -bottom-1 -right-1 w-2 h-2 bg-gray-400 border border-gray-600 cursor-se-resize z-10"
               onMouseDown={(e) => handleMouseDown(e, 'se')}
               draggable={false}
             />
 
             {/* Маркеры на сторонах */}
             <div
-              className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-500 border-2 border-white rounded-full cursor-n-resize z-10"
+              className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-400 border border-gray-600 cursor-n-resize z-10"
               onMouseDown={(e) => handleMouseDown(e, 'n')}
               draggable={false}
             />
             <div
-              className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-blue-500 border-2 border-white rounded-full cursor-s-resize z-10"
+              className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-400 border border-gray-600 cursor-s-resize z-10"
               onMouseDown={(e) => handleMouseDown(e, 's')}
               draggable={false}
             />
             <div
-              className="absolute -left-1 top-1/2 -translate-y-1/2 w-3 h-3 bg-blue-500 border-2 border-white rounded-full cursor-w-resize z-10"
+              className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-gray-400 border border-gray-600 cursor-w-resize z-10"
               onMouseDown={(e) => handleMouseDown(e, 'w')}
               draggable={false}
             />
             <div
-              className="absolute -right-1 top-1/2 -translate-y-1/2 w-3 h-3 bg-blue-500 border-2 border-white rounded-full cursor-e-resize z-10"
+              className="absolute -right-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-gray-400 border border-gray-600 cursor-e-resize z-10"
               onMouseDown={(e) => handleMouseDown(e, 'e')}
               draggable={false}
             />
+
+            {/* Панель режимов отображения внутри изображения */}
+            <div className="absolute top-2 right-2 flex gap-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded shadow-lg p-1 z-20" draggable={false}>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setDisplayMode('float');
+                }}
+                className={`p-1.5 rounded transition-colors ${
+                  displayMode === 'float' 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
+                }`}
+                title="Квадрат (обтекание текстом)"
+                draggable={false}
+                type="button"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M3 3h6v6H3V3zm8 0h10v2H11V3zm0 4h10v2H11V7zm-8 6h6v6H3v-6zm8 0h10v2H11v-2zm0 4h10v2H11v-2z"/>
+                </svg>
+              </button>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setDisplayMode('inline');
+                }}
+                className={`p-1.5 rounded transition-colors ${
+                  displayMode === 'inline' 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
+                }`}
+                title="В тексте (как строка)"
+                draggable={false}
+                type="button"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M3 3h18v2H3V3zm0 4h8v2H3V7zm10 0h8v2h-8V7zm-10 4h6v2H3v-2zm8 0h10v2H11v-2zm-8 4h18v2H3v-2zm0 4h18v2H3v-2z"/>
+                </svg>
+              </button>
+            </div>
           </>
         )}
       </div>
+
+      {/* Модальное окно для просмотра изображения */}
+      {showModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+          onClick={closeModal}
+        >
+          <div className="relative max-w-screen-lg max-h-screen-lg p-4">
+            <button
+              onClick={closeModal}
+              className="absolute -top-2 -right-2 w-8 h-8 bg-white rounded-full flex items-center justify-center text-gray-600 hover:text-gray-800 shadow-lg z-10"
+              title="Закрыть"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <img
+              src={node.attrs.src}
+              alt={node.attrs.alt || ''}
+              className="max-w-full max-h-full object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
     </NodeViewWrapper>
   );
 }

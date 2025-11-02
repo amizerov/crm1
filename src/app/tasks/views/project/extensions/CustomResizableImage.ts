@@ -57,6 +57,17 @@ export const CustomResizableImage = Image.extend({
           };
         },
       },
+      displayMode: {
+        default: 'float',
+        parseHTML: element => {
+          return element.getAttribute('data-display-mode') || 'float';
+        },
+        renderHTML: attributes => {
+          return {
+            'data-display-mode': attributes.displayMode,
+          };
+        },
+      },
     };
   },
 
