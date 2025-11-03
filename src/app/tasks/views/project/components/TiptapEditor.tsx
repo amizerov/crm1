@@ -55,7 +55,7 @@ export default function TiptapEditor({
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-sm dark:prose-invert max-w-none focus:outline-none px-4 py-3',
+        class: `prose prose-sm dark:prose-invert max-w-none focus:outline-none px-4 py-3 ${editable ? 'editor-editable' : 'editor-readonly'}`,
       },
     },
   });
@@ -312,12 +312,12 @@ export default function TiptapEditor({
 
       <div 
         className={`border border-gray-200 dark:border-gray-600 ${
-          editable ? 'rounded-b-lg' : 'rounded-lg'
+          editable ? 'rounded-b-lg bg-amber-50 dark:bg-[rgb(40,48,65)]' : 'rounded-lg bg-white dark:bg-gray-800'
         } overflow-auto`}
         style={{ 
           height: isFullscreen 
-            ? (editable ? 'calc(100vh - 155px)' : 'calc(100vh - 100px)')
-            : (editable ? 'calc(100vh - 372px)' : 'calc(100vh - 315px)'),
+            ? (editable ? 'calc(100vh - 157px)' : 'calc(100vh - 100px)')
+            : (editable ? 'calc(100vh - 382px)' : 'calc(100vh - 325px)'),
           minHeight: '300px' 
         }}
       >
@@ -327,17 +327,18 @@ export default function TiptapEditor({
       <style jsx global>{`
         .ProseMirror {
           padding: 1rem;
-          background: white;
           min-height: 100%;
           outline: none;
         }
         
-        .dark .ProseMirror {
-          background: rgb(31, 41, 55);
+        /* Режим просмотра */
+        .ProseMirror.editor-readonly {
+          background: transparent;
         }
         
-        .dark .ProseMirror {
-          background: rgb(31, 41, 55);
+        /* Режим редактирования */
+        .ProseMirror.editor-editable {
+          background: transparent;
         }
         
         /* Стили для изображений с возможностью изменения размера */
