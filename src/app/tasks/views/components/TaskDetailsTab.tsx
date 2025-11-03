@@ -1,5 +1,7 @@
 'use client';
 
+import TaskDescription from './TaskDescription';
+
 interface Task {
   id: number;
   parentId?: number;
@@ -173,18 +175,16 @@ export default function TaskDetailsTab({
   };
 
   return (
-    <>
+    <div className="flex flex-col h-full">
       {/* ID задачи */}
-      <div className="text-xs text-gray-500 dark:text-gray-400">
+      <div className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
         ID: #{task.id}
       </div>
 
       {isEditing ? (
-        <>
-          {/* Форма редактирования */}
-          
+        <div className="flex flex-col flex-1 min-h-0">
           {/* Название */}
-          <div className="mb-3">
+          <div className="mb-3 flex-shrink-0">
             <input
               type="text"
               value={formData.taskName}
@@ -196,7 +196,7 @@ export default function TaskDetailsTab({
           </div>
 
           {/* Список полей */}
-          <div className="space-y-2 text-sm">
+          <div className="space-y-2 text-sm flex-shrink-0">
             {/* Этап */}
             <div className="flex items-center gap-3">
               <label className="text-slate-500 dark:text-slate-400 w-28 flex-shrink-0">Этап:</label>
@@ -282,32 +282,29 @@ export default function TaskDetailsTab({
           </div>
 
           {/* Описание на всю ширину */}
-          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex flex-col flex-1 min-h-0">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 flex-shrink-0">
               Описание:
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => onFormDataChange({...formData, description: e.target.value})}
-              rows={6}
               placeholder="Введите описание задачи..."
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-slate-100 text-sm"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-slate-100 text-sm flex-1 resize-none"
             />
           </div>
-        </>
+        </div>
       ) : (
-        <>
-          {/* Режим просмотра */}
-          
+        <div className="flex flex-col flex-1 min-h-0">
           {/* Название */}
-          <div className="mb-4">
+          <div className="mb-4 flex-shrink-0">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
               {task.taskName}
             </h3>
           </div>
 
           {/* Список свойств */}
-          <div className="space-y-2 text-sm">
+          <div className="space-y-2 text-sm flex-shrink-0">
             {/* Этап */}
             <div className="flex items-center gap-3">
               <span className="text-slate-500 dark:text-slate-400 w-28 flex-shrink-0">Этап:</span>
@@ -405,16 +402,15 @@ export default function TaskDetailsTab({
           </div>
 
           {/* Описание/Цель задачи на всю ширину */}
-          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-            <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Описание / Цель задачи:
-            </div>
-            <div className="text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 p-3 rounded whitespace-pre-wrap min-h-[60px]">
-              {task.description || 'Описание не указано'}
-            </div>
-          </div>
-        </>
+          <TaskDescription
+            taskId={task.id}
+            projectId={task.projectId || 0}
+            taskName={task.taskName}
+            description={task.description || ''}
+            isEditable={true}
+          />
+        </div>
       )}
-    </>
+    </div>
   );
 }

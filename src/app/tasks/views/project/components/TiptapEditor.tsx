@@ -7,14 +7,17 @@ import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
 import { useEffect, useRef, useState } from 'react';
 import { uploadProjectImage } from '../actions/uploadImage';
+import { uploadTaskImage } from '../../../actions/uploadTaskImage';
 import { CustomResizableImage } from '../extensions/CustomResizableImage';
 import MediaLibrary from './MediaLibrary';
+import TaskMediaLibrary from '../../components/TaskMediaLibrary';
 
 interface TiptapEditorProps {
   content: string;
   onChange: (html: string) => void;
   editable: boolean;
   projectId: number;
+  taskId?: number;
   onImageUploadStart?: () => void;
   onImageUploadEnd?: () => void;
   isFullscreen?: boolean;
@@ -25,6 +28,7 @@ export default function TiptapEditor({
   onChange, 
   editable, 
   projectId,
+  taskId,
   onImageUploadStart,
   onImageUploadEnd,
   isFullscreen = false
@@ -94,7 +98,10 @@ export default function TiptapEditor({
       const formData = new FormData();
       formData.append('file', file);
 
-      const result = await uploadProjectImage(projectId, formData);
+      // Используем разные функции загрузки в зависимости от того, для задачи ли это или для проекта
+      const result = taskId 
+        ? await uploadTaskImage(projectId, taskId, formData)
+        : await uploadProjectImage(projectId, formData);
       
       if (result.success && result.path) {
         editor.chain().focus().setImage({ src: result.path }).run();
@@ -471,15 +478,28 @@ export default function TiptapEditor({
       
       {/* Медиатека */}
       {showMediaLibrary && (
-        <MediaLibrary
-          projectId={projectId}
-          onImageSelect={(imagePath) => {
-            if (editor) {
-              editor.chain().focus().setImage({ src: imagePath }).run();
-            }
-          }}
-          onClose={() => setShowMediaLibrary(false)}
-        />
+        taskId ? (
+          <TaskMediaLibrary
+            projectId={projectId}
+            taskId={taskId}
+            onImageSelect={(imagePath) => {
+              if (editor) {
+                editor.chain().focus().setImage({ src: imagePath }).run();
+              }
+            }}
+            onClose={() => setShowMediaLibrary(false)}
+          />
+        ) : (
+          <MediaLibrary
+            projectId={projectId}
+            onImageSelect={(imagePath) => {
+              if (editor) {
+                editor.chain().focus().setImage({ src: imagePath }).run();
+              }
+            }}
+            onClose={() => setShowMediaLibrary(false)}
+          />
+        )
       )}
     </div>
   );
