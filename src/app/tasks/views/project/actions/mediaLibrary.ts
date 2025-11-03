@@ -19,7 +19,7 @@ export async function getProjectImages(projectId: number): Promise<{ success: bo
       return { success: false, message: 'Не авторизован' };
     }
 
-    const imagesDir = path.join(process.cwd(), 'public', 'projectdescription', projectId.toString());
+    const imagesDir = path.join(process.cwd(), 'public', 'media', `p${projectId}`);
     
     try {
       // Проверяем существует ли папка
@@ -42,7 +42,7 @@ export async function getProjectImages(projectId: number): Promise<{ success: bo
         
         return {
           name: filename,
-          path: `/projectdescription/${projectId}/${filename}`,
+          path: `/media/p${projectId}/${filename}`,
           size: stats.size,
           lastModified: stats.mtime.getTime()
         };
@@ -72,7 +72,7 @@ export async function deleteProjectImage(projectId: number, imagePath: string): 
     }
 
     // Проверяем что путь относится к нужному проекту
-    const expectedPrefix = `/projectdescription/${projectId}/`;
+    const expectedPrefix = `/media/p${projectId}/`;
     if (!imagePath.startsWith(expectedPrefix)) {
       return { success: false, message: 'Неверный путь к изображению' };
     }
@@ -82,12 +82,10 @@ export async function deleteProjectImage(projectId: number, imagePath: string): 
     const filePath = path.join(
       process.cwd(), 
       'public', 
-      'projectdescription', 
-      projectId.toString(), 
+      'media', 
+      `p${projectId}`,
       filename
-    );
-
-    // Проверяем существование файла
+    );    // Проверяем существование файла
     try {
       await fs.access(filePath);
     } catch {

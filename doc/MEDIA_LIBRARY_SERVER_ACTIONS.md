@@ -19,7 +19,7 @@
 - **Выход**: `{ success: boolean; images?: ProjectImage[]; message?: string }`
 - **Функциональность**: 
   - Проверка авторизации
-  - Чтение папки `public/projectdescription/{projectId}/`
+  - Чтение папки `public/media/p{projectId}/`
   - Фильтрация только изображений (.jpg, .jpeg, .png, .gif, .webp)
   - Сортировка по дате изменения (новые сначала)
 
@@ -37,7 +37,7 @@
 ```typescript
 interface ProjectImage {
   name: string;          // Имя файла
-  path: string;          // Путь для отображения (/projectdescription/{projectId}/{filename})
+  path: string;          // Путь для отображения (/media/p{projectId}/{filename})
   size: number;          // Размер файла в байтах
   lastModified: number;  // Время последнего изменения (timestamp)
 }

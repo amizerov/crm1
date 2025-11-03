@@ -28,8 +28,8 @@ export async function uploadProjectImage(projectId: number, formData: FormData) 
       return { success: false, message: 'Размер файла не должен превышать 5 МБ' };
     }
 
-    // Создаем папку public/projectdescription/{projectId}
-    const projectDir = join(process.cwd(), 'public', 'projectdescription', projectId.toString());
+    // Создаем папку public/media/p{projectId}
+    const projectDir = join(process.cwd(), 'public', 'media', `p${projectId}`);
     await mkdir(projectDir, { recursive: true });
 
     // Генерируем имя файла: timestamp + оригинальное расширение
@@ -43,7 +43,7 @@ export async function uploadProjectImage(projectId: number, formData: FormData) 
     await writeFile(filePath, buffer);
 
     // Возвращаем относительный путь для использования в <img>
-    const relativePath = `/projectdescription/${projectId}/${fileName}`;
+    const relativePath = `/media/p${projectId}/${fileName}`;
     
     return { 
       success: true, 

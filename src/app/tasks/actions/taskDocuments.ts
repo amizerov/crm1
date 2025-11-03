@@ -25,23 +25,35 @@ export async function uploadTaskDocument(taskId: number, formData: FormData) {
     const originalName = formData.get('originalName') as string;
     const fileId = formData.get('fileId') as string;
 
-    // Создаем папку uploads/tasks если её нет
-    const uploadsDir = join(process.cwd(), 'public', 'uploads', 'tasks');
+    // Получаем projectId для задачи
+    const taskInfo = await query(`
+      SELECT projectId FROM Task WHERE id = @taskId
+    `, { taskId });
+
+    if (!taskInfo || taskInfo.length === 0) {
+      throw new Error('Задача не найдена');
+    }
+
+    const projectId = taskInfo[0].projectId;
+    if (!projectId) {
+      throw new Error('Задача не связана с проектом');
+    }
+
+    // Создаем папку media/p{projectId}/t{taskId} если её нет
+    const uploadsDir = join(process.cwd(), 'public', 'media', `p${projectId}`, `t${taskId}`);
     await mkdir(uploadsDir, { recursive: true });
 
-    // Генерируем уникальное имя файла
-    const cleanFileName = (originalName || file.name).replace(/[^a-zA-Z0-9.-]/g, '_');
-    // Для чанков используем fileId, для обычных файлов - timestamp
-    const fileName = isChunk 
-      ? `${fileId}_${cleanFileName}` 
-      : `${Date.now()}_${cleanFileName}`;
+    // Используем оригинальное имя файла без изменений
+    const fileName = originalName || file.name;
     
     if (isChunk) {
       // Обработка чанков
       const tempDir = join(uploadsDir, 'temp');
       await mkdir(tempDir, { recursive: true });
       
-      const chunkPath = join(tempDir, `${fileName}.part${chunkIndex}`);
+      // Для чанков добавляем fileId только для временных файлов
+      const tempFileName = `${fileId}_${fileName}`;
+      const chunkPath = join(tempDir, `${tempFileName}.part${chunkIndex}`);
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
       await writeFile(chunkPath, buffer);
@@ -56,7 +68,7 @@ export async function uploadTaskDocument(taskId: number, formData: FormData) {
         let totalSize = 0;
         
         for (let i = 0; i < total; i++) {
-          const partPath = join(tempDir, `${fileName}.part${i}`);
+          const partPath = join(tempDir, `${tempFileName}.part${i}`);
           const fs = require('fs');
           const partBuffer = fs.readFileSync(partPath);
           chunks.push(partBuffer);
@@ -66,7 +78,7 @@ export async function uploadTaskDocument(taskId: number, formData: FormData) {
           fs.unlinkSync(partPath);
         }
         
-        // Объединяем чанки
+        // Объединяем чанки и сохраняем с оригинальным именем
         const finalBuffer = Buffer.concat(chunks);
         const filePath = join(uploadsDir, fileName);
         await writeFile(filePath, finalBuffer);
@@ -79,8 +91,8 @@ export async function uploadTaskDocument(taskId: number, formData: FormData) {
         `, {
           taskId,
           fileName,
-          originalName: originalName || file.name,
-          filePath: `/uploads/tasks/${fileName}`,
+          originalName: fileName,
+          filePath: `/media/p${projectId}/t${taskId}/${fileName}`,
           fileSize: totalSize,
           mimeType: file.type || 'application/octet-stream',
           uploadedBy: currentUser.id
@@ -89,7 +101,7 @@ export async function uploadTaskDocument(taskId: number, formData: FormData) {
         // Логируем в историю
         await logTaskHistory(taskId, {
           actionType: 'document_added',
-          newValue: originalName || file.name
+          newValue: fileName
         });
         
         revalidatePath(`/tasks/edit/${taskId}`);
@@ -114,8 +126,8 @@ export async function uploadTaskDocument(taskId: number, formData: FormData) {
       `, {
         taskId,
         fileName,
-        originalName: file.name,
-        filePath: `/uploads/tasks/${fileName}`,
+        originalName: fileName,
+        filePath: `/media/p${projectId}/t${taskId}/${fileName}`,
         fileSize: file.size,
         mimeType: file.type || 'application/octet-stream',
         uploadedBy: currentUser.id
@@ -124,7 +136,7 @@ export async function uploadTaskDocument(taskId: number, formData: FormData) {
       // Логируем в историю
       await logTaskHistory(taskId, {
         actionType: 'document_added',
-        newValue: file.name
+        newValue: fileName
       });
 
       revalidatePath(`/tasks/edit/${taskId}`);
