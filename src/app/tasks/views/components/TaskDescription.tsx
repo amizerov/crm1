@@ -73,7 +73,7 @@ export default function TaskDescription({
   return (
     <>
       {/* Краткое отображение в карточке задачи */}
-      <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex flex-col flex-1 min-h-0 mb-4">
+      <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex flex-col flex-1 min-h-0 mb-0">
         <div className="flex items-center justify-between mb-2 flex-shrink-0">
           <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Описание / Цель задачи:
@@ -115,14 +115,14 @@ export default function TaskDescription({
                         <button
                           onClick={handleCancel}
                           disabled={isSaving}
-                          className="px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                          className="px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition-colors cursor-pointer"
                         >
                           Отмена
                         </button>
                         <button
                           onClick={handleSave}
                           disabled={isSaving || isImageUploading}
-                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded transition-colors flex items-center gap-2"
+                          className="px-4 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white rounded transition-colors flex items-center gap-2 cursor-pointer"
                         >
                           {isSaving ? (
                             <>
@@ -137,7 +137,7 @@ export default function TaskDescription({
                     ) : (
                       <button
                         onClick={() => setIsEditing(true)}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+                        className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors cursor-pointer"
                       >
                         Редактировать
                       </button>
@@ -146,7 +146,7 @@ export default function TaskDescription({
                 )}
                 <button
                   onClick={closeModal}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors cursor-pointer"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
