@@ -19,7 +19,7 @@ export interface ProjectDocument {
   task_title?: string;
 }
 
-// Получение всех документов проекта (прямых + из задач)
+// Получение всех документов проекта (только из задач)
 export async function getProjectDocuments(projectId: number): Promise<ProjectDocument[]> {
   try {
     const currentUser = await getCurrentUser();
@@ -29,28 +29,7 @@ export async function getProjectDocuments(projectId: number): Promise<ProjectDoc
     }
 
     const result = await query(`
-      -- Документы прикрепленные напрямую к проекту
-      SELECT 
-        pd.id,
-        pd.project_id,
-        pd.filename,
-        pd.originalName,
-        pd.filePath,
-        pd.mimeType,
-        pd.fileSize,
-        pd.uploaded_by,
-        pd.uploaded_at,
-        ISNULL(u.nicName, u.fullName) as uploader_name,
-        'project' as source,
-        NULL as task_id,
-        NULL as task_title
-      FROM ProjectDocuments pd
-      LEFT JOIN [Users] u ON pd.uploaded_by = u.id
-      WHERE pd.project_id = @projectId
-      
-      UNION ALL
-      
-      -- Документы из задач проекта  
+      -- Только документы из задач проекта  
       SELECT 
         td.id,
         t.projectId as project_id,

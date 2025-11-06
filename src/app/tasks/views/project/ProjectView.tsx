@@ -6,6 +6,7 @@ import { getProjectDocuments, ProjectDocument } from './actions/getDocuments';
 import { getProjectMessages, addProjectMessage, ProjectMessage } from './actions/getMessages';
 import { getProjectTaskStats, ProjectTaskStats } from './actions/getTasks';
 import Description from './components/Description';
+import Documents from './components/Documents';
 
 interface ProjectViewProps {
   projectId: number;
@@ -64,14 +65,6 @@ export default function ProjectView({ projectId, currentUserId }: ProjectViewPro
     } finally {
       setIsSendingMessage(false);
     }
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   if (isLoading) {
@@ -222,56 +215,11 @@ export default function ProjectView({ projectId, currentUserId }: ProjectViewPro
         )}
 
         {activeTab === 'documents' && (
-          <div className="flex-1 overflow-auto p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                Документы проекта
-              </h3>
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
-                Загрузить документ
-              </button>
-            </div>
-            
-            {documents.length === 0 ? (
-              <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                <div className="text-4xl mb-4">📁</div>
-                <p>Документы не найдены</p>
-                <p className="text-sm mt-2">
-                  Загрузите документы или прикрепите их к задачам проекта
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {documents.map((doc) => (
-                  <div key={doc.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-                        <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          {doc.originalName}
-                        </h4>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {formatFileSize(doc.fileSize)} • {doc.uploader_name} • 
-                          {doc.source === 'task' ? ` Задача: ${doc.task_title}` : ' Прямая загрузка'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button className="p-2 text-gray-400 hover:text-blue-600 transition-colors">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <Documents 
+            projectId={projectId}
+            documents={documents}
+            onDocumentsChanged={loadProjectData}
+          />
         )}
 
         {activeTab === 'discussion' && (
