@@ -1,39 +1,28 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { ProjectDocument } from '../actions/getDocuments';
 import { uploadProjectDocument } from '../actions/uploadDocument';
-import { deleteProjectDocument, deleteProjectFile } from '../actions/deleteDocument';
-import { scanProjectFiles, FileSystemDocument } from '../actions/scanFiles';
+import { deleteProjectDocument } from '../actions/deleteDocument';
 
 interface DocumentsProps {
   projectId: number;
-  documents: ProjectDocument[];
+  projectDocuments: ProjectDocument[];
+  taskDocuments: ProjectDocument[];
   onDocumentsChanged: () => void;
 }
 
-export default function Documents({ projectId, documents, onDocumentsChanged }: DocumentsProps) {
+export default function Documents({ 
+  projectId, 
+  projectDocuments, 
+  taskDocuments, 
+  onDocumentsChanged 
+}: DocumentsProps) {
   const [isUploading, setIsUploading] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<ProjectDocument | FileSystemDocument | null>(null);
+  const [selectedDocument, setSelectedDocument] = useState<ProjectDocument | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [fsFiles, setFsFiles] = useState<FileSystemDocument[]>([]);
-  const [viewMode, setViewMode] = useState<'tasks' | 'project'>('project');
+  const [viewMode, setViewMode] = useState<'project' | 'tasks'>('project');
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (viewMode === 'project') {
-      loadFsFiles();
-    }
-  }, [viewMode, projectId]);
-
-  const loadFsFiles = async () => {
-    try {
-      const files = await scanProjectFiles(projectId);
-      setFsFiles(files);
-    } catch (error) {
-      console.error('Ошибка загрузки файлов:', error);
-    }
-  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -48,9 +37,6 @@ export default function Documents({ projectId, documents, onDocumentsChanged }: 
       
       if (result.success) {
         onDocumentsChanged();
-        if (viewMode === 'project') {
-          loadFsFiles();
-        }
       } else {
         alert(result.message || 'Ошибка загрузки документа');
       }
@@ -69,21 +55,10 @@ export default function Documents({ projectId, documents, onDocumentsChanged }: 
     if (!selectedDocument) return;
 
     try {
-      let result;
-      
-      if ('id' in selectedDocument) {
-        // Документ из БД
-        result = await deleteProjectDocument(selectedDocument.id, selectedDocument.source);
-      } else {
-        // Файл из файловой системы
-        result = await deleteProjectFile(projectId, selectedDocument.path);
-      }
+      const result = await deleteProjectDocument(selectedDocument.id, selectedDocument.source);
 
       if (result.success) {
         onDocumentsChanged();
-        if (viewMode === 'project') {
-          loadFsFiles();
-        }
       } else {
         alert(result.message || 'Ошибка удаления документа');
       }
@@ -148,7 +123,8 @@ export default function Documents({ projectId, documents, onDocumentsChanged }: 
     window.open(path, '_blank');
   };
 
-  const currentDocuments = viewMode === 'tasks' ? documents : fsFiles;
+  // Выбираем документы в зависимости от режима
+  const currentDocuments = viewMode === 'project' ? projectDocuments : taskDocuments;
 
   return (
     <div className="flex-1 overflow-auto p-6">
@@ -168,7 +144,7 @@ export default function Documents({ projectId, documents, onDocumentsChanged }: 
                   : 'text-gray-600 dark:text-gray-400'
               }`}
             >
-              Документы проекта ({fsFiles.length})
+              Документы проекта ({projectDocuments.length})
             </button>
             <button
               onClick={() => setViewMode('tasks')}
@@ -178,33 +154,36 @@ export default function Documents({ projectId, documents, onDocumentsChanged }: 
                   : 'text-gray-600 dark:text-gray-400'
               }`}
             >
-              Документы задач ({documents.length})
+              Документы задач ({taskDocuments.length})
             </button>
           </div>
         </div>
 
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
-        >
-          {isUploading ? (
-            <>
-              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Загрузка...
-            </>
-          ) : (
-            <>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-              </svg>
-              Загрузить документ
-            </>
-          )}
-        </button>
+        {/* Кнопка загрузки документов только для документов проекта */}
+        {viewMode === 'project' && (
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
+          >
+            {isUploading ? (
+              <>
+                <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Загрузка...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Загрузить документ
+              </>
+            )}
+          </button>
+        )}
         
         <input
           ref={fileInputRef}
@@ -227,143 +206,72 @@ export default function Documents({ projectId, documents, onDocumentsChanged }: 
         </div>
       ) : (
         <div className="space-y-3">
-          {viewMode === 'tasks' ? (
-            // Документы из БД
-            documents.map((doc) => (
-              <div
-                key={`db-${doc.id}`}
-                className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-              >
-                <div className="flex items-center space-x-3 flex-1 min-w-0">
-                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                    {getFileIcon(doc.mimeType)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                        {doc.originalName}
-                      </h4>
-                      {doc.source === 'task' && doc.task_title && (
-                        <span className="text-xs bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 px-2 py-0.5 rounded-full flex-shrink-0">
-                          Задача: {doc.task_title}
-                        </span>
-                      )}
-                      {doc.source === 'project' && (
-                        <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-0.5 rounded-full flex-shrink-0">
-                          Проект
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {formatFileSize(doc.fileSize)} • {doc.uploader_name} • {new Date(doc.uploaded_at).toLocaleString('ru-RU')}
-                    </p>
-                  </div>
+          {currentDocuments.map((doc) => (
+            <div
+              key={`${doc.source}-${doc.id}`}
+              className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+            >
+              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center flex-shrink-0">
+                  {getFileIcon(doc.mimeType)}
                 </div>
-                <div className="flex items-center space-x-2 ml-4 flex-shrink-0">
-                  <button
-                    onClick={() => openDocument(doc.filePath)}
-                    className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-lg transition-colors cursor-pointer"
-                    title="Просмотреть"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  </button>
-                  <a
-                    href={doc.filePath}
-                    download={doc.originalName}
-                    className="p-2 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900 rounded-lg transition-colors cursor-pointer"
-                    title="Скачать"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                  </a>
-                  <button
-                    onClick={() => {
-                      setSelectedDocument(doc);
-                      setShowDeleteConfirm(true);
-                    }}
-                    className="p-2 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900 rounded-lg transition-colors cursor-pointer"
-                    title="Удалить"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                      {doc.originalName}
+                    </h4>
+                    {doc.source === 'task' && doc.task_title && (
+                      <span className="text-xs bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 px-2 py-0.5 rounded-full flex-shrink-0">
+                        Задача: {doc.task_title}
+                      </span>
+                    )}
+                    {doc.source === 'project' && (
+                      <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-0.5 rounded-full flex-shrink-0">
+                        Проект
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {formatFileSize(doc.fileSize)} • {doc.uploader_name} • {new Date(doc.uploaded_at).toLocaleString('ru-RU')}
+                  </p>
                 </div>
               </div>
-            ))
-          ) : (
-            // Файлы из файловой системы
-            fsFiles.map((file, index) => (
-              <div
-                key={`fs-${index}`}
-                className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-              >
-                <div className="flex items-center space-x-3 flex-1 min-w-0">
-                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                    {getFileIcon(file.mimeType)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                        {file.name}
-                      </h4>
-                      {file.source === 'task' && file.taskId && (
-                        <span className="text-xs bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 px-2 py-0.5 rounded-full flex-shrink-0">
-                          Задача #{file.taskId}
-                        </span>
-                      )}
-                      {file.source === 'project' && (
-                        <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-0.5 rounded-full flex-shrink-0">
-                          Проект
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {formatFileSize(file.size)} • {new Date(file.modified).toLocaleString('ru-RU')}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2 ml-4 flex-shrink-0">
-                  <button
-                    onClick={() => openDocument(file.path)}
-                    className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-lg transition-colors cursor-pointer"
-                    title="Просмотреть"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  </button>
-                  <a
-                    href={file.path}
-                    download={file.name}
-                    className="p-2 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900 rounded-lg transition-colors cursor-pointer"
-                    title="Скачать"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                  </a>
-                  <button
-                    onClick={() => {
-                      setSelectedDocument(file);
-                      setShowDeleteConfirm(true);
-                    }}
-                    className="p-2 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900 rounded-lg transition-colors cursor-pointer"
-                    title="Удалить"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
+              <div className="flex items-center space-x-2 ml-4 flex-shrink-0">
+                <button
+                  onClick={() => openDocument(doc.filePath)}
+                  className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-lg transition-colors cursor-pointer"
+                  title="Просмотреть"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+                <a
+                  href={doc.filePath}
+                  download={doc.originalName}
+                  className="p-2 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900 rounded-lg transition-colors cursor-pointer"
+                  title="Скачать"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </a>
+                <button
+                  onClick={() => {
+                    setSelectedDocument(doc);
+                    setShowDeleteConfirm(true);
+                  }}
+                  className="p-2 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900 rounded-lg transition-colors cursor-pointer"
+                  title="Удалить"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
               </div>
-            ))
-          )}
+            </div>
+          ))}
         </div>
       )}
 
@@ -377,7 +285,7 @@ export default function Documents({ projectId, documents, onDocumentsChanged }: 
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               Вы действительно хотите удалить документ{' '}
               <span className="font-medium">
-                {'originalName' in selectedDocument ? selectedDocument.originalName : selectedDocument.name}
+                {selectedDocument.originalName}
               </span>
               ? Это действие нельзя отменить.
             </p>

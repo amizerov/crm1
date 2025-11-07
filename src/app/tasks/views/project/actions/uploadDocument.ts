@@ -44,6 +44,11 @@ export async function uploadProjectDocument(
       };
     }
 
+    // Создаем уникальное имя файла с timestamp
+    const timestamp = Date.now();
+    const originalExtension = file.name.split('.').pop() || '';
+    const filename = `${timestamp}_${file.name}`;
+    
     // Создаем путь для сохранения: public/media/p{projectId}/
     const uploadDir = join(process.cwd(), 'public', 'media', `p${projectId}`);
     
@@ -52,17 +57,7 @@ export async function uploadProjectDocument(
       await mkdir(uploadDir, { recursive: true });
     }
 
-    // Используем оригинальное имя файла
-    const filename = file.name;
     const filePath = join(uploadDir, filename);
-
-    // Проверяем, существует ли файл с таким именем
-    if (existsSync(filePath)) {
-      return {
-        success: false,
-        message: `Файл с именем "${filename}" уже существует. Переименуйте файл перед загрузкой.`
-      };
-    }
 
     // Сохраняем файл
     const bytes = await file.arrayBuffer();
@@ -76,12 +71,12 @@ export async function uploadProjectDocument(
     const result = await query(`
       INSERT INTO ProjectDocuments (
         project_id, filename, originalName, filePath, 
-        mimeType, fileSize, uploaded_by, uploaded_at
+        mimeType, fileSize, uploaded_by
       )
       OUTPUT INSERTED.id
       VALUES (
         @projectId, @filename, @originalName, @filePath,
-        @mimeType, @fileSize, @userId, GETDATE()
+        @mimeType, @fileSize, @userId
       )
     `, {
       projectId,
@@ -93,8 +88,8 @@ export async function uploadProjectDocument(
       userId: currentUser.id
     });
 
-    // query() возвращает массив (recordset), берём первый элемент
-    const insertedId = result && result.length > 0 ? result[0]?.id : undefined;
+    const insertResult = (result as any).recordset || result;
+    const insertedId = insertResult && insertResult.length > 0 ? insertResult[0]?.id : undefined;
 
     return {
       success: true,

@@ -5,7 +5,6 @@ import { getCurrentUser } from '@/app/(auth)/actions/login';
 
 export interface ProjectDocument {
   id: number;
-  project_id: number;
   filename: string;
   originalName: string;
   filePath: string;
@@ -19,7 +18,7 @@ export interface ProjectDocument {
   task_title?: string;
 }
 
-// Получение всех документов проекта (только из задач)
+// Получение документов проекта из таблицы ProjectDocuments
 export async function getProjectDocuments(projectId: number): Promise<ProjectDocument[]> {
   try {
     const currentUser = await getCurrentUser();
@@ -29,10 +28,45 @@ export async function getProjectDocuments(projectId: number): Promise<ProjectDoc
     }
 
     const result = await query(`
-      -- Только документы из задач проекта  
+      SELECT 
+        pd.id,
+        pd.filename,
+        pd.originalName,
+        pd.filePath,
+        pd.mimeType,
+        pd.fileSize,
+        pd.uploaded_by,
+        pd.uploaded_at,
+        ISNULL(u.nicName, u.fullName) as uploader_name,
+        'project' as source
+      FROM ProjectDocuments pd
+      LEFT JOIN [Users] u ON pd.uploaded_by = u.id
+      WHERE pd.project_id = @projectId
+      ORDER BY pd.uploaded_at DESC
+    `, {
+      projectId
+    });
+
+    const documents = (result as any).recordset || result;
+    return documents;
+  } catch (error) {
+    console.error('Ошибка при получении документов проекта:', error);
+    return [];
+  }
+}
+
+// Получение документов задач проекта из таблицы TaskDocuments
+export async function getTaskDocuments(projectId: number): Promise<ProjectDocument[]> {
+  try {
+    const currentUser = await getCurrentUser();
+    
+    if (!currentUser) {
+      return [];
+    }
+
+    const result = await query(`
       SELECT 
         td.id,
-        t.projectId as project_id,
         td.filename,
         td.originalName,
         td.filePath,
@@ -48,8 +82,7 @@ export async function getProjectDocuments(projectId: number): Promise<ProjectDoc
       INNER JOIN Task t ON td.taskId = t.id
       LEFT JOIN [Users] u ON td.uploadedBy = u.id
       WHERE t.projectId = @projectId
-      
-      ORDER BY uploaded_at DESC
+      ORDER BY td.dtc DESC
     `, {
       projectId
     });
@@ -57,47 +90,7 @@ export async function getProjectDocuments(projectId: number): Promise<ProjectDoc
     const documents = (result as any).recordset || result;
     return documents;
   } catch (error) {
-    console.error('Ошибка при получении документов проекта:', error);
+    console.error('Ошибка при получении документов задач:', error);
     return [];
-  }
-}
-
-// Загрузка документа проекта (заглушка для будущей реализации)
-export async function uploadProjectDocument(
-  projectId: number, 
-  filename: string, 
-  originalName: string, 
-  filePath: string, 
-  mimeType: string, 
-  fileSize: number
-): Promise<void> {
-  try {
-    const currentUser = await getCurrentUser();
-    
-    if (!currentUser) {
-      throw new Error('Пользователь не авторизован');
-    }
-
-    await query(`
-      INSERT INTO ProjectDocuments (
-        project_id, filename, originalName, filePath, 
-        mimeType, fileSize, uploaded_by, uploaded_at
-      )
-      VALUES (
-        @projectId, @filename, @originalName, @filePath,
-        @mimeType, @fileSize, @userId, GETDATE()
-      )
-    `, {
-      projectId,
-      filename,
-      originalName,
-      filePath,
-      mimeType,
-      fileSize,
-      userId: currentUser.id
-    });
-  } catch (error) {
-    console.error('Ошибка при загрузке документа:', error);
-    throw error;
   }
 }

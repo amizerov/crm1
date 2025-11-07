@@ -35,7 +35,8 @@ export async function deleteProjectDocument(
         WHERE id = @documentId
       `, { documentId });
       
-      documentInfo = result && result.length > 0 ? result[0] : null;
+      const queryResult = (result as any).recordset || result;
+      documentInfo = queryResult && queryResult.length > 0 ? queryResult[0] : null;
     } else {
       const result = await query(`
         SELECT filePath, uploadedBy as uploaded_by
@@ -43,7 +44,8 @@ export async function deleteProjectDocument(
         WHERE id = @documentId
       `, { documentId });
       
-      documentInfo = result && result.length > 0 ? result[0] : null;
+      const queryResult = (result as any).recordset || result;
+      documentInfo = queryResult && queryResult.length > 0 ? queryResult[0] : null;
     }
 
     if (!documentInfo) {
@@ -53,8 +55,7 @@ export async function deleteProjectDocument(
       };
     }
 
-    // Проверяем права (только загрузивший пользователь или админ может удалить)
-    // TODO: добавить проверку на админа
+    // Проверяем права (только загрузивший пользователь может удалить)
     if (documentInfo.uploaded_by !== currentUser.id) {
       return {
         success: false,
@@ -95,62 +96,6 @@ export async function deleteProjectDocument(
     return {
       success: false,
       message: error instanceof Error ? error.message : 'Ошибка при удалении документа'
-    };
-  }
-}
-
-// Удаление файла напрямую из файловой системы (для файлов без записи в БД)
-export async function deleteProjectFile(
-  projectId: number,
-  filePath: string
-): Promise<DeleteDocumentResult> {
-  try {
-    const currentUser = await getCurrentUser();
-    
-    if (!currentUser) {
-      return {
-        success: false,
-        message: 'Пользователь не авторизован'
-      };
-    }
-
-    // Проверяем, что путь начинается с правильной папки проекта для безопасности
-    const expectedPrefix = `/media/p${projectId}/`;
-    if (!filePath.startsWith(expectedPrefix)) {
-      return {
-        success: false,
-        message: 'Неверный путь к файлу'
-      };
-    }
-
-    // Удаляем физический файл
-    const fullPath = join(process.cwd(), 'public', filePath);
-    if (!existsSync(fullPath)) {
-      return {
-        success: false,
-        message: 'Файл не найден'
-      };
-    }
-
-    try {
-      await unlink(fullPath);
-    } catch (fileError) {
-      console.error('Ошибка при удалении файла:', fileError);
-      return {
-        success: false,
-        message: 'Ошибка при удалении файла'
-      };
-    }
-
-    return {
-      success: true,
-      message: 'Файл успешно удален'
-    };
-  } catch (error) {
-    console.error('Ошибка при удалении файла:', error);
-    return {
-      success: false,
-      message: error instanceof Error ? error.message : 'Ошибка при удалении файла'
     };
   }
 }

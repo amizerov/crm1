@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getProjectDetails, ProjectDetails } from './actions/getDetails';
-import { getProjectDocuments, ProjectDocument } from './actions/getDocuments';
+import { getProjectDocuments, getTaskDocuments, ProjectDocument } from './actions/getDocuments';
 import { getProjectMessages, addProjectMessage, ProjectMessage } from './actions/getMessages';
 import { getProjectTaskStats, ProjectTaskStats } from './actions/getTasks';
 import Description from './components/Description';
@@ -15,7 +15,8 @@ interface ProjectViewProps {
 
 export default function ProjectView({ projectId, currentUserId }: ProjectViewProps) {
   const [project, setProject] = useState<ProjectDetails | null>(null);
-  const [documents, setDocuments] = useState<ProjectDocument[]>([]);
+  const [projectDocuments, setProjectDocuments] = useState<ProjectDocument[]>([]);
+  const [taskDocuments, setTaskDocuments] = useState<ProjectDocument[]>([]);
   const [messages, setMessages] = useState<ProjectMessage[]>([]);
   const [taskStats, setTaskStats] = useState<ProjectTaskStats>({ totalTasks: 0, completedTasks: 0, inProgressTasks: 0, todoTasks: 0 });
   const [activeTab, setActiveTab] = useState('description');
@@ -30,15 +31,17 @@ export default function ProjectView({ projectId, currentUserId }: ProjectViewPro
   const loadProjectData = async () => {
     try {
       setIsLoading(true);
-      const [projectData, documentsData, messagesData, taskStatsData] = await Promise.all([
+      const [projectData, projectDocsData, taskDocsData, messagesData, taskStatsData] = await Promise.all([
         getProjectDetails(projectId),
         getProjectDocuments(projectId),
+        getTaskDocuments(projectId),
         getProjectMessages(projectId),
         getProjectTaskStats(projectId)
       ]);
       
       setProject(projectData);
-      setDocuments(documentsData);
+      setProjectDocuments(projectDocsData);
+      setTaskDocuments(taskDocsData);
       setMessages(messagesData);
       setTaskStats(taskStatsData);
     } catch (error) {
@@ -111,7 +114,7 @@ export default function ProjectView({ projectId, currentUserId }: ProjectViewPro
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
       ),
-      count: documents.length 
+      count: projectDocuments.length + taskDocuments.length 
     },
     { 
       id: 'discussion', 
@@ -217,7 +220,8 @@ export default function ProjectView({ projectId, currentUserId }: ProjectViewPro
         {activeTab === 'documents' && (
           <Documents 
             projectId={projectId}
-            documents={documents}
+            projectDocuments={projectDocuments}
+            taskDocuments={taskDocuments}
             onDocumentsChanged={loadProjectData}
           />
         )}
