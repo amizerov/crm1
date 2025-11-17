@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react';
 import { getProjectDetails, ProjectDetails } from './actions/getDetails';
 import { getProjectDocuments, getTaskDocuments, ProjectDocument } from './actions/getDocuments';
-import { getProjectMessages, addProjectMessage, ProjectMessage } from './actions/getMessages';
+import { getProjectMessages, ProjectMessage } from './actions/getMessages';
 import { getProjectTaskStats, ProjectTaskStats } from './actions/getTasks';
 import Description from './components/Description';
 import Documents from './components/Documents';
+import Discussion from './components/Discussion';
+import Secrets from './components/Secrets';
 
 interface ProjectViewProps {
   projectId: number;
@@ -21,8 +23,6 @@ export default function ProjectView({ projectId, currentUserId }: ProjectViewPro
   const [taskStats, setTaskStats] = useState<ProjectTaskStats>({ totalTasks: 0, completedTasks: 0, inProgressTasks: 0, todoTasks: 0 });
   const [activeTab, setActiveTab] = useState('description');
   const [isLoading, setIsLoading] = useState(true);
-  const [newMessage, setNewMessage] = useState('');
-  const [isSendingMessage, setIsSendingMessage] = useState(false);
 
   useEffect(() => {
     loadProjectData();
@@ -48,25 +48,6 @@ export default function ProjectView({ projectId, currentUserId }: ProjectViewPro
       console.error('Ошибка загрузки данных проекта:', error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim() || isSendingMessage) return;
-
-    try {
-      setIsSendingMessage(true);
-      await addProjectMessage(projectId, newMessage);
-      setNewMessage('');
-      
-      // Перезагружаем сообщения
-      const updatedMessages = await getProjectMessages(projectId);
-      setMessages(updatedMessages);
-    } catch (error) {
-      console.error('Ошибка отправки сообщения:', error);
-    } finally {
-      setIsSendingMessage(false);
     }
   };
 
@@ -227,92 +208,11 @@ export default function ProjectView({ projectId, currentUserId }: ProjectViewPro
         )}
 
         {activeTab === 'discussion' && (
-          <div className="flex flex-col h-full">
-            <div className="p-6 pb-0">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
-                Обсуждение проекта
-              </h3>
-            </div>
-            
-            {/* Сообщения */}
-            <div className="flex-1 overflow-auto px-6">
-              {messages.length === 0 ? (
-                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                  <div className="text-4xl mb-4">💬</div>
-                  <p>Сообщений пока нет</p>
-                  <p className="text-sm mt-2">Начните обсуждение проекта</p>
-                </div>
-              ) : (
-                <div className="space-y-4 pb-4">
-                  {messages.map((message) => (
-                    <div key={message.id} className="flex space-x-3">
-                      <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-gray-600 dark:text-gray-300 text-sm font-medium">
-                          {(message.user_name || 'У').charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2">
-                          <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                            {message.user_name || 'Пользователь'}
-                          </h4>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {new Date(message.dtc).toLocaleString('ru-RU')}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-700 dark:text-gray-300 mt-1 whitespace-pre-wrap">
-                          {message.description}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            
-            {/* Форма отправки сообщения */}
-            <div className="p-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <form onSubmit={handleSendMessage} className="flex space-x-3">
-                <div className="flex-1">
-                  <textarea
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Написать сообщение..."
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={!newMessage.trim() || isSendingMessage}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isSendingMessage ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                  ) : (
-                    'Отправить'
-                  )}
-                </button>
-              </form>
-            </div>
-          </div>
+          <Discussion projectId={projectId} />
         )}
 
         {activeTab === 'secrets' && (
-          <div className="flex-1 p-6">
-            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                Секреты проекта
-              </h3>
-              <p className="text-sm">Здесь будут храниться конфиденциальные данные проекта</p>
-              <p className="text-xs mt-2 text-gray-400">Функционал в разработке</p>
-            </div>
-          </div>
+          <Secrets projectId={projectId} />
         )}
       </div>
     </div>
