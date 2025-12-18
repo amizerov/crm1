@@ -1,13 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  eslint: {
-    // Отключаем ESLint во время production сборки
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     // Отключаем TypeScript ошибки во время production сборки (опционально)
     ignoreBuildErrors: true,
+  },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '5mb', // Увеличен лимит для загрузки больших объёмов данных (задачи, история, медиатека)
+    },
   },
 };
 
