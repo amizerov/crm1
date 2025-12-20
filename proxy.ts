@@ -1,11 +1,11 @@
-// middleware.ts
+// proxy.ts
 import { NextResponse, NextRequest } from 'next/server';
 
 /**
- * Middleware для защиты приватных маршрутов
+ * Proxy для защиты приватных маршрутов
  * Проверяет наличие сессии пользователя и перенаправляет на /login если сессии нет
  */
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
   
   // Разрешаем доступ к корневой странице без авторизации
@@ -31,7 +31,7 @@ export function middleware(req: NextRequest) {
 }
 
 /**
- * Конфигурация путей для middleware
+ * Конфигурация путей для proxy
  * Перехватываем все маршруты КРОМЕ:
  * - Технические пути Next.js (_next, static, favicon и т.д.)
  * - Публичные страницы аутентификации (login, register, verify)
