@@ -334,36 +334,6 @@ export default function TaskDetailsTab({
               </span>
             </div>
 
-            {/* Проект */}
-            {task.projectId && (
-              <div className="flex items-center gap-3">
-                <span className="text-slate-500 dark:text-slate-400 w-28 flex-shrink-0">Проект:</span>
-                <span className="text-slate-700 dark:text-slate-300">
-                  {task.projectName ? `${task.projectName} (ID: ${task.projectId})` : `ID: ${task.projectId}`}
-                </span>
-              </div>
-            )}
-
-            {/* Компания */}
-            {task.companyId && (
-              <div className="flex items-center gap-3">
-                <span className="text-slate-500 dark:text-slate-400 w-28 flex-shrink-0">Компания:</span>
-                <span className="text-slate-700 dark:text-slate-300">
-                  {task.companyName ? `${task.companyName} (ID: ${task.companyId})` : `ID: ${task.companyId}`}
-                </span>
-              </div>
-            )}
-
-            {/* Дата обновления */}
-            {task.dtu && (
-              <div className="flex items-center gap-3">
-                <span className="text-slate-500 dark:text-slate-400 w-28 flex-shrink-0">Обновлено:</span>
-                <span className="text-slate-700 dark:text-slate-300">
-                  {formatDate(task.dtu)}
-                </span>
-              </div>
-            )}
-
             {/* Родительская задача */}
             {task.parentId && (
               <div className="flex items-center gap-3">
