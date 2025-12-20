@@ -197,20 +197,6 @@ export default function TaskDetailsTab({
 
           {/* Список полей */}
           <div className="space-y-2 text-sm flex-shrink-0">
-            {/* Этап */}
-            <div className="flex items-center gap-3">
-              <label className="text-slate-500 dark:text-slate-400 w-28 flex-shrink-0">Этап:</label>
-              <select
-                value={formData.statusId}
-                onChange={(e) => onFormDataChange({...formData, statusId: Number(e.target.value)})}
-                className="flex-1 px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-slate-100 text-sm"
-              >
-                {statuses.map(status => (
-                  <option key={status.id} value={status.id}>{status.status}</option>
-                ))}
-              </select>
-            </div>
-
             {/* Приоритет */}
             <div className="flex items-center gap-3">
               <label className="text-slate-500 dark:text-slate-400 w-28 flex-shrink-0">Приоритет:</label>
@@ -301,14 +287,6 @@ export default function TaskDetailsTab({
 
           {/* Список свойств */}
           <div className="space-y-2 text-sm flex-shrink-0">
-            {/* Этап */}
-            <div className="flex items-center gap-3">
-              <span className="text-slate-500 dark:text-slate-400 w-28 flex-shrink-0">Этап:</span>
-              <span className="inline-block px-2.5 py-0.5 bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200 rounded text-xs font-medium">
-                {task.statusName}
-              </span>
-            </div>
-
             {/* Приоритет */}
             <div className="flex items-center gap-3">
               <span className="text-slate-500 dark:text-slate-400 w-28 flex-shrink-0">Приоритет:</span>
