@@ -282,17 +282,13 @@ export default function TaskDetailsTab({
           </div>
 
           {/* Описание на всю ширину */}
-          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex flex-col flex-1 min-h-0">
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 flex-shrink-0">
-              Описание:
-            </label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => onFormDataChange({...formData, description: e.target.value})}
-              placeholder="Введите описание задачи..."
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-gray-700 text-slate-900 dark:text-slate-100 text-sm flex-1 resize-none"
-            />
-          </div>
+          <TaskDescription
+            taskId={task.id}
+            projectId={task.projectId || 0}
+            taskName={task.taskName}
+            description={task.description || ''}
+            isEditable={true}
+          />
         </div>
       ) : (
         <div className="flex flex-col flex-1 min-h-0">

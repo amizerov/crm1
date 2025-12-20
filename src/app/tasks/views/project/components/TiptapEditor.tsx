@@ -5,6 +5,8 @@ import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
+import Color from '@tiptap/extension-color';
+import { TextStyle } from '@tiptap/extension-text-style';
 import { useEffect, useRef, useState } from 'react';
 import { uploadProjectImage } from '../actions/uploadImage';
 import { uploadTaskImage } from '../../../actions/uploadTaskImage';
@@ -41,6 +43,8 @@ export default function TiptapEditor({
     extensions: [
       StarterKit,
       Underline,
+      TextStyle,
+      Color,
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
@@ -166,6 +170,15 @@ export default function TiptapEditor({
               >
                 <s>S</s>
               </button>
+              <div className="relative inline-block">
+                <input
+                  type="color"
+                  onChange={(e) => editor.chain().focus().setColor(e.target.value).run()}
+                  value={editor.getAttributes('textStyle').color || '#000000'}
+                  className="w-8 h-8 rounded cursor-pointer border border-gray-300 dark:border-gray-500"
+                  title="Цвет текста"
+                />
+              </div>
             </div>
 
             {/* Заголовки */}
