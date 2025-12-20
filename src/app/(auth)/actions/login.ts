@@ -1,9 +1,9 @@
 'use server';
 
 import { query } from '@/db/connect';
-import { cookies } from 'next/headers';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
+import { createSession, destroySession, getSession } from '@/lib/session';
 
 /**
  * Хеширование пароля с помощью bcrypt
@@ -150,23 +150,9 @@ export async function loginAction(formData: FormData) {
       }
     }
 
-    // Успешная аутентификация - устанавливаем сессию
-    console.log('✅ Аутентификация успешна, устанавливаем сессию');
-    const cookieStore = await cookies();
-    
-    cookieStore.set('userId', user.id.toString(), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7 // 7 дней
-    });
-    
-    cookieStore.set('userNicName', user.nicName, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7 // 7 дней
-    });
+    // Успешная аутентификация - создаем защищенную сессию (iron-session)
+    console.log('✅ Аутентификация успешна, создаем криптографически защищенную сессию');
+    await createSession(user.id, user.nicName);
     
     console.log('✅ Пользователь успешно авторизован:', user.nicName);
     
@@ -189,10 +175,8 @@ export async function loginAction(formData: FormData) {
  */
 export async function logoutAction() {
   try {
-    const cookieStore = await cookies();
-    cookieStore.delete('userId');
-    cookieStore.delete('userNicName');
-    console.log('✅ Пользователь вышел из системы');
+    await destroySession();
+    console.log('✅ Пользователь вышел из системы, сессия уничтожена');
     return { success: true };
   } catch (error) {
     console.error('❌ Ошибка при выходе:', error);
@@ -204,13 +188,14 @@ export async function logoutAction() {
  * Получить текущего авторизованного пользователя
  */
 export async function getCurrentUser() {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get('userId')?.value;
-  const userNicName = cookieStore.get('userNicName')?.value;
+  const session = await getSession();
   
-  if (!userId) {
+  if (!session.isLoggedIn || !session.userId) {
     return null;
   }
+  
+  const userId = session.userId;
+  const userNicName = session.userNicName;
   
   try {
     const result = await query(`
@@ -227,7 +212,7 @@ export async function getCurrentUser() {
       FROM [Users] u
       LEFT JOIN Employee e ON u.id = e.userId
       WHERE u.id = @userId
-    `, { userId: parseInt(userId) });
+    `, { userId });
     
     if (result.length === 0) {
       return null;

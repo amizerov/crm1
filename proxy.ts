@@ -1,11 +1,13 @@
 // proxy.ts
 import { NextResponse, NextRequest } from 'next/server';
+import { getIronSession } from 'iron-session';
+import { SessionData, sessionOptions } from '@/lib/session';
 
 /**
  * Proxy для защиты приватных маршрутов
- * Проверяет наличие сессии пользователя и перенаправляет на /login если сессии нет
+ * Проверяет наличие криптографически защищенной сессии (iron-session)
  */
-export function proxy(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
   
   // Разрешаем доступ к корневой странице без авторизации
@@ -13,13 +15,14 @@ export function proxy(req: NextRequest) {
     return NextResponse.next();
   }
   
-  // Проверяем наличие сессии
-  const userId = req.cookies.get('userId')?.value?.trim();
-  const hasSession = !!userId;
+  // Проверяем наличие защищенной сессии
+  const response = NextResponse.next();
+  const session = await getIronSession<SessionData>(req, response, sessionOptions);
+  const hasSession = session.isLoggedIn === true && !!session.userId;
 
   // Если сессия есть — пропускаем
   if (hasSession) {
-    return NextResponse.next();
+    return response;
   }
 
   // Если сессии нет — редиректим на /login с возвратом на исходный URL
