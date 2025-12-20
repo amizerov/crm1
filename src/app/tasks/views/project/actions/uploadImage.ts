@@ -3,6 +3,7 @@
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { getCurrentUser } from '@/app/(auth)/actions/login';
+import { validateFileComprehensive, sanitizeFileName } from '@/lib/fileValidation';
 
 export async function uploadProjectImage(projectId: number, formData: FormData) {
   try {
@@ -16,26 +17,25 @@ export async function uploadProjectImage(projectId: number, formData: FormData) 
       return { success: false, message: 'Файл не выбран' };
     }
 
-    // Валидация типа файла
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      return { success: false, message: 'Допустимы только изображения (JPEG, PNG, GIF, WebP)' };
-    }
-
-    // Валидация размера (макс 5MB)
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      return { success: false, message: 'Размер файла не должен превышать 5 МБ' };
+    // КРИТИЧНО: Комплексная валидация файла
+    const validation = await validateFileComprehensive(file, 'image', 5 * 1024 * 1024);
+    if (!validation.valid) {
+      console.warn(`⚠️ Попытка загрузки недопустимого файла: ${file.name} от пользователя ${currentUser.id}`);
+      return { 
+        success: false, 
+        message: validation.error || 'Файл не прошел проверку безопасности' 
+      };
     }
 
     // Создаем папку public/media/p{projectId}
     const projectDir = join(process.cwd(), 'public', 'media', `p${projectId}`);
     await mkdir(projectDir, { recursive: true });
 
-    // Генерируем имя файла: timestamp + оригинальное расширение
+    // Генерируем безопасное имя файла
     const extension = file.name.split('.').pop() || 'png';
     const timestamp = Date.now();
-    const fileName = `${timestamp}.${extension}`;
+    const safeName = sanitizeFileName(file.name.replace(/\.[^/.]+$/, '')); // Имя без расширения
+    const fileName = `${timestamp}_${safeName}.${extension}`;
     
     const filePath = join(projectDir, fileName);
     const bytes = await file.arrayBuffer();

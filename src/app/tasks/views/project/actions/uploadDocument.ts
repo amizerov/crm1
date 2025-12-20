@@ -5,6 +5,7 @@ import { existsSync } from 'fs';
 import { join } from 'path';
 import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { query } from '@/db/connect';
+import { validateFileComprehensive, sanitizeFileName } from '@/lib/fileValidation';
 
 export interface UploadDocumentResult {
   success: boolean;
@@ -35,19 +36,20 @@ export async function uploadProjectDocument(
       };
     }
 
-    // Проверка размера файла (максимум 50 МБ)
-    const maxSize = 50 * 1024 * 1024;
-    if (file.size > maxSize) {
+    // КРИТИЧНО: Комплексная валидация документа
+    const validation = await validateFileComprehensive(file, 'document', 50 * 1024 * 1024);
+    if (!validation.valid) {
+      console.warn(`⚠️ Попытка загрузки недопустимого документа: ${file.name} от пользователя ${currentUser.id}`);
       return {
         success: false,
-        message: 'Размер файла не должен превышать 50 МБ'
+        message: validation.error || 'Файл не прошел проверку безопасности'
       };
     }
 
-    // Создаем уникальное имя файла с timestamp
+    // Создаем уникальное безопасное имя файла
     const timestamp = Date.now();
-    const originalExtension = file.name.split('.').pop() || '';
-    const filename = `${timestamp}_${file.name}`;
+    const safeName = sanitizeFileName(file.name);
+    const filename = `${timestamp}_${safeName}`;
     
     // Создаем путь для сохранения: public/media/p{projectId}/
     const uploadDir = join(process.cwd(), 'public', 'media', `p${projectId}`);

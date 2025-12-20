@@ -43,3 +43,4 @@ next-env.d.ts
 # uploads - ignore uploaded files but keep directory structure
 public/uploads/**/*
 !public/uploads/**/.gitkeep
+public/media/**/*
