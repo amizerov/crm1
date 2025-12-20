@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import DOMPurify from 'isomorphic-dompurify';
 import TiptapEditor from '../project/components/TiptapEditor';
 import { updateTaskDescription } from '../../actions/updateTaskDescription';
 
@@ -90,16 +89,13 @@ export default function TaskDescription({
           </button>
         </div>
         <div className="text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 p-3 rounded min-h-[100px] overflow-y-auto flex-1 mb-4">
-          <div 
-            className="task-description-content"
-            dangerouslySetInnerHTML={{ 
-              __html: DOMPurify.sanitize(description || '<p>Описание не указано</p>', {
-                ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'img', 'blockquote', 'code', 'pre', 'hr', 'table', 'thead', 'tbody', 'tr', 'th', 'td'],
-                ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'style', 'width', 'height', 'target', 'rel'],
-                ALLOW_DATA_ATTR: false,
-                ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i
-              }) 
-            }} 
+          {/* Используем TiptapEditor в режиме только для чтения */}
+          <TiptapEditor
+            content={description || '<p>Описание не указано</p>'}
+            onChange={() => {}}
+            editable={false}
+            projectId={projectId}
+            taskId={taskId}
           />
         </div>
       </div>
