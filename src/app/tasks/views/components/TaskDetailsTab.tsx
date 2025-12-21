@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import TaskDescription from './TaskDescription';
+import TiptapEditor from '../project/components/TiptapEditor';
 
 interface Task {
   id: number;
@@ -84,6 +86,8 @@ export default function TaskDetailsTab({
   taskTypes,
   onFormDataChange
 }: TaskDetailsTabProps) {
+  const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState(false);
+  const [modalContent, setModalContent] = useState('');
   
   const getPriorityColor = (priorityName: string) => {
     switch(priorityName) {
@@ -268,13 +272,36 @@ export default function TaskDetailsTab({
           </div>
 
           {/* Описание на всю ширину */}
-          <TaskDescription
-            taskId={task.id}
-            projectId={task.projectId || 0}
-            taskName={task.taskName}
-            description={task.description || ''}
-            isEditable={true}
-          />
+          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex flex-col flex-1 min-h-0">
+            <div className="flex items-center justify-between mb-2 flex-shrink-0">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                Описание:
+              </label>
+              <button
+                onClick={() => {
+                  setModalContent(formData.description);
+                  setIsDescriptionModalOpen(true);
+                }}
+                className="p-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 rounded transition-colors cursor-pointer"
+                title="Открыть в полноэкранном режиме"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 min-h-0">
+              <TiptapEditor
+                content={formData.description}
+                onChange={(html) => onFormDataChange({...formData, description: html})}
+                editable={true}
+                projectId={task.projectId || 0}
+                taskId={task.id}
+                showToolbar={false}
+                customHeight="100%"
+              />
+            </div>
+          </div>
         </div>
       ) : (
         <div className="flex flex-col flex-1 min-h-0">
@@ -353,6 +380,53 @@ export default function TaskDetailsTab({
             description={task.description || ''}
             isEditable={true}
           />
+        </div>
+      )}
+
+      {/* Модальное окно для описания */}
+      {isDescriptionModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setIsDescriptionModalOpen(false)}></div>
+          
+          <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-6xl h-[90vh] flex flex-col">
+            {/* Заголовок */}
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                {task.taskName}
+              </h2>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    onFormDataChange({...formData, description: modalContent});
+                    setIsDescriptionModalOpen(false);
+                  }}
+                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors cursor-pointer"
+                >
+                  Применить
+                </button>
+                <button
+                  onClick={() => setIsDescriptionModalOpen(false)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors cursor-pointer"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Контент с редактором */}
+            <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+              <TiptapEditor
+                content={modalContent}
+                onChange={setModalContent}
+                editable={true}
+                projectId={task.projectId || 0}
+                taskId={task.id}
+                isFullscreen={true}
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>

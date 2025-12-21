@@ -23,6 +23,8 @@ interface TiptapEditorProps {
   onImageUploadStart?: () => void;
   onImageUploadEnd?: () => void;
   isFullscreen?: boolean;
+  showToolbar?: boolean;
+  customHeight?: string;
 }
 
 export default function TiptapEditor({ 
@@ -33,7 +35,9 @@ export default function TiptapEditor({
   taskId,
   onImageUploadStart,
   onImageUploadEnd,
-  isFullscreen = false
+  isFullscreen = false,
+  showToolbar = true,
+  customHeight
 }: TiptapEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showMediaLibrary, setShowMediaLibrary] = useState(false);
@@ -129,7 +133,7 @@ export default function TiptapEditor({
 
   return (
     <div className="h-full flex flex-col">
-      {editable && (
+      {editable && showToolbar && (
         <div className="flex-shrink-0 bg-gray-100 dark:bg-gray-600 border border-gray-200 dark:border-gray-600 rounded-t-lg border-b-0 p-2">
           <div className="flex flex-wrap gap-1">
             {/* Текстовые стили */}
@@ -335,9 +339,9 @@ export default function TiptapEditor({
           editable ? 'rounded-b-lg bg-amber-50 dark:bg-[rgb(40,48,65)]' : 'rounded-lg bg-white dark:bg-gray-800'
         } overflow-auto`}
         style={{ 
-          height: isFullscreen 
-            ? (editable ? 'calc(100vh - 157px)' : 'calc(100vh - 100px)')
-            : (editable ? 'calc(100vh - 382px)' : 'calc(100vh - 325px)'),
+          height: customHeight || (isFullscreen 
+            ? (editable && showToolbar ? 'calc(100vh - 157px)' : 'calc(100vh - 100px)')
+            : (editable && showToolbar ? 'calc(100vh - 382px)' : 'calc(100vh - 325px)')),
           minHeight: '300px' 
         }}
       >
