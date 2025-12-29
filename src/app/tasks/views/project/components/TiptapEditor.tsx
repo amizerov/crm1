@@ -7,6 +7,16 @@ import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
 import Color from '@tiptap/extension-color';
 import { TextStyle } from '@tiptap/extension-text-style';
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+import { createLowlight } from 'lowlight';
+import sql from 'highlight.js/lib/languages/sql';
+import javascript from 'highlight.js/lib/languages/javascript';
+import typescript from 'highlight.js/lib/languages/typescript';
+import python from 'highlight.js/lib/languages/python';
+import json from 'highlight.js/lib/languages/json';
+import xml from 'highlight.js/lib/languages/xml';
+import css from 'highlight.js/lib/languages/css';
+import bash from 'highlight.js/lib/languages/bash';
 import { useEffect, useRef, useState } from 'react';
 import { uploadProjectImage } from '../actions/uploadImage';
 import { uploadTaskImage } from '../../../actions/uploadTaskImage';
@@ -42,10 +52,29 @@ export default function TiptapEditor({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showMediaLibrary, setShowMediaLibrary] = useState(false);
   
+  // Создаем lowlight и регистрируем языки
+  const lowlight = createLowlight();
+  lowlight.register('sql', sql);
+  lowlight.register('javascript', javascript);
+  lowlight.register('typescript', typescript);
+  lowlight.register('python', python);
+  lowlight.register('json', json);
+  lowlight.register('xml', xml);
+  lowlight.register('html', xml);
+  lowlight.register('css', css);
+  lowlight.register('bash', bash);
+  lowlight.register('shell', bash);
+  
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        codeBlock: false, // отключаем стандартный CodeBlock
+      }),
+      CodeBlockLowlight.configure({
+        lowlight,
+        defaultLanguage: 'plaintext',
+      }),
       Underline,
       TextStyle,
       Color,
@@ -85,6 +114,177 @@ export default function TiptapEditor({
       editor.setEditable(editable);
     }
   }, [editable, editor]);
+
+  // Функция для распознавания и применения Markdown стилей
+  const applyMarkdownFormatting = () => {
+    if (!editor) return;
+
+    // Получаем текст из редактора
+    const text = editor.getText();
+    const lines = text.split('\n');
+    const result: any[] = [];
+    
+    let i = 0;
+    while (i < lines.length) {
+      const line = lines[i];
+      
+      // Пустая строка
+      if (!line.trim()) {
+        i++;
+        continue;
+      }
+      
+      // Блок кода
+      if (line.trim().startsWith('```')) {
+        const langMatch = line.trim().match(/^```(\w+)?/);
+        const language = langMatch?.[1] || 'plaintext';
+        const codeLines: string[] = [];
+        i++;
+        
+        // Собираем строки кода до закрывающих ```
+        while (i < lines.length && !lines[i].trim().startsWith('```')) {
+          codeLines.push(lines[i]);
+          i++;
+        }
+        
+        // Применяем блок кода в редакторе
+        const codeContent = codeLines.join('\n');
+        result.push({
+          type: 'codeBlock',
+          attrs: { language },
+          content: codeContent
+        });
+        
+        i++; // Пропускаем закрывающие ```
+        continue;
+      }
+      
+      // Заголовок 3
+      if (line.startsWith('### ')) {
+        result.push({
+          type: 'heading',
+          level: 3,
+          content: line.substring(4)
+        });
+        i++;
+        continue;
+      }
+      
+      // Заголовок 2
+      if (line.startsWith('## ')) {
+        result.push({
+          type: 'heading',
+          level: 2,
+          content: line.substring(3)
+        });
+        i++;
+        continue;
+      }
+      
+      // Заголовок 1
+      if (line.startsWith('# ')) {
+        result.push({
+          type: 'heading',
+          level: 1,
+          content: line.substring(2)
+        });
+        i++;
+        continue;
+      }
+      
+      // Маркированный список
+      if (line.match(/^[*-]\s+/)) {
+        const items: string[] = [];
+        while (i < lines.length && lines[i].match(/^[*-]\s+/)) {
+          items.push(lines[i].replace(/^[*-]\s+/, ''));
+          i++;
+        }
+        result.push({
+          type: 'bulletList',
+          items
+        });
+        continue;
+      }
+      
+      // Нумерованный список
+      if (line.match(/^\d+\.\s+/)) {
+        const items: string[] = [];
+        while (i < lines.length && lines[i].match(/^\d+\.\s+/)) {
+          items.push(lines[i].replace(/^\d+\.\s+/, ''));
+          i++;
+        }
+        result.push({
+          type: 'orderedList',
+          items
+        });
+        continue;
+      }
+      
+      // Обычный параграф с inline форматированием
+      let content = line;
+      
+      // Жирный текст
+      content = content.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      
+      // Курсив (но не затрагиваем уже обработанный жирный текст)
+      content = content.replace(/\*(?!\*)(.+?)\*/g, '<em>$1</em>');
+      
+      // Зачеркнутый
+      content = content.replace(/~~(.+?)~~/g, '<s>$1</s>');
+      
+      // Инлайн код
+      content = content.replace(/`([^`]+)`/g, '<code>$1</code>');
+      
+      // Ссылки
+      content = content.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+      
+      result.push({
+        type: 'paragraph',
+        content
+      });
+      
+      i++;
+    }
+    
+    // Применяем распознанный контент к редактору
+    editor.commands.clearContent();
+    
+    result.forEach(item => {
+      if (item.type === 'heading') {
+        editor.commands.insertContent({
+          type: 'heading',
+          attrs: { level: item.level },
+          content: [{ type: 'text', text: item.content }]
+        });
+      } else if (item.type === 'codeBlock') {
+        editor.commands.insertContent({
+          type: 'codeBlock',
+          attrs: { language: item.attrs.language },
+          content: item.content ? [{ type: 'text', text: item.content }] : []
+        });
+      } else if (item.type === 'bulletList') {
+        editor.commands.insertContent({
+          type: 'bulletList',
+          content: item.items.map((text: string) => ({
+            type: 'listItem',
+            content: [{ type: 'paragraph', content: [{ type: 'text', text }] }]
+          }))
+        });
+      } else if (item.type === 'orderedList') {
+        editor.commands.insertContent({
+          type: 'orderedList',
+          content: item.items.map((text: string) => ({
+            type: 'listItem',
+            content: [{ type: 'paragraph', content: [{ type: 'text', text }] }]
+          }))
+        });
+      } else if (item.type === 'paragraph') {
+        editor.commands.insertContent(`<p>${item.content}</p>`);
+      }
+    });
+    
+    onChange(editor.getHTML());
+  };
 
   // Обработка загрузки изображения
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -288,6 +488,30 @@ export default function TiptapEditor({
               </button>
             </div>
 
+            {/* Код */}
+            <div className="flex gap-1 pr-2 border-r border-gray-300 dark:border-gray-500">
+              <button
+                onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+                className={`p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-500 cursor-pointer ${
+                  editor.isActive('codeBlock') ? 'bg-gray-300 dark:bg-gray-500' : ''
+                }`}
+                title="Блок кода"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
+                </svg>
+              </button>
+              <button
+                onClick={() => editor.chain().focus().toggleCode().run()}
+                className={`px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-500 font-mono text-sm cursor-pointer ${
+                  editor.isActive('code') ? 'bg-gray-300 dark:bg-gray-500' : ''
+                }`}
+                title="Инлайн код"
+              >
+                {'<>'}
+              </button>
+            </div>
+
             {/* Изображения и ссылки */}
             <div className="flex gap-1 pr-2 border-r border-gray-300 dark:border-gray-500">
               <button
@@ -329,6 +553,22 @@ export default function TiptapEditor({
                 onChange={handleImageUpload}
                 className="hidden"
               />
+            </div>
+
+            {/* Markdown */}
+            <div className="flex gap-1">
+              <button
+                onClick={applyMarkdownFormatting}
+                className="px-3 py-2 rounded bg-blue-500 hover:bg-blue-600 text-white font-medium cursor-pointer transition-colors"
+                title="Применить Markdown форматирование"
+              >
+                <span className="flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M22.2 10.4l-1.6-1.6L12 17.4l-8.6-8.6-1.6 1.6L12 20.6z"/>
+                  </svg>
+                  MD
+                </span>
+              </button>
             </div>
           </div>
         </div>
@@ -490,6 +730,165 @@ export default function TiptapEditor({
         
         .ProseMirror a:hover {
           color: #2563eb;
+        }
+        
+        /* Стили для блоков кода */
+        .ProseMirror pre {
+          background: #f1f5f9;
+          color: #1e293b;
+          font-family: 'JetBrainsMono', 'Courier New', Courier, monospace;
+          padding: 1rem;
+          border-radius: 0.5rem;
+          margin: 1rem 0;
+          overflow-x: auto;
+          border: 1px solid #e2e8f0;
+        }
+        
+        .ProseMirror pre code {
+          background: transparent;
+          color: inherit;
+          font-size: 0.875rem;
+          padding: 0;
+          line-height: 1.5;
+        }
+        
+        .ProseMirror code {
+          background: transparent;
+          color: #e11d48;
+          padding: 0;
+          font-family: 'Courier New', Courier, monospace;
+          font-size: 0.875rem;
+        }
+        
+        .dark .ProseMirror code {
+          background: transparent;
+          color: #fb7185;
+        }
+        
+        .dark .ProseMirror pre {
+          background: #1e293b;
+          color: #e2e8f0;
+          border: 1px solid #334155;
+        }
+        
+        /* Подсветка синтаксиса - светлая тема */
+        .ProseMirror .hljs-keyword,
+        .ProseMirror .hljs-selector-tag,
+        .ProseMirror .hljs-literal,
+        .ProseMirror .hljs-section,
+        .ProseMirror .hljs-link {
+          color: #9333ea;
+          font-weight: 600;
+        }
+        
+        .ProseMirror .hljs-string,
+        .ProseMirror .hljs-attr,
+        .ProseMirror .hljs-attribute {
+          color: #16a34a;
+        }
+        
+        .ProseMirror .hljs-number,
+        .ProseMirror .hljs-built_in {
+          color: #ea580c;
+        }
+        
+        .ProseMirror .hljs-title,
+        .ProseMirror .hljs-function,
+        .ProseMirror .hljs-title.function_ {
+          color: #2563eb;
+        }
+        
+        .ProseMirror .hljs-comment,
+        .ProseMirror .hljs-quote {
+          color: #64748b;
+          font-style: italic;
+        }
+        
+        .ProseMirror .hljs-variable,
+        .ProseMirror .hljs-params,
+        .ProseMirror .hljs-template-variable {
+          color: #dc2626;
+        }
+        
+        .ProseMirror .hljs-operator,
+        .ProseMirror .hljs-punctuation {
+          color: #0891b2;
+        }
+        
+        .ProseMirror .hljs-meta,
+        .ProseMirror .hljs-regexp {
+          color: #ca8a04;
+        }
+        
+        .ProseMirror .hljs-tag,
+        .ProseMirror .hljs-name {
+          color: #dc2626;
+        }
+        
+        .ProseMirror .hljs-class,
+        .ProseMirror .hljs-type,
+        .ProseMirror .hljs-title.class_ {
+          color: #ca8a04;
+        }
+        
+        /* Подсветка синтаксиса - темная тема */
+        .dark .ProseMirror .hljs-keyword,
+        .dark .ProseMirror .hljs-selector-tag,
+        .dark .ProseMirror .hljs-literal,
+        .dark .ProseMirror .hljs-section,
+        .dark .ProseMirror .hljs-link {
+          color: #d8b4fe;
+          font-weight: 600;
+        }
+        
+        .dark .ProseMirror .hljs-string,
+        .dark .ProseMirror .hljs-attr,
+        .dark .ProseMirror .hljs-attribute {
+          color: #86efac;
+        }
+        
+        .dark .ProseMirror .hljs-number,
+        .dark .ProseMirror .hljs-built_in {
+          color: #fdba74;
+        }
+        
+        .dark .ProseMirror .hljs-title,
+        .dark .ProseMirror .hljs-function,
+        .dark .ProseMirror .hljs-title.function_ {
+          color: #93c5fd;
+        }
+        
+        .dark .ProseMirror .hljs-comment,
+        .dark .ProseMirror .hljs-quote {
+          color: #94a3b8;
+          font-style: italic;
+        }
+        
+        .dark .ProseMirror .hljs-variable,
+        .dark .ProseMirror .hljs-params,
+        .dark .ProseMirror .hljs-template-variable {
+          color: #fca5a5;
+        }
+        
+        .dark .ProseMirror .hljs-operator,
+        .dark .ProseMirror .hljs-punctuation {
+          color: #67e8f9;
+        }
+        
+        .dark .ProseMirror .hljs-meta,
+        .dark .ProseMirror .hljs-regexp {
+          color: #fde047;
+        }
+        
+        .dark .ProseMirror .hljs-tag,
+        .dark .ProseMirror .hljs-name {
+          color: #fca5a5;
+        }
+        
+        .dark .ProseMirror .hljs-class,
+        .dark .ProseMirror .hljs-type,
+        .dark .ProseMirror .hljs-title.class_ {
+          color: #fde047;
         }
       `}</style>
       
