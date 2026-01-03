@@ -1,5 +1,22 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Features
+
+- **CRM System**: Manage tasks, clients, projects, and employees
+- **Model Context Protocol (MCP)**: AI assistant integration for seamless data access
+- **Modern Stack**: Next.js 15, TypeScript, MSSQL, iron-session
+
+## Model Context Protocol Support
+
+This CRM system includes built-in support for Model Context Protocol (MCP), allowing AI assistants like Claude to interact with your CRM data.
+
+For detailed information about MCP setup and usage, see [doc/MCP_README.md](doc/MCP_README.md).
+
+Quick start:
+```bash
+npm run mcp  # Start the MCP server
+```
+
 ## Getting Started
 
 First, run the development server:
