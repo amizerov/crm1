@@ -1,11 +1,13 @@
 import sql from 'mssql';
 
-// Проверяем наличие обязательных переменных окружения
-if (!process.env.DB_USER || !process.env.DB_PASSWORD || !process.env.DB_SERVER || (!process.env.DB_NAME && !process.env.DB_DATABASE)) {
-  throw new Error('Отсутствуют обязательные переменные окружения: DB_USER, DB_PASSWORD, DB_SERVER, DB_NAME (или DB_DATABASE)');
-}
+// Функция для получения конфигурации БД с проверкой переменных окружения
+function getDbConfig(): sql.config {
+  // Проверяем наличие обязательных переменных окружения
+  if (!process.env.DB_USER || !process.env.DB_PASSWORD || !process.env.DB_SERVER || (!process.env.DB_NAME && !process.env.DB_DATABASE)) {
+    throw new Error('Отсутствуют обязательные переменные окружения: DB_USER, DB_PASSWORD, DB_SERVER, DB_NAME (или DB_DATABASE)');
+  }
 
-const config: sql.config = {
+  return {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     server: process.env.DB_SERVER,
@@ -29,7 +31,8 @@ const config: sql.config = {
         destroyTimeoutMillis: 5000,
         createRetryIntervalMillis: 200,
     }
-};
+  };
+}
 
 let pool: sql.ConnectionPool | null = null;
 let isConnecting = false;
@@ -65,6 +68,7 @@ async function getPool(): Promise<sql.ConnectionPool> {
       }
     }
 
+    const config = getDbConfig();
     pool = new sql.ConnectionPool(config);
     await pool.connect();
     console.log('Подключение к базе данных установлено');
