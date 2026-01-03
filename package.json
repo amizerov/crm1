@@ -6,9 +6,11 @@
     "dev": "next dev --turbopack -p 3001",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "mcp": "node --loader tsx src/mcp/server.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.1",
     "@tiptap/extension-code-block-lowlight": "^3.14.0",
     "@tiptap/extension-color": "^3.14.0",
     "@tiptap/extension-image": "^3.10.1",
@@ -41,6 +43,7 @@
     "eslint": "^9",
     "eslint-config-next": "^16.0.0",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }
