@@ -1,8 +1,8 @@
 'use server';
 
-import { cookies } from 'next/headers';
 import sql from 'mssql';
 import { getConnection } from '@/db/connect';
+import { getSession } from '@/lib/session';
 
 export interface ProjectSecret {
   id: number;
@@ -21,11 +21,11 @@ export interface ProjectSecret {
  */
 export async function verifyMasterPassword(projectId: number, password: string): Promise<boolean> {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get('userId')?.value;
+    const session = await getSession();
     
-    if (!userId) {
-      throw new Error('Unauthorized');
+    if (!session.userId || !session.isLoggedIn) {
+      console.error('Unauthorized: no active session');
+      return false;
     }
 
     const pool = await getConnection();
@@ -52,7 +52,7 @@ export async function verifyMasterPassword(projectId: number, password: string):
     return password.length >= 4;
   } catch (error) {
     console.error('Error verifying master password:', error);
-    throw error;
+    return false;
   }
 }
 
@@ -61,10 +61,9 @@ export async function verifyMasterPassword(projectId: number, password: string):
  */
 export async function getProjectSecrets(projectId: number): Promise<ProjectSecret[]> {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get('userId')?.value;
+    const session = await getSession();
     
-    if (!userId) {
+    if (!session.userId || !session.isLoggedIn) {
       throw new Error('Unauthorized');
     }
 
@@ -106,13 +105,13 @@ export async function addProjectSecret(
   description?: string
 ): Promise<ProjectSecret> {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get('userId')?.value;
+    const session = await getSession();
     
-    if (!userId) {
+    if (!session.userId || !session.isLoggedIn) {
       throw new Error('Unauthorized');
     }
 
+    const userId = session.userId;
     const pool = await getConnection();
     
     // Проверяем, что ключ уникален для проекта
@@ -137,7 +136,7 @@ export async function addProjectSecret(
       .input('key', sql.NVarChar, key)
       .input('value', sql.NVarChar, value)
       .input('description', sql.NVarChar, description || null)
-      .input('userId', sql.Int, parseInt(userId))
+      .input('userId', sql.Int, userId)
       .query(`
         INSERT INTO ProjectSecrets (project_id, [key], value, description, created_by, created_at, updated_at)
         OUTPUT INSERTED.*
@@ -176,10 +175,9 @@ export async function updateProjectSecret(
   description?: string
 ): Promise<void> {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get('userId')?.value;
+    const session = await getSession();
     
-    if (!userId) {
+    if (!session.userId || !session.isLoggedIn) {
       throw new Error('Unauthorized');
     }
 
@@ -209,10 +207,9 @@ export async function updateProjectSecret(
  */
 export async function deleteProjectSecret(secretId: number): Promise<void> {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get('userId')?.value;
+    const session = await getSession();
     
-    if (!userId) {
+    if (!session.userId || !session.isLoggedIn) {
       throw new Error('Unauthorized');
     }
 
@@ -232,18 +229,18 @@ export async function deleteProjectSecret(secretId: number): Promise<void> {
  */
 export async function logSecretAccess(secretId: number, action: string): Promise<void> {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get('userId')?.value;
+    const session = await getSession();
     
-    if (!userId) {
+    if (!session.userId || !session.isLoggedIn) {
       return;
     }
 
+    const userId = session.userId;
     const pool = await getConnection();
     
     await pool.request()
       .input('secretId', sql.Int, secretId)
-      .input('userId', sql.Int, parseInt(userId))
+      .input('userId', sql.Int, userId)
       .input('action', sql.NVarChar, action)
       .query(`
         INSERT INTO SecretAccessLog (secret_id, user_id, action, accessed_at)

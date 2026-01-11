@@ -69,7 +69,9 @@ export default function TiptapEditor({
     immediatelyRender: false,
     extensions: [
       StarterKit.configure({
-        codeBlock: false, // отключаем стандартный CodeBlock
+        codeBlock: false, // отключаем стандартный CodeBlock  
+        link: false, // отключаем встроенный link
+        underline: false, // отключаем встроенный underline (если есть)
       }),
       CodeBlockLowlight.configure({
         lowlight,
