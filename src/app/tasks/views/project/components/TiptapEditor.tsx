@@ -128,7 +128,7 @@ export default function TiptapEditor({
     while (i < lines.length) {
       const line = lines[i];
       
-      // Пустая строка
+      // Пустая строка - просто пропускаем, не добавляем в результат
       if (!line.trim()) {
         i++;
         continue;
@@ -141,14 +141,14 @@ export default function TiptapEditor({
         const codeLines: string[] = [];
         i++;
         
-        // Собираем строки кода до закрывающих ```
+        // Собираем строки кода до закрывающих ``` (включая пустые строки внутри блока)
         while (i < lines.length && !lines[i].trim().startsWith('```')) {
           codeLines.push(lines[i]);
           i++;
         }
         
-        // Применяем блок кода в редакторе
-        const codeContent = codeLines.join('\n');
+        // Применяем блок кода в редакторе, убираем пустые строки в начале и конце
+        const codeContent = codeLines.join('\n').replace(/^\n+/, '').replace(/\n+$/, '');
         result.push({
           type: 'codeBlock',
           attrs: { language },
@@ -164,7 +164,7 @@ export default function TiptapEditor({
         result.push({
           type: 'heading',
           level: 3,
-          content: line.substring(4)
+          content: line.substring(4).trim()
         });
         i++;
         continue;
@@ -175,7 +175,7 @@ export default function TiptapEditor({
         result.push({
           type: 'heading',
           level: 2,
-          content: line.substring(3)
+          content: line.substring(3).trim()
         });
         i++;
         continue;
@@ -186,7 +186,7 @@ export default function TiptapEditor({
         result.push({
           type: 'heading',
           level: 1,
-          content: line.substring(2)
+          content: line.substring(2).trim()
         });
         i++;
         continue;
@@ -195,8 +195,8 @@ export default function TiptapEditor({
       // Маркированный список
       if (line.match(/^[*-]\s+/)) {
         const items: string[] = [];
-        while (i < lines.length && lines[i].match(/^[*-]\s+/)) {
-          items.push(lines[i].replace(/^[*-]\s+/, ''));
+        while (i < lines.length && lines[i].trim() && lines[i].match(/^[*-]\s+/)) {
+          items.push(lines[i].replace(/^[*-]\s+/, '').trim());
           i++;
         }
         result.push({
@@ -209,8 +209,8 @@ export default function TiptapEditor({
       // Нумерованный список
       if (line.match(/^\d+\.\s+/)) {
         const items: string[] = [];
-        while (i < lines.length && lines[i].match(/^\d+\.\s+/)) {
-          items.push(lines[i].replace(/^\d+\.\s+/, ''));
+        while (i < lines.length && lines[i].trim() && lines[i].match(/^\d+\.\s+/)) {
+          items.push(lines[i].replace(/^\d+\.\s+/, '').trim());
           i++;
         }
         result.push({
@@ -220,68 +220,50 @@ export default function TiptapEditor({
         continue;
       }
       
-      // Обычный параграф с inline форматированием
-      let content = line;
-      
-      // Жирный текст
-      content = content.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-      
-      // Курсив (но не затрагиваем уже обработанный жирный текст)
-      content = content.replace(/\*(?!\*)(.+?)\*/g, '<em>$1</em>');
-      
-      // Зачеркнутый
-      content = content.replace(/~~(.+?)~~/g, '<s>$1</s>');
-      
-      // Инлайн код
-      content = content.replace(/`([^`]+)`/g, '<code>$1</code>');
-      
-      // Ссылки
-      content = content.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
-      
+      // Обычный параграф - просто добавляем как есть без замен
       result.push({
         type: 'paragraph',
-        content
+        content: line.trim()
       });
       
       i++;
     }
     
-    // Применяем распознанный контент к редактору
-    editor.commands.clearContent();
+    // Преобразуем markdown форматирование в HTML
+    const parseInlineMarkdown = (text: string): string => {
+      let content = text;
+      content = content.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      content = content.replace(/\*(?!\*)(.+?)\*/g, '<em>$1</em>');
+      content = content.replace(/~~(.+?)~~/g, '<s>$1</s>');
+      content = content.replace(/`([^`]+)`/g, '<code>$1</code>');
+      content = content.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+      return content;
+    };
     
-    result.forEach(item => {
+    // Формируем HTML строку - все элементы слитно, без разделителей
+    const htmlContent = result.map(item => {
       if (item.type === 'heading') {
-        editor.commands.insertContent({
-          type: 'heading',
-          attrs: { level: item.level },
-          content: [{ type: 'text', text: item.content }]
-        });
+        return `<h${item.level}>${item.content}</h${item.level}>`;
       } else if (item.type === 'codeBlock') {
-        editor.commands.insertContent({
-          type: 'codeBlock',
-          attrs: { language: item.attrs.language },
-          content: item.content ? [{ type: 'text', text: item.content }] : []
-        });
+        // Экранируем HTML в коде
+        const escapedCode = item.content
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+        return `<pre><code class="language-${item.attrs.language}">${escapedCode}</code></pre>`;
       } else if (item.type === 'bulletList') {
-        editor.commands.insertContent({
-          type: 'bulletList',
-          content: item.items.map((text: string) => ({
-            type: 'listItem',
-            content: [{ type: 'paragraph', content: [{ type: 'text', text }] }]
-          }))
-        });
+        const items = item.items.map((t: string) => `<li><p>${t}</p></li>`).join('');
+        return `<ul>${items}</ul>`;
       } else if (item.type === 'orderedList') {
-        editor.commands.insertContent({
-          type: 'orderedList',
-          content: item.items.map((text: string) => ({
-            type: 'listItem',
-            content: [{ type: 'paragraph', content: [{ type: 'text', text }] }]
-          }))
-        });
-      } else if (item.type === 'paragraph') {
-        editor.commands.insertContent(`<p>${item.content}</p>`);
+        const items = item.items.map((t: string) => `<li><p>${t}</p></li>`).join('');
+        return `<ol>${items}</ol>`;
+      } else {
+        return `<p>${parseInlineMarkdown(item.content)}</p>`;
       }
-    });
+    }).join(''); // Важно: без разделителей!
+    
+    // Устанавливаем контент одной строкой
+    editor.commands.setContent(htmlContent);
     
     onChange(editor.getHTML());
   };
