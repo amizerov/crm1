@@ -128,7 +128,7 @@ export default function DashboardPage() {
         <div style={{ position: 'relative' }}>
           <ButtonCard
             icon="🏢"
-            title="Мои компании / Рабочие области"
+            title="Компании / Отделы"
             description="Управление компаниями"
             href="/companies"
             color="#6f42c1"
