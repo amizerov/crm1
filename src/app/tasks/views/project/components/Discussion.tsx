@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getProjectMessages, addProjectMessage, ProjectMessage } from '../actions/getMessages';
 
 interface DiscussionProps {
@@ -12,10 +12,17 @@ export default function Discussion({ projectId }: DiscussionProps) {
   const [newMessage, setNewMessage] = useState('');
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     loadMessages();
   }, [projectId]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [messages, isLoading]);
 
   const loadMessages = async () => {
     try {
@@ -58,7 +65,7 @@ export default function Discussion({ projectId }: DiscussionProps) {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0 overflow-auto">
       <div className="p-6 pb-0">
         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
           Обсуждение проекта
@@ -66,7 +73,7 @@ export default function Discussion({ projectId }: DiscussionProps) {
       </div>
       
       {/* Сообщения */}
-      <div className="flex-1 overflow-auto px-6">
+      <div className="px-6">
         {messages.length === 0 ? (
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
             <div className="text-4xl mb-4">💬</div>
@@ -102,7 +109,7 @@ export default function Discussion({ projectId }: DiscussionProps) {
       </div>
       
       {/* Форма отправки сообщения */}
-      <div className="p-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+      <div ref={bottomRef} className="p-6 pt-4 border-t border-gray-200 dark:border-gray-700">
         <form onSubmit={handleSendMessage} className="flex space-x-3">
           <div className="flex-1">
             <textarea
