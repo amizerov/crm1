@@ -355,7 +355,7 @@ export default function TaskViewLayout({
         )}
 
         {/* Main Content - ТОЛЬКО это перерисовывается */}
-        <div className="flex-1 min-w-0 relative">
+        <div className="flex-1 min-w-0 min-h-0 relative overflow-hidden flex flex-col">
           {renderMainContent()}
         </div>
       </div>

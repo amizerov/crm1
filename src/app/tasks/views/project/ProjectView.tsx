@@ -119,7 +119,7 @@ export default function ProjectView({ projectId, currentUserId }: ProjectViewPro
   ];
 
   return (
-    <div className="flex-1 flex flex-col bg-white dark:bg-gray-800 overflow-hidden">
+    <div className="h-full flex-1 min-h-0 flex flex-col bg-white dark:bg-gray-800 overflow-hidden">
       {/* Заголовок проекта */}
       <div className="p-6 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
@@ -187,7 +187,7 @@ export default function ProjectView({ projectId, currentUserId }: ProjectViewPro
       </div>
 
       {/* Содержимое табов */}
-      <div className="flex-1 overflow-hidden flex flex-col">
+      <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
         {activeTab === 'description' && (
           <div className="flex-1 flex flex-col min-h-0 p-6">
             <Description 
@@ -208,7 +208,9 @@ export default function ProjectView({ projectId, currentUserId }: ProjectViewPro
         )}
 
         {activeTab === 'discussion' && (
-          <Discussion projectId={projectId} />
+          <div className="flex-1 flex flex-col min-h-0 p-6">
+            <Discussion projectId={projectId} />
+          </div>
         )}
 
         {activeTab === 'secrets' && (

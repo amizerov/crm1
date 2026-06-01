@@ -12,7 +12,8 @@ export default function Discussion({ projectId }: DiscussionProps) {
   const [newMessage, setNewMessage] = useState('');
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     loadMessages();
@@ -20,7 +21,13 @@ export default function Discussion({ projectId }: DiscussionProps) {
 
   useEffect(() => {
     if (!isLoading) {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      textareaRef.current?.focus({ preventScroll: true });
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTo({
+          top: messagesContainerRef.current.scrollHeight,
+          behavior: 'smooth',
+        });
+      }
     }
   }, [messages, isLoading]);
 
@@ -57,7 +64,7 @@ export default function Discussion({ projectId }: DiscussionProps) {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col h-full items-center justify-center">
+      <div className="flex-1 flex flex-col min-h-0 items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-4"></div>
         <p className="text-gray-600 dark:text-gray-400">Загрузка обсуждения...</p>
       </div>
@@ -65,73 +72,77 @@ export default function Discussion({ projectId }: DiscussionProps) {
   }
 
   return (
-    <div className="flex flex-col h-full min-h-0 overflow-auto">
-      <div className="p-6 pb-0">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+      <div className="flex items-center justify-between mb-4 flex-shrink-0">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
           Обсуждение проекта
         </h3>
       </div>
-      
-      {/* Сообщения */}
-      <div className="px-6">
-        {messages.length === 0 ? (
-          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-            <div className="text-4xl mb-4">💬</div>
-            <p>Сообщений пока нет</p>
-            <p className="text-sm mt-2">Начните обсуждение проекта</p>
-          </div>
-        ) : (
-          <div className="space-y-4 pb-4">
-            {messages.map((message) => (
-              <div key={message.id} className="flex space-x-3">
-                <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-gray-600 dark:text-gray-300 text-sm font-medium">
-                    {(message.user_name || 'У').charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2">
-                    <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      {message.user_name || 'Пользователь'}
-                    </h4>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {new Date(message.dtc).toLocaleString('ru-RU')}
+
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div
+          ref={messagesContainerRef}
+          className="flex-1 min-h-0 overflow-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4"
+        >
+          {messages.length === 0 ? (
+            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+              <div className="text-4xl mb-4">💬</div>
+              <p>Сообщений пока нет</p>
+              <p className="text-sm mt-2">Начните обсуждение проекта</p>
+            </div>
+          ) : (
+            <div className="space-y-4 pb-4">
+              {messages.map((message) => (
+                <div key={message.id} className="flex space-x-3">
+                  <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-gray-600 dark:text-gray-300 text-sm font-medium">
+                      {(message.user_name || 'У').charAt(0).toUpperCase()}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 mt-1 whitespace-pre-wrap">
-                    {message.description}
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2">
+                      <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {message.user_name || 'Пользователь'}
+                      </h4>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {new Date(message.dtc).toLocaleString('ru-RU')}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-1 whitespace-pre-wrap">
+                      {message.description}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-      
-      {/* Форма отправки сообщения */}
-      <div ref={bottomRef} className="p-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-        <form onSubmit={handleSendMessage} className="flex space-x-3">
-          <div className="flex-1">
-            <textarea
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Написать сообщение..."
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={!newMessage.trim() || isSendingMessage}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isSendingMessage ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-            ) : (
-              'Отправить'
-            )}
-          </button>
-        </form>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <form onSubmit={handleSendMessage} className="flex space-x-3">
+            <div className="flex-1">
+              <textarea
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Написать сообщение..."
+                rows={3}
+                ref={textareaRef}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={!newMessage.trim() || isSendingMessage}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isSendingMessage ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+              ) : (
+                'Отправить'
+              )}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
