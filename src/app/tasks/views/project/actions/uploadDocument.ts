@@ -11,6 +11,10 @@ export interface UploadDocumentResult {
   success: boolean;
   message: string;
   documentId?: number;
+  filePath?: string;
+  originalName?: string;
+  mimeType?: string;
+  fileSize?: number;
 }
 
 export async function uploadProjectDocument(
@@ -36,8 +40,14 @@ export async function uploadProjectDocument(
       };
     }
 
-    // КРИТИЧНО: Комплексная валидация документа
-    const validation = await validateFileComprehensive(file, 'document', 50 * 1024 * 1024);
+    const isImage = file.type.startsWith('image/');
+
+    // КРИТИЧНО: Комплексная валидация документа или изображения
+    const validation = await validateFileComprehensive(
+      file,
+      isImage ? 'image' : 'document',
+      isImage ? 5 * 1024 * 1024 : 50 * 1024 * 1024
+    );
     if (!validation.valid) {
       console.warn(`⚠️ Попытка загрузки недопустимого документа: ${file.name} от пользователя ${currentUser.id}`);
       return {
@@ -96,7 +106,11 @@ export async function uploadProjectDocument(
     return {
       success: true,
       message: 'Документ успешно загружен',
-      documentId: insertedId
+      documentId: insertedId,
+      filePath: dbFilePath,
+      originalName: file.name,
+      mimeType: file.type || 'application/octet-stream',
+      fileSize: file.size
     };
   } catch (error) {
     console.error('Ошибка при загрузке документа:', error);

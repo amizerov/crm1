@@ -1,19 +1,42 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { getProjectMessages, addProjectMessage, ProjectMessage } from '../actions/getMessages';
+import {
+  getProjectMessages,
+  addProjectMessage,
+  updateProjectMessageText,
+  deleteProjectMessage,
+  deleteProjectMessageAttachment,
+  ProjectMessage
+} from '../actions/getMessages';
+import { uploadProjectDocument } from '../actions/uploadDocument';
 
 interface DiscussionProps {
   projectId: number;
+  currentUserId: number;
+  onDocumentsChanged?: () => void;
 }
 
-export default function Discussion({ projectId }: DiscussionProps) {
+interface DiscussionAttachment {
+  name: string;
+  path: string;
+}
+
+const ATTACHMENT_PREFIX = '__PROJECT_ATTACHMENT__';
+
+export default function Discussion({ projectId, currentUserId, onDocumentsChanged }: DiscussionProps) {
   const [messages, setMessages] = useState<ProjectMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
+  const [editingText, setEditingText] = useState('');
+  const [processingMessageId, setProcessingMessageId] = useState<number | null>(null);
+  const [deletingAttachmentPath, setDeletingAttachmentPath] = useState<string | null>(null);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     loadMessages();
@@ -43,22 +66,171 @@ export default function Discussion({ projectId }: DiscussionProps) {
     }
   };
 
+  const refreshMessages = async () => {
+    const updatedMessages = await getProjectMessages(projectId);
+    setMessages(updatedMessages);
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || isSendingMessage) return;
+    if ((!newMessage.trim() && selectedFiles.length === 0) || isSendingMessage) return;
 
     try {
       setIsSendingMessage(true);
-      await addProjectMessage(projectId, newMessage);
+      const uploadedAttachments: DiscussionAttachment[] = [];
+
+      for (const file of selectedFiles) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const result = await uploadProjectDocument(projectId, formData);
+
+        if (!result.success || !result.filePath || !result.originalName) {
+          throw new Error(result.message || 'Ошибка загрузки файла');
+        }
+
+        uploadedAttachments.push({
+          name: result.originalName,
+          path: result.filePath,
+        });
+      }
+
+      const attachmentLines = uploadedAttachments.map((attachment) => (
+        `${ATTACHMENT_PREFIX}${JSON.stringify(attachment)}`
+      ));
+      const messageText = [
+        newMessage.trim(),
+        ...attachmentLines,
+      ].filter(Boolean).join('\n');
+
+      await addProjectMessage(projectId, messageText);
       setNewMessage('');
+      setSelectedFiles([]);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       
-      // Перезагружаем сообщения
-      const updatedMessages = await getProjectMessages(projectId);
-      setMessages(updatedMessages);
+      await refreshMessages();
+      onDocumentsChanged?.();
     } catch (error) {
       console.error('Ошибка отправки сообщения:', error);
+      alert(error instanceof Error ? error.message : 'Ошибка отправки сообщения');
     } finally {
       setIsSendingMessage(false);
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    setSelectedFiles(files);
+  };
+
+  const removeSelectedFile = (index: number) => {
+    setSelectedFiles((files) => files.filter((_, fileIndex) => fileIndex !== index));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const parseMessage = (description: string) => {
+    const lines = description.split('\n');
+    const textLines: string[] = [];
+    const attachments: DiscussionAttachment[] = [];
+
+    for (const line of lines) {
+      if (line.startsWith(ATTACHMENT_PREFIX)) {
+        try {
+          attachments.push(JSON.parse(line.slice(ATTACHMENT_PREFIX.length)));
+        } catch {
+          textLines.push(line);
+        }
+      } else {
+        textLines.push(line);
+      }
+    }
+
+    return {
+      text: textLines.join('\n').trim(),
+      attachments,
+    };
+  };
+
+  const startEditMessage = (message: ProjectMessage) => {
+    const parsedMessage = parseMessage(message.description);
+    setEditingMessageId(message.id);
+    setEditingText(parsedMessage.text);
+  };
+
+  const cancelEditMessage = () => {
+    setEditingMessageId(null);
+    setEditingText('');
+  };
+
+  const handleUpdateMessage = async (messageId: number) => {
+    try {
+      setProcessingMessageId(messageId);
+      const result = await updateProjectMessageText(messageId, editingText);
+
+      if (!result.success) {
+        alert(result.message || 'Ошибка редактирования сообщения');
+        return;
+      }
+
+      cancelEditMessage();
+      await refreshMessages();
+    } catch (error) {
+      console.error('Ошибка редактирования сообщения:', error);
+      alert(error instanceof Error ? error.message : 'Ошибка редактирования сообщения');
+    } finally {
+      setProcessingMessageId(null);
+    }
+  };
+
+  const handleDeleteMessage = async (messageId: number) => {
+    if (!confirm('Удалить сообщение? Прикрепленные к нему файлы тоже будут удалены.')) return;
+
+    try {
+      setProcessingMessageId(messageId);
+      const result = await deleteProjectMessage(messageId);
+
+      if (!result.success) {
+        alert(result.message || 'Ошибка удаления сообщения');
+        return;
+      }
+
+      if (editingMessageId === messageId) {
+        cancelEditMessage();
+      }
+
+      await refreshMessages();
+      onDocumentsChanged?.();
+    } catch (error) {
+      console.error('Ошибка удаления сообщения:', error);
+      alert(error instanceof Error ? error.message : 'Ошибка удаления сообщения');
+    } finally {
+      setProcessingMessageId(null);
+    }
+  };
+
+  const handleDeleteAttachment = async (messageId: number, attachment: DiscussionAttachment) => {
+    if (!confirm(`Удалить файл "${attachment.name}"? Он исчезнет из обсуждения и документов проекта.`)) return;
+
+    try {
+      setDeletingAttachmentPath(attachment.path);
+      const result = await deleteProjectMessageAttachment(messageId, attachment.path);
+
+      if (!result.success) {
+        alert(result.message || 'Ошибка удаления файла');
+        return;
+      }
+
+      await refreshMessages();
+      onDocumentsChanged?.();
+    } catch (error) {
+      console.error('Ошибка удаления файла:', error);
+      alert(error instanceof Error ? error.message : 'Ошибка удаления файла');
+    } finally {
+      setDeletingAttachmentPath(null);
     }
   };
 
@@ -93,26 +265,130 @@ export default function Discussion({ projectId }: DiscussionProps) {
           ) : (
             <div className="space-y-4 pb-4">
               {messages.map((message) => (
-                <div key={message.id} className="flex space-x-3">
-                  <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-gray-600 dark:text-gray-300 text-sm font-medium">
-                      {(message.user_name || 'У').charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-2">
-                      <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {message.user_name || 'Пользователь'}
-                      </h4>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {new Date(message.dtc).toLocaleString('ru-RU')}
-                      </span>
+                (() => {
+                  const parsedMessage = parseMessage(message.description);
+                  const isOwnMessage = message.user_id === currentUserId;
+                  const isEditing = editingMessageId === message.id;
+                  const isProcessing = processingMessageId === message.id;
+
+                  return (
+                    <div key={message.id} className="flex space-x-3">
+                      <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-gray-600 dark:text-gray-300 text-sm font-medium">
+                          {(message.user_name || 'У').charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center space-x-2">
+                            <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {message.user_name || 'Пользователь'}
+                            </h4>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {new Date(message.dtc).toLocaleString('ru-RU')}
+                            </span>
+                            {message.dtu && (
+                              <span className="text-xs text-gray-400 dark:text-gray-500">
+                                изменено
+                              </span>
+                            )}
+                          </div>
+                          {isOwnMessage && !isEditing && (
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => startEditMessage(message)}
+                                disabled={isProcessing}
+                                className="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-blue-600 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-blue-300"
+                                title="Редактировать"
+                              >
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                </svg>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteMessage(message.id)}
+                                disabled={isProcessing}
+                                className="rounded p-1.5 text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-red-950 dark:hover:text-red-300"
+                                title="Удалить"
+                              >
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        {isEditing ? (
+                          <div className="mt-2">
+                            <textarea
+                              value={editingText}
+                              onChange={(e) => setEditingText(e.target.value)}
+                              rows={3}
+                              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                            />
+                            <div className="mt-2 flex justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={cancelEditMessage}
+                                disabled={isProcessing}
+                                className="rounded-lg bg-gray-100 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                              >
+                                Отмена
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateMessage(message.id)}
+                                disabled={isProcessing}
+                                className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+                              >
+                                Сохранить
+                              </button>
+                            </div>
+                          </div>
+                        ) : parsedMessage.text && (
+                          <p className="text-sm text-gray-700 dark:text-gray-300 mt-1 whitespace-pre-wrap">
+                            {parsedMessage.text}
+                          </p>
+                        )}
+                        {parsedMessage.attachments.length > 0 && (
+                          <div className="mt-2 flex flex-col gap-2">
+                            {parsedMessage.attachments.map((attachment) => (
+                              <div
+                                key={`${attachment.path}-${attachment.name}`}
+                                className="inline-flex w-fit max-w-full items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300 dark:hover:bg-blue-900"
+                              >
+                                <a
+                                  href={attachment.path}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex min-w-0 items-center gap-2"
+                                >
+                                  <svg className="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.586-6.586a4 4 0 00-5.657-5.657l-6.586 6.586a6 6 0 108.485 8.485L20 13" />
+                                  </svg>
+                                  <span className="truncate">{attachment.name}</span>
+                                </a>
+                                {isOwnMessage && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteAttachment(message.id, attachment)}
+                                    disabled={deletingAttachmentPath === attachment.path}
+                                    className="ml-1 rounded p-0.5 text-blue-500 hover:bg-blue-200 hover:text-red-600 disabled:opacity-50 dark:text-blue-300 dark:hover:bg-blue-900 dark:hover:text-red-300"
+                                    title="Удалить файл"
+                                  >
+                                    ×
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-1 whitespace-pre-wrap">
-                      {message.description}
-                    </p>
-                  </div>
-                </div>
+                  );
+                })()
               ))}
             </div>
           )}
@@ -129,10 +405,48 @@ export default function Discussion({ projectId }: DiscussionProps) {
                 ref={textareaRef}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
+              {selectedFiles.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {selectedFiles.map((file, index) => (
+                    <span
+                      key={`${file.name}-${file.size}-${index}`}
+                      className="inline-flex max-w-full items-center gap-2 rounded-lg bg-gray-100 px-3 py-1.5 text-sm text-gray-700 dark:bg-gray-700 dark:text-gray-200"
+                    >
+                      <span className="truncate">{file.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeSelectedFile(index)}
+                        className="text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+                        title="Убрать файл"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isSendingMessage}
+              className="h-10 w-10 flex-shrink-0 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+              title="Прикрепить файл"
+            >
+              <svg className="mx-auto h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.586-6.586a4 4 0 00-5.657-5.657l-6.586 6.586a6 6 0 108.485 8.485L20 13" />
+              </svg>
+            </button>
             <button
               type="submit"
-              disabled={!newMessage.trim() || isSendingMessage}
+              disabled={(!newMessage.trim() && selectedFiles.length === 0) || isSendingMessage}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isSendingMessage ? (

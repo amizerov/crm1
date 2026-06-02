@@ -14,6 +14,7 @@ export interface ProjectDocument {
   uploaded_at: string;
   uploader_name: string;
   source: 'project' | 'task';
+  origin?: 'documents' | 'discussion';
   task_id?: number;
   task_title?: string;
 }
@@ -38,7 +39,17 @@ export async function getProjectDocuments(projectId: number): Promise<ProjectDoc
         pd.uploaded_by,
         pd.uploaded_at,
         ISNULL(u.nicName, u.fullName) as uploader_name,
-        'project' as source
+        'project' as source,
+        CASE
+          WHEN EXISTS (
+            SELECT 1
+            FROM ProjectActions pa
+            WHERE pa.project_id = pd.project_id
+              AND pa.description LIKE '%' + pd.filePath + '%'
+          )
+          THEN 'discussion'
+          ELSE 'documents'
+        END as origin
       FROM ProjectDocuments pd
       LEFT JOIN [Users] u ON pd.uploaded_by = u.id
       WHERE pd.project_id = @projectId

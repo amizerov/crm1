@@ -21,7 +21,7 @@ export default function Documents({
   const [isUploading, setIsUploading] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<ProjectDocument | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [viewMode, setViewMode] = useState<'project' | 'tasks'>('project');
+  const [viewMode, setViewMode] = useState<'documents' | 'discussion' | 'tasks'>('documents');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -123,8 +123,14 @@ export default function Documents({
     window.open(path, '_blank');
   };
 
-  // Выбираем документы в зависимости от режима
-  const currentDocuments = viewMode === 'project' ? projectDocuments : taskDocuments;
+  const directProjectDocuments = projectDocuments.filter((doc) => doc.origin !== 'discussion');
+  const discussionDocuments = projectDocuments.filter((doc) => doc.origin === 'discussion');
+  const currentDocuments =
+    viewMode === 'documents'
+      ? directProjectDocuments
+      : viewMode === 'discussion'
+        ? discussionDocuments
+        : taskDocuments;
 
   return (
     <div className="flex-1 overflow-auto p-6">
@@ -137,14 +143,24 @@ export default function Documents({
           {/* Переключатель режима просмотра */}
           <div className="flex bg-gray-200 dark:bg-gray-700 rounded-lg p-1">
             <button
-              onClick={() => setViewMode('project')}
+              onClick={() => setViewMode('documents')}
               className={`px-3 py-1 rounded text-sm font-medium transition-colors cursor-pointer ${
-                viewMode === 'project'
+                viewMode === 'documents'
                   ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100'
                   : 'text-gray-600 dark:text-gray-400'
               }`}
             >
-              Документы проекта ({projectDocuments.length})
+              Документы ({directProjectDocuments.length})
+            </button>
+            <button
+              onClick={() => setViewMode('discussion')}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors cursor-pointer ${
+                viewMode === 'discussion'
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100'
+                  : 'text-gray-600 dark:text-gray-400'
+              }`}
+            >
+              Из обсуждения ({discussionDocuments.length})
             </button>
             <button
               onClick={() => setViewMode('tasks')}
@@ -159,8 +175,8 @@ export default function Documents({
           </div>
         </div>
 
-        {/* Кнопка загрузки документов только для документов проекта */}
-        {viewMode === 'project' && (
+        {/* Кнопка загрузки документов только для прямых документов проекта */}
+        {viewMode === 'documents' && (
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
@@ -198,10 +214,9 @@ export default function Documents({
           <div className="text-4xl mb-4">📁</div>
           <p>Документы не найдены</p>
           <p className="text-sm mt-2">
-            {viewMode === 'tasks' 
-              ? 'Документы задач не найдены. Загрузите документы в задачах проекта'
-              : 'Документы проекта не найдены. Загрузите документы для проекта'
-            }
+            {viewMode === 'tasks' && 'Документы задач не найдены. Загрузите документы в задачах проекта'}
+            {viewMode === 'discussion' && 'Файлы из обсуждения не найдены. Прикрепите файлы в сообщениях проекта'}
+            {viewMode === 'documents' && 'Документы проекта не найдены. Загрузите документы для проекта'}
           </p>
         </div>
       ) : (
@@ -225,9 +240,14 @@ export default function Documents({
                         Задача: {doc.task_title}
                       </span>
                     )}
-                    {doc.source === 'project' && (
+                    {doc.source === 'project' && doc.origin === 'discussion' && (
+                      <span className="text-xs bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200 px-2 py-0.5 rounded-full flex-shrink-0">
+                        Обсуждение
+                      </span>
+                    )}
+                    {doc.source === 'project' && doc.origin !== 'discussion' && (
                       <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-0.5 rounded-full flex-shrink-0">
-                        Проект
+                        Документы
                       </span>
                     )}
                   </div>

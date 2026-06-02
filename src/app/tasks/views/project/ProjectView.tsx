@@ -209,7 +209,11 @@ export default function ProjectView({ projectId, currentUserId }: ProjectViewPro
 
         {activeTab === 'discussion' && (
           <div className="flex-1 flex flex-col min-h-0 p-6">
-            <Discussion projectId={projectId} />
+            <Discussion
+              projectId={projectId}
+              currentUserId={currentUserId}
+              onDocumentsChanged={loadProjectData}
+            />
           </div>
         )}
 

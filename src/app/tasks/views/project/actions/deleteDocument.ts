@@ -30,7 +30,7 @@ export async function deleteProjectDocument(
     
     if (source === 'project') {
       const result = await query(`
-        SELECT filePath, uploaded_by
+        SELECT project_id, filePath, uploaded_by
         FROM ProjectDocuments
         WHERE id = @documentId
       `, { documentId });
@@ -80,6 +80,8 @@ export async function deleteProjectDocument(
         DELETE FROM ProjectDocuments
         WHERE id = @documentId
       `, { documentId });
+
+      await removeDocumentLinksFromProjectMessages(documentInfo.project_id, documentInfo.filePath);
     } else {
       await query(`
         DELETE FROM TaskDocuments
@@ -98,4 +100,87 @@ export async function deleteProjectDocument(
       message: error instanceof Error ? error.message : 'Ошибка при удалении документа'
     };
   }
+}
+
+interface DiscussionAttachment {
+  name: string;
+  path: string;
+}
+
+const ATTACHMENT_PREFIX = '__PROJECT_ATTACHMENT__';
+
+async function removeDocumentLinksFromProjectMessages(projectId: number, filePath: string) {
+  const result = await query(`
+    SELECT id, description
+    FROM ProjectActions
+    WHERE project_id = @projectId AND description LIKE @attachmentPattern
+  `, {
+    projectId,
+    attachmentPattern: `%${filePath}%`,
+  });
+
+  const messages = (result as any).recordset || result;
+
+  for (const message of messages) {
+    const parsedMessage = parseMessageDescription(message.description);
+    const nextAttachments = parsedMessage.attachments.filter((attachment) => (
+      attachment.path !== filePath
+    ));
+
+    if (nextAttachments.length === parsedMessage.attachments.length) {
+      continue;
+    }
+
+    if (!parsedMessage.text && nextAttachments.length === 0) {
+      await query(`
+        DELETE FROM ProjectActions
+        WHERE id = @messageId
+      `, {
+        messageId: message.id,
+      });
+    } else {
+      await query(`
+        UPDATE ProjectActions
+        SET description = @description, dtu = GETDATE()
+        WHERE id = @messageId
+      `, {
+        messageId: message.id,
+        description: buildMessageDescription(parsedMessage.text, nextAttachments),
+      });
+    }
+  }
+}
+
+function parseMessageDescription(description: string) {
+  const lines = description.split('\n');
+  const textLines: string[] = [];
+  const attachments: DiscussionAttachment[] = [];
+
+  for (const line of lines) {
+    if (line.startsWith(ATTACHMENT_PREFIX)) {
+      try {
+        attachments.push(JSON.parse(line.slice(ATTACHMENT_PREFIX.length)));
+      } catch {
+        textLines.push(line);
+      }
+    } else {
+      textLines.push(line);
+    }
+  }
+
+  return {
+    text: textLines.join('\n').trim(),
+    attachments,
+  };
+}
+
+function buildMessageDescription(text: string, attachments: DiscussionAttachment[]) {
+  const attachmentLines = attachments.map((attachment) => (
+    `${ATTACHMENT_PREFIX}${JSON.stringify(attachment)}`
+  ));
+
+  return [
+    text.trim(),
+    ...attachmentLines,
+  ].filter(Boolean).join('\n');
 }
