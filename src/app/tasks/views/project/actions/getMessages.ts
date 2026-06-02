@@ -5,6 +5,7 @@ import { existsSync } from 'fs';
 import { resolve } from 'path';
 import { query } from '@/db/connect';
 import { getCurrentUser } from '@/app/(auth)/actions/login';
+import { notifyProjectMessagesChanged } from '@/lib/projectMessageEvents';
 
 export interface ProjectMessage {
   id: number;
@@ -90,6 +91,8 @@ export async function addProjectMessage(projectId: number, message: string): Pro
       userId: currentUser.id,
       message: message.trim()
     });
+
+    notifyProjectMessagesChanged(projectId);
   } catch (error) {
     console.error('Ошибка при добавлении сообщения:', error);
     throw error;
@@ -128,6 +131,7 @@ export async function updateProjectMessageText(
       messageId,
       description: buildMessageDescription(nextText, parsedMessage.attachments),
     });
+    notifyProjectMessagesChanged(messageRecord.project_id);
 
     return { success: true, message: 'Сообщение обновлено' };
   } catch (error) {
@@ -163,6 +167,7 @@ export async function deleteProjectMessage(messageId: number): Promise<MessageAc
       DELETE FROM ProjectActions
       WHERE id = @messageId
     `, { messageId });
+    notifyProjectMessagesChanged(messageRecord.project_id);
 
     return { success: true, message: 'Сообщение удалено' };
   } catch (error) {
@@ -211,6 +216,7 @@ export async function deleteProjectMessageAttachment(
         DELETE FROM ProjectActions
         WHERE id = @messageId
       `, { messageId });
+      notifyProjectMessagesChanged(messageRecord.project_id);
 
       return { success: true, message: 'Файл и пустое сообщение удалены' };
     }
@@ -223,6 +229,7 @@ export async function deleteProjectMessageAttachment(
       messageId,
       description: buildMessageDescription(parsedMessage.text, nextAttachments),
     });
+    notifyProjectMessagesChanged(messageRecord.project_id);
 
     return { success: true, message: 'Файл удален' };
   } catch (error) {

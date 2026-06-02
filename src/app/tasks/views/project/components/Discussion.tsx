@@ -51,11 +51,22 @@ export default function Discussion({
   }, [projectId]);
 
   useEffect(() => {
+    const eventSource = new EventSource(`/api/projects/${projectId}/messages/stream`);
+    const handleMessagesChanged = () => {
+      void refreshMessages();
+    };
+
+    eventSource.addEventListener('messages-changed', handleMessagesChanged);
+
     const intervalId = window.setInterval(() => {
       void pollMessages();
-    }, 5000);
+    }, 60000);
 
-    return () => window.clearInterval(intervalId);
+    return () => {
+      eventSource.removeEventListener('messages-changed', handleMessagesChanged);
+      eventSource.close();
+      window.clearInterval(intervalId);
+    };
   }, [projectId]);
 
   useEffect(() => {
