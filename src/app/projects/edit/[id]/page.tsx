@@ -2,11 +2,10 @@ import { getCurrentUser } from '@/app/(auth)/actions/login';
 import { redirect } from 'next/navigation';
 import { getProjectById, getCompanies } from '../../actions/actions';
 import { getProjectStatuses } from '../../actions/statusActions';
-import { getProjectTaskTypes } from '../../actions/taskTypeActions';
 import { getTemplates } from '@/app/templates/actions/getTemplates';
-import ProjectForm from './ProjectForm';
-import ProjectStatusEditor from './ProjectStatusEditor';
-import ProjectTaskTypeEditor from './TaskTypeEditor';
+import ButtonBack from '@/components/ButtonBack';
+import ProjectEditTabs from './ProjectEditTabs';
+import { getProjectAccessEmployees } from './actions';
 
 interface EditProjectPageProps {
   params: Promise<{ id: string }>;
@@ -25,12 +24,12 @@ export default async function EditProjectPage({ params }: EditProjectPageProps) 
     redirect('/projects');
   }
 
-  const [project, companies, statuses, taskTypes, templates] = await Promise.all([
+  const [project, companies, statuses, templates, accessEmployees] = await Promise.all([
     getProjectById(projectId),
     getCompanies(),
     getProjectStatuses(projectId),
-    getProjectTaskTypes(projectId),
-    getTemplates()
+    getTemplates(),
+    getProjectAccessEmployees(projectId)
   ]);
 
   if (!project) {
@@ -38,20 +37,25 @@ export default async function EditProjectPage({ params }: EditProjectPageProps) 
   }
 
   return (
-    <div style={{ padding: '20px 0', maxWidth: '900px', margin: '0 auto' }}>
-      <div style={{ marginBottom: '32px' }}>
-        <ProjectForm project={project} companies={companies} />
+    <div className="mx-auto max-w-[900px] py-5">
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="m-0 text-[28px] font-bold text-gray-900">
+            Редактирование проекта
+          </h1>
+          <p className="mt-3 text-base text-gray-600">
+            Изменение данных проекта &quot;{project.projectName}&quot; (ID: {project.id})
+          </p>
+        </div>
+        <ButtonBack />
       </div>
-      
-      <ProjectStatusEditor 
-        projectId={project.id} 
-        initialStatuses={statuses} 
-        templates={templates}
-      />
 
-      <ProjectTaskTypeEditor 
-        projectId={project.id} 
-        initialTaskTypes={taskTypes}
+      <ProjectEditTabs
+        project={project}
+        companies={companies}
+        statuses={statuses}
+        templates={templates}
+        accessEmployees={accessEmployees}
       />
     </div>
   );

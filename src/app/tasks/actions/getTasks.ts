@@ -45,7 +45,7 @@ export async function getTasks(executorId?: number, companyId?: number): Promise
     // Строим WHERE условие для фильтрации
     // Исключаем только "На паузе" и "Отменено" - для канбан доски нужны все остальные включая "Готово"
     let whereClause = "WHERE st.status NOT IN ('На паузе', 'Отменено')";
-    const params: any = {};
+    const params: any = { userId: currentUser.id };
     
     // Получаем все компании пользователя (собственные, где он член, и где он сотрудник)
     const userCompaniesResult = await query(`
@@ -85,6 +85,26 @@ export async function getTasks(executorId?: number, companyId?: number): Promise
       whereClause += " AND t.executorId = @executorId";
       params.executorId = executorId;
     }
+
+    whereClause += `
+      AND (
+        t.projectId IS NULL
+        OR EXISTS (
+          SELECT 1
+          FROM Company ownerCompany
+          WHERE ownerCompany.id = t.companyId
+            AND ownerCompany.ownerId = @userId
+        )
+        OR EXISTS (
+          SELECT 1
+          FROM Project_Employee pe
+          INNER JOIN Employee accessEmployee ON accessEmployee.id = pe.employeeId
+          WHERE pe.projectId = t.projectId
+            AND accessEmployee.companyId = t.companyId
+            AND accessEmployee.userId = @userId
+        )
+      )
+    `;
     
     // Если есть фильтр по компании, получаем только задачи этой компании
     // (включая корневые задачи и их подзадачи только если они принадлежат этой компании)
@@ -189,7 +209,7 @@ export async function getCompletedTasks(executorId?: number): Promise<Task[]> {
 
     // Строим WHERE условие для выполненных задач
     let whereClause = "WHERE st.status IN ('Готово')";
-    const params: any = {};
+    const params: any = { userId: currentUser.id };
     
     // Получаем все компании пользователя (собственные, где он член, и где он сотрудник)
     const userCompaniesResult = await query(`
@@ -229,6 +249,26 @@ export async function getCompletedTasks(executorId?: number): Promise<Task[]> {
       whereClause += " AND t.executorId = @executorId";
       params.executorId = executorId;
     }
+
+    whereClause += `
+      AND (
+        t.projectId IS NULL
+        OR EXISTS (
+          SELECT 1
+          FROM Company ownerCompany
+          WHERE ownerCompany.id = t.companyId
+            AND ownerCompany.ownerId = @userId
+        )
+        OR EXISTS (
+          SELECT 1
+          FROM Project_Employee pe
+          INNER JOIN Employee accessEmployee ON accessEmployee.id = pe.employeeId
+          WHERE pe.projectId = t.projectId
+            AND accessEmployee.companyId = t.companyId
+            AND accessEmployee.userId = @userId
+        )
+      )
+    `;
 
     
     const completedTasks = await query(`

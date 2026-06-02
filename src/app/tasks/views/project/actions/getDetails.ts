@@ -41,16 +41,21 @@ export async function getProjectDetails(projectId: number): Promise<ProjectDetai
       LEFT JOIN Company c ON p.companyId = c.id
       LEFT JOIN [Users] u ON p.userId = u.id
       WHERE p.id = @projectId
-        AND p.companyId IN (
-          SELECT DISTINCT companyId 
-          FROM Employee 
-          WHERE userId = @userId
-          
-          UNION
-          
-          SELECT id 
-          FROM Company 
-          WHERE ownerId = @userId
+        AND (
+          EXISTS (
+            SELECT 1
+            FROM Company ownerCompany
+            WHERE ownerCompany.id = p.companyId
+              AND ownerCompany.ownerId = @userId
+          )
+          OR EXISTS (
+            SELECT 1
+            FROM Project_Employee pe
+            INNER JOIN Employee e ON e.id = pe.employeeId
+            WHERE pe.projectId = p.id
+              AND e.companyId = p.companyId
+              AND e.userId = @userId
+          )
         )
     `, {
       projectId,

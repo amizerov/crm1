@@ -8,37 +8,35 @@ export interface Project {
   projectName: string;
 }
 
-// Получение проектов по компании для фильтра
 export async function getProjectsByCompanyForFilter(companyId?: number): Promise<Project[]> {
   try {
     const currentUser = await getCurrentUser();
-    
-    if (!currentUser) {
-      return [];
-    }
 
-    // Если companyId не указан, возвращаем пустой массив
-    if (!companyId) {
+    if (!currentUser || !companyId) {
       return [];
     }
 
     const result = await query(`
-      SELECT 
+      SELECT
         p.id,
         p.projectName
       FROM Project p
       WHERE p.companyId = @companyId
-        AND p.companyId IN (
-          -- Проверяем доступ к компании
-          SELECT DISTINCT companyId 
-          FROM Employee 
-          WHERE userId = @userId
-          
-          UNION
-          
-          SELECT id 
-          FROM Company 
-          WHERE ownerId = @userId
+        AND (
+          EXISTS (
+            SELECT 1
+            FROM Company c
+            WHERE c.id = p.companyId
+              AND c.ownerId = @userId
+          )
+          OR EXISTS (
+            SELECT 1
+            FROM Project_Employee pe
+            INNER JOIN Employee e ON e.id = pe.employeeId
+            WHERE pe.projectId = p.id
+              AND e.companyId = p.companyId
+              AND e.userId = @userId
+          )
         )
       ORDER BY p.projectName
     `, {
@@ -46,8 +44,7 @@ export async function getProjectsByCompanyForFilter(companyId?: number): Promise
       userId: currentUser.id
     });
 
-    const projects = (result as any).recordset || result;
-    return projects;
+    return (result as any).recordset || result;
   } catch (error) {
     console.error('Ошибка при получении проектов для фильтра:', error);
     return [];

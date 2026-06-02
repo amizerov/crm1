@@ -35,11 +35,6 @@ export default function ProjectsTable({ projects, isPending = false }: ProjectsT
       label: 'Название проекта'
     },
     {
-      key: 'description',
-      label: 'Описание',
-      render: (project) => project.description || '-'
-    },
-    {
       key: 'companyName',
       label: 'Компания',
       render: (project) => project.companyName || '-'
