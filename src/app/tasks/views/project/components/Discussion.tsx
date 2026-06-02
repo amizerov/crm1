@@ -147,6 +147,16 @@ export default function Discussion({
     }
   };
 
+  const notifyProjectMessagesChanged = async () => {
+    try {
+      await fetch(`/api/projects/${projectId}/messages/stream`, {
+        method: 'POST',
+      });
+    } catch (error) {
+      console.warn('Project discussion SSE notify failed', { projectId, error });
+    }
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if ((!newMessage.trim() && selectedFiles.length === 0) || isSendingMessage) return;
@@ -187,6 +197,7 @@ export default function Discussion({
       }
       
       await refreshMessages();
+      await notifyProjectMessagesChanged();
       if (uploadedAttachments.length > 0) {
         onDocumentsChanged?.();
       }
@@ -256,6 +267,7 @@ export default function Discussion({
 
       cancelEditMessage();
       await refreshMessages();
+      await notifyProjectMessagesChanged();
     } catch (error) {
       console.error('Ошибка редактирования сообщения:', error);
       alert(error instanceof Error ? error.message : 'Ошибка редактирования сообщения');
@@ -281,6 +293,7 @@ export default function Discussion({
       }
 
       await refreshMessages();
+      await notifyProjectMessagesChanged();
       onDocumentsChanged?.();
     } catch (error) {
       console.error('Ошибка удаления сообщения:', error);
@@ -303,6 +316,7 @@ export default function Discussion({
       }
 
       await refreshMessages();
+      await notifyProjectMessagesChanged();
       onDocumentsChanged?.();
     } catch (error) {
       console.error('Ошибка удаления файла:', error);

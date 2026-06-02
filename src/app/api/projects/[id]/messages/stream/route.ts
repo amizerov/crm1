@@ -1,11 +1,19 @@
 import { getCurrentUser } from '@/app/(auth)/actions/login';
-import { subscribeProjectMessages } from '@/lib/projectMessageEvents';
+import {
+  notifyProjectMessagesChanged,
+  subscribeProjectMessages
+} from '@/lib/projectMessageEvents';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 function formatEvent(eventName: string, data: unknown) {
   return `event: ${eventName}\ndata: ${JSON.stringify(data)}\n\n`;
+}
+
+function getProjectIdFromRequest(request: Request) {
+  const url = new URL(request.url);
+  return Number(url.pathname.split('/')[3]);
 }
 
 export async function GET(request: Request) {
@@ -15,8 +23,7 @@ export async function GET(request: Request) {
     return new Response('Unauthorized', { status: 401 });
   }
 
-  const url = new URL(request.url);
-  const projectId = Number(url.pathname.split('/')[3]);
+  const projectId = getProjectIdFromRequest(request);
 
   if (!Number.isInteger(projectId) || projectId <= 0) {
     return new Response('Invalid project id', { status: 400 });
@@ -73,4 +80,22 @@ export async function GET(request: Request) {
       'X-Accel-Buffering': 'no',
     },
   });
+}
+
+export async function POST(request: Request) {
+  const currentUser = await getCurrentUser();
+
+  if (!currentUser) {
+    return Response.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+  }
+
+  const projectId = getProjectIdFromRequest(request);
+
+  if (!Number.isInteger(projectId) || projectId <= 0) {
+    return Response.json({ success: false, message: 'Invalid project id' }, { status: 400 });
+  }
+
+  notifyProjectMessagesChanged(projectId);
+
+  return Response.json({ success: true });
 }
