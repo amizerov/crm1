@@ -51,6 +51,20 @@ export default function ProjectView({ projectId, currentUserId }: ProjectViewPro
     }
   };
 
+  const refreshProjectDocuments = async () => {
+    try {
+      const [projectDocsData, taskDocsData] = await Promise.all([
+        getProjectDocuments(projectId),
+        getTaskDocuments(projectId)
+      ]);
+
+      setProjectDocuments(projectDocsData);
+      setTaskDocuments(taskDocsData);
+    } catch (error) {
+      console.error('РћС€РёР±РєР° РѕР±РЅРѕРІР»РµРЅРёСЏ РґРѕРєСѓРјРµРЅС‚РѕРІ РїСЂРѕРµРєС‚Р°:', error);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -203,7 +217,7 @@ export default function ProjectView({ projectId, currentUserId }: ProjectViewPro
             projectId={projectId}
             projectDocuments={projectDocuments}
             taskDocuments={taskDocuments}
-            onDocumentsChanged={loadProjectData}
+            onDocumentsChanged={refreshProjectDocuments}
           />
         )}
 
@@ -212,7 +226,8 @@ export default function ProjectView({ projectId, currentUserId }: ProjectViewPro
             <Discussion
               projectId={projectId}
               currentUserId={currentUserId}
-              onDocumentsChanged={loadProjectData}
+              onMessagesChanged={setMessages}
+              onDocumentsChanged={refreshProjectDocuments}
             />
           </div>
         )}

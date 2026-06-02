@@ -14,6 +14,7 @@ import { uploadProjectDocument } from '../actions/uploadDocument';
 interface DiscussionProps {
   projectId: number;
   currentUserId: number;
+  onMessagesChanged?: (messages: ProjectMessage[]) => void;
   onDocumentsChanged?: () => void;
 }
 
@@ -24,7 +25,12 @@ interface DiscussionAttachment {
 
 const ATTACHMENT_PREFIX = '__PROJECT_ATTACHMENT__';
 
-export default function Discussion({ projectId, currentUserId, onDocumentsChanged }: DiscussionProps) {
+export default function Discussion({
+  projectId,
+  currentUserId,
+  onMessagesChanged,
+  onDocumentsChanged
+}: DiscussionProps) {
   const [messages, setMessages] = useState<ProjectMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -37,9 +43,19 @@ export default function Discussion({ projectId, currentUserId, onDocumentsChange
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const messagesRef = useRef<ProjectMessage[]>([]);
+  const isRefreshingRef = useRef(false);
 
   useEffect(() => {
     loadMessages();
+  }, [projectId]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      void pollMessages();
+    }, 5000);
+
+    return () => window.clearInterval(intervalId);
   }, [projectId]);
 
   useEffect(() => {
@@ -58,7 +74,7 @@ export default function Discussion({ projectId, currentUserId, onDocumentsChange
     try {
       setIsLoading(true);
       const messagesData = await getProjectMessages(projectId);
-      setMessages(messagesData);
+      applyMessages(messagesData);
     } catch (error) {
       console.error('Ошибка загрузки сообщений:', error);
     } finally {
@@ -66,9 +82,47 @@ export default function Discussion({ projectId, currentUserId, onDocumentsChange
     }
   };
 
-  const refreshMessages = async () => {
-    const updatedMessages = await getProjectMessages(projectId);
+  const applyMessages = (updatedMessages: ProjectMessage[]) => {
+    const currentMessages = messagesRef.current;
+    const hasChanges =
+      updatedMessages.length !== currentMessages.length ||
+      updatedMessages.some((message, index) => {
+        const currentMessage = currentMessages[index];
+
+        return (
+          !currentMessage ||
+          message.id !== currentMessage.id ||
+          message.description !== currentMessage.description ||
+          message.dtc !== currentMessage.dtc ||
+          message.dtu !== currentMessage.dtu
+        );
+      });
+
+    if (!hasChanges) return;
+
+    messagesRef.current = updatedMessages;
     setMessages(updatedMessages);
+    onMessagesChanged?.(updatedMessages);
+  };
+
+  const refreshMessages = async () => {
+    try {
+      const updatedMessages = await getProjectMessages(projectId);
+      applyMessages(updatedMessages);
+    } catch (error) {
+      console.error('РћС€РёР±РєР° РѕР±РЅРѕРІР»РµРЅРёСЏ СЃРѕРѕР±С‰РµРЅРёР№:', error);
+    }
+  };
+
+  const pollMessages = async () => {
+    if (isRefreshingRef.current) return;
+
+    try {
+      isRefreshingRef.current = true;
+      await refreshMessages();
+    } finally {
+      isRefreshingRef.current = false;
+    }
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -111,7 +165,9 @@ export default function Discussion({ projectId, currentUserId, onDocumentsChange
       }
       
       await refreshMessages();
-      onDocumentsChanged?.();
+      if (uploadedAttachments.length > 0) {
+        onDocumentsChanged?.();
+      }
     } catch (error) {
       console.error('Ошибка отправки сообщения:', error);
       alert(error instanceof Error ? error.message : 'Ошибка отправки сообщения');
