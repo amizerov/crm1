@@ -52,18 +52,29 @@ export default function Discussion({
 
   useEffect(() => {
     const eventSource = new EventSource(`/api/projects/${projectId}/messages/stream`);
+    const handleConnected = () => {
+      console.info('Project discussion SSE connected', { projectId });
+    };
     const handleMessagesChanged = () => {
+      console.info('Project discussion SSE messages-changed', { projectId });
       void refreshMessages();
     };
+    const handleError = (event: Event) => {
+      console.warn('Project discussion SSE error', { projectId, event });
+    };
 
+    eventSource.addEventListener('connected', handleConnected);
     eventSource.addEventListener('messages-changed', handleMessagesChanged);
+    eventSource.addEventListener('error', handleError);
 
     const intervalId = window.setInterval(() => {
       void pollMessages();
     }, 60000);
 
     return () => {
+      eventSource.removeEventListener('connected', handleConnected);
       eventSource.removeEventListener('messages-changed', handleMessagesChanged);
+      eventSource.removeEventListener('error', handleError);
       eventSource.close();
       window.clearInterval(intervalId);
     };
