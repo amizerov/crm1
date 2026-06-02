@@ -23,6 +23,17 @@ interface DiscussionAttachment {
   path: string;
 }
 
+type FeedbackDialogVariant = 'danger' | 'warning' | 'info';
+
+interface FeedbackDialogState {
+  title: string;
+  message: string;
+  variant: FeedbackDialogVariant;
+  confirmLabel: string;
+  cancelLabel?: string;
+  onConfirm?: () => void | Promise<void>;
+}
+
 const ATTACHMENT_PREFIX = '__PROJECT_ATTACHMENT__';
 
 export default function Discussion({
@@ -40,6 +51,7 @@ export default function Discussion({
   const [deletingAttachmentPath, setDeletingAttachmentPath] = useState<string | null>(null);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [feedbackDialog, setFeedbackDialog] = useState<FeedbackDialogState | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -157,6 +169,24 @@ export default function Discussion({
     }
   };
 
+  const showErrorDialog = (message: string) => {
+    setFeedbackDialog({
+      title: 'Ошибка',
+      message,
+      variant: 'danger',
+      confirmLabel: 'Понятно',
+    });
+  };
+
+  const handleDialogConfirm = async () => {
+    const confirmAction = feedbackDialog?.onConfirm;
+    setFeedbackDialog(null);
+
+    if (confirmAction) {
+      await confirmAction();
+    }
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if ((!newMessage.trim() && selectedFiles.length === 0) || isSendingMessage) return;
@@ -203,7 +233,7 @@ export default function Discussion({
       }
     } catch (error) {
       console.error('Ошибка отправки сообщения:', error);
-      alert(error instanceof Error ? error.message : 'Ошибка отправки сообщения');
+      showErrorDialog(error instanceof Error ? error.message : 'Ошибка отправки сообщения');
     } finally {
       setIsSendingMessage(false);
     }
@@ -261,7 +291,7 @@ export default function Discussion({
       const result = await updateProjectMessageText(messageId, editingText);
 
       if (!result.success) {
-        alert(result.message || 'Ошибка редактирования сообщения');
+        showErrorDialog(result.message || 'Ошибка редактирования сообщения');
         return;
       }
 
@@ -270,21 +300,30 @@ export default function Discussion({
       await notifyProjectMessagesChanged();
     } catch (error) {
       console.error('Ошибка редактирования сообщения:', error);
-      alert(error instanceof Error ? error.message : 'Ошибка редактирования сообщения');
+      showErrorDialog(error instanceof Error ? error.message : 'Ошибка редактирования сообщения');
     } finally {
       setProcessingMessageId(null);
     }
   };
 
   const handleDeleteMessage = async (messageId: number) => {
-    if (!confirm('Удалить сообщение? Прикрепленные к нему файлы тоже будут удалены.')) return;
+    setFeedbackDialog({
+      title: 'Удалить сообщение?',
+      message: 'Прикрепленные к нему файлы тоже будут удалены.',
+      variant: 'danger',
+      confirmLabel: 'Удалить',
+      cancelLabel: 'Отмена',
+      onConfirm: () => deleteMessageConfirmed(messageId),
+    });
+  };
 
+  const deleteMessageConfirmed = async (messageId: number) => {
     try {
       setProcessingMessageId(messageId);
       const result = await deleteProjectMessage(messageId);
 
       if (!result.success) {
-        alert(result.message || 'Ошибка удаления сообщения');
+        showErrorDialog(result.message || 'Ошибка удаления сообщения');
         return;
       }
 
@@ -297,21 +336,30 @@ export default function Discussion({
       onDocumentsChanged?.();
     } catch (error) {
       console.error('Ошибка удаления сообщения:', error);
-      alert(error instanceof Error ? error.message : 'Ошибка удаления сообщения');
+      showErrorDialog(error instanceof Error ? error.message : 'Ошибка удаления сообщения');
     } finally {
       setProcessingMessageId(null);
     }
   };
 
   const handleDeleteAttachment = async (messageId: number, attachment: DiscussionAttachment) => {
-    if (!confirm(`Удалить файл "${attachment.name}"? Он исчезнет из обсуждения и документов проекта.`)) return;
+    setFeedbackDialog({
+      title: 'Удалить файл?',
+      message: `"${attachment.name}" исчезнет из обсуждения и документов проекта.`,
+      variant: 'danger',
+      confirmLabel: 'Удалить',
+      cancelLabel: 'Отмена',
+      onConfirm: () => deleteAttachmentConfirmed(messageId, attachment),
+    });
+  };
 
+  const deleteAttachmentConfirmed = async (messageId: number, attachment: DiscussionAttachment) => {
     try {
       setDeletingAttachmentPath(attachment.path);
       const result = await deleteProjectMessageAttachment(messageId, attachment.path);
 
       if (!result.success) {
-        alert(result.message || 'Ошибка удаления файла');
+        showErrorDialog(result.message || 'Ошибка удаления файла');
         return;
       }
 
@@ -320,7 +368,7 @@ export default function Discussion({
       onDocumentsChanged?.();
     } catch (error) {
       console.error('Ошибка удаления файла:', error);
-      alert(error instanceof Error ? error.message : 'Ошибка удаления файла');
+      showErrorDialog(error instanceof Error ? error.message : 'Ошибка удаления файла');
     } finally {
       setDeletingAttachmentPath(null);
     }
@@ -550,6 +598,72 @@ export default function Discussion({
           </form>
         </div>
       </div>
+
+      {feedbackDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/60 px-4 backdrop-blur-sm">
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="w-full max-w-md rounded-lg border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800"
+          >
+            <div className="flex gap-4 p-5">
+              <div
+                className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full ${
+                  feedbackDialog.variant === 'danger'
+                    ? 'bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-300'
+                    : feedbackDialog.variant === 'warning'
+                      ? 'bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-300'
+                      : 'bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-300'
+                }`}
+              >
+                {feedbackDialog.variant === 'danger' ? (
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v4m0 4h.01M4.93 19h14.14c1.54 0 2.5-1.67 1.73-3L13.73 4c-.77-1.33-2.69-1.33-3.46 0L3.2 16c-.77 1.33.19 3 1.73 3z" />
+                  </svg>
+                ) : (
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M12 22a10 10 0 110-20 10 10 0 010 20z" />
+                  </svg>
+                )}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <h4 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                  {feedbackDialog.title}
+                </h4>
+                <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
+                  {feedbackDialog.message}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 border-t border-gray-100 px-5 py-4 dark:border-gray-700">
+              {feedbackDialog.cancelLabel && (
+                <button
+                  type="button"
+                  onClick={() => setFeedbackDialog(null)}
+                  className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                >
+                  {feedbackDialog.cancelLabel}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleDialogConfirm}
+                className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
+                  feedbackDialog.variant === 'danger'
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : feedbackDialog.variant === 'warning'
+                      ? 'bg-amber-600 hover:bg-amber-700'
+                      : 'bg-blue-600 hover:bg-blue-700'
+                }`}
+              >
+                {feedbackDialog.confirmLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
