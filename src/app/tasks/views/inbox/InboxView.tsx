@@ -2,8 +2,7 @@
 
 import { Task } from '@/app/tasks/types';
 import { TaskHistoryItem, markHistoryAsViewed, markAllHistoryAsViewed } from './actions/getTasksHistory';
-import Link from 'next/link';
-import { useState, useTransition } from 'react';
+import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface InboxViewProps {
@@ -54,7 +53,7 @@ export default function InboxView({ tasks, currentUserId, tasksHistory, tasksSta
                 Входящие
               </h1>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                История изменений по всем задачам и другие события по вашим компаниям.
+                События, которые требуют вашего внимания.
               </p>
             </div>
           </div>
@@ -126,7 +125,7 @@ function HistoryCard({
   // Определяем, является ли это назначением текущему пользователю
   const isAssignedToMe = 
     (item.actionType === 'assigned' || item.actionType === 'executor_changed') && 
-    item.executorId === currentUserId;
+    item.executorUserId === currentUserId;
   
   // Определяем, является ли задача завершённой
   const isCompleted = 

@@ -1,6 +1,7 @@
 'use server';
 
 import { query } from '@/db/connect';
+import { getCurrentUser } from '@/app/(auth)/actions/login';
 
 export interface TaskHistoryItem {
   id: number;
@@ -19,6 +20,7 @@ export interface TaskHistoryItem {
   statusId: number;
   statusName: string;
   executorId?: number;
+  executorUserId?: number;
   executorName?: string;
   priorityId?: number;
   priorityName?: string;
@@ -47,6 +49,9 @@ export interface TaskStats {
  */
 export async function getTasksHistory(limit: number = 50): Promise<TaskHistoryItem[]> {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) return [];
+
     const result = await query(`
       SELECT TOP (@limit)
         th.id,
@@ -66,6 +71,7 @@ export async function getTasksHistory(limit: number = 50): Promise<TaskHistoryIt
         t.statusId,
         st.status as statusName,
         t.executorId,
+        e.userId as executorUserId,
         e.Name as executorName,
         t.priorityId,
         p.priority as priorityName,
@@ -80,8 +86,24 @@ export async function getTasksHistory(limit: number = 50): Promise<TaskHistoryIt
       LEFT JOIN Project proj ON t.projectId = proj.id
       WHERE t.id IS NOT NULL
         AND (th.isViewed = 0 OR th.isViewed IS NULL)
+        AND th.userId <> @userId
+        AND (
+          (th.actionType IN ('assigned', 'executor_changed') AND e.userId = @userId)
+          OR (th.actionType IN ('comment_added', 'comment_edited') AND (e.userId = @userId OR t.userId = @userId))
+          OR (th.actionType IN ('priority_changed', 'deadline_changed') AND e.userId = @userId)
+          OR (
+            th.actionType = 'status_changed'
+            AND e.userId = @userId
+            AND (
+              LOWER(COALESCE(th.newValue, '')) LIKE N'%доработ%'
+              OR LOWER(COALESCE(th.newValue, '')) LIKE N'%возвращ%'
+              OR LOWER(COALESCE(th.newValue, '')) LIKE '%reopen%'
+              OR LOWER(COALESCE(th.newValue, '')) LIKE '%returned%'
+            )
+          )
+        )
       ORDER BY th.dtc DESC
-    `, { limit });
+    `, { limit, userId: currentUser.id });
 
     return result || [];
   } catch (error) {
@@ -213,11 +235,33 @@ export async function getTasksStatsMap(taskIds: number[]): Promise<Map<number, {
  */
 export async function markHistoryAsViewed(historyId: number) {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) return { success: false };
+
     await query(`
-      UPDATE TaskHistory
-      SET isViewed = 1
-      WHERE id = @historyId
-    `, { historyId });
+      UPDATE th
+      SET th.isViewed = 1
+      FROM TaskHistory th
+      INNER JOIN Task t ON th.taskId = t.id
+      LEFT JOIN Employee e ON t.executorId = e.id
+      WHERE th.id = @historyId
+        AND th.userId <> @userId
+        AND (
+          (th.actionType IN ('assigned', 'executor_changed') AND e.userId = @userId)
+          OR (th.actionType IN ('comment_added', 'comment_edited') AND (e.userId = @userId OR t.userId = @userId))
+          OR (th.actionType IN ('priority_changed', 'deadline_changed') AND e.userId = @userId)
+          OR (
+            th.actionType = 'status_changed'
+            AND e.userId = @userId
+            AND (
+              LOWER(COALESCE(th.newValue, '')) LIKE N'%доработ%'
+              OR LOWER(COALESCE(th.newValue, '')) LIKE N'%возвращ%'
+              OR LOWER(COALESCE(th.newValue, '')) LIKE '%reopen%'
+              OR LOWER(COALESCE(th.newValue, '')) LIKE '%returned%'
+            )
+          )
+        )
+    `, { historyId, userId: currentUser.id });
 
     return { success: true };
   } catch (error) {
@@ -231,11 +275,33 @@ export async function markHistoryAsViewed(historyId: number) {
  */
 export async function markAllHistoryAsViewed() {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) return { success: false };
+
     await query(`
-      UPDATE TaskHistory
-      SET isViewed = 1
-      WHERE isViewed = 0 OR isViewed IS NULL
-    `);
+      UPDATE th
+      SET th.isViewed = 1
+      FROM TaskHistory th
+      INNER JOIN Task t ON th.taskId = t.id
+      LEFT JOIN Employee e ON t.executorId = e.id
+      WHERE (th.isViewed = 0 OR th.isViewed IS NULL)
+        AND th.userId <> @userId
+        AND (
+          (th.actionType IN ('assigned', 'executor_changed') AND e.userId = @userId)
+          OR (th.actionType IN ('comment_added', 'comment_edited') AND (e.userId = @userId OR t.userId = @userId))
+          OR (th.actionType IN ('priority_changed', 'deadline_changed') AND e.userId = @userId)
+          OR (
+            th.actionType = 'status_changed'
+            AND e.userId = @userId
+            AND (
+              LOWER(COALESCE(th.newValue, '')) LIKE N'%доработ%'
+              OR LOWER(COALESCE(th.newValue, '')) LIKE N'%возвращ%'
+              OR LOWER(COALESCE(th.newValue, '')) LIKE '%reopen%'
+              OR LOWER(COALESCE(th.newValue, '')) LIKE '%returned%'
+            )
+          )
+        )
+    `, { userId: currentUser.id });
 
     return { success: true };
   } catch (error) {
@@ -249,11 +315,32 @@ export async function markAllHistoryAsViewed() {
  */
 export async function getUnreadHistoryCount(): Promise<number> {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) return 0;
+
     const result = await query(`
       SELECT COUNT(*) as count
-      FROM TaskHistory
-      WHERE isViewed = 0 OR isViewed IS NULL
-    `);
+      FROM TaskHistory th
+      INNER JOIN Task t ON th.taskId = t.id
+      LEFT JOIN Employee e ON t.executorId = e.id
+      WHERE (th.isViewed = 0 OR th.isViewed IS NULL)
+        AND th.userId <> @userId
+        AND (
+          (th.actionType IN ('assigned', 'executor_changed') AND e.userId = @userId)
+          OR (th.actionType IN ('comment_added', 'comment_edited') AND (e.userId = @userId OR t.userId = @userId))
+          OR (th.actionType IN ('priority_changed', 'deadline_changed') AND e.userId = @userId)
+          OR (
+            th.actionType = 'status_changed'
+            AND e.userId = @userId
+            AND (
+              LOWER(COALESCE(th.newValue, '')) LIKE N'%доработ%'
+              OR LOWER(COALESCE(th.newValue, '')) LIKE N'%возвращ%'
+              OR LOWER(COALESCE(th.newValue, '')) LIKE '%reopen%'
+              OR LOWER(COALESCE(th.newValue, '')) LIKE '%returned%'
+            )
+          )
+        )
+    `, { userId: currentUser.id });
 
     return result && result[0] ? result[0].count : 0;
   } catch (error) {
